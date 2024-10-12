@@ -1,3 +1,4 @@
+import gleam/float
 import gleam/int
 import gleam/result
 import gleam/string
@@ -29,7 +30,12 @@ pub fn trim(str: String) -> Result(String, String) {
 }
 
 pub fn int(str: String) -> Result(Int, String) {
-  str |> int.parse |> result.replace_error("not an integer")
+  str |> int.parse |> result.replace_error("Must be a whole number")
+}
+
+pub fn number(str: String) -> Result(Float, String) {
+  // TODO accept whole numbers too
+  str |> float.parse |> result.replace_error("Must be a number")
 }
 
 pub fn and(
