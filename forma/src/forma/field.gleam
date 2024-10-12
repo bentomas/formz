@@ -1,78 +1,105 @@
-pub type Field(format) {
+import forma/input.{type Input, Input}
+import forma/validation
+import gleam/option
+import gleam/result
+import justin
+
+pub fn text_field(widget: fn(Input(format)) -> format) -> Field(format, String) {
+  Field(input.empty_field(widget), "", validation.string)
+}
+
+pub fn email_field(widget: fn(Input(format)) -> format) -> Field(format, String) {
+  Field(input.empty_field(widget), "", validation.email)
+}
+
+pub fn integer_field(widget: fn(Input(format)) -> format) -> Field(format, Int) {
+  let transform = validation.int
+  Field(input.empty_field(widget), 0, transform)
+}
+
+pub fn number_field(widget: fn(Input(format)) -> format) -> Field(format, Float) {
+  let transform = validation.number
+  Field(input.empty_field(widget), 0.0, transform)
+}
+
+pub type Field(format, output) {
   Field(
-    name: String,
-    label: String,
-    help_text: String,
-    render: fn(Field(format)) -> format,
-    value: String,
-  )
-  InvalidField(
-    name: String,
-    label: String,
-    help_text: String,
-    render: fn(Field(format)) -> format,
-    value: String,
-    error: String,
+    input: Input(format),
+    default: output,
+    transform: fn(String) -> Result(output, String),
   )
 }
 
-pub fn empty_field(render: fn(Field(format)) -> format) -> Field(format) {
-  Field("", "", "", render, "")
+pub fn field(
+  name: String,
+  field: Field(format, output),
+) -> Field(format, output) {
+  Field(
+    Input(name, justin.sentence_case(name), "", field.input.render, ""),
+    field.default,
+    field.transform,
+  )
 }
 
-pub fn set_name(field: Field(format), name: String) -> Field(format) {
-  case field {
-    Field(_, label, help_text, render, value) ->
-      Field(name, label, help_text, render, value)
-    InvalidField(_, label, help_text, render, value, error) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn full(
+  name: String,
+  label: String,
+  help_text: String,
+  field: Field(format, output),
+) -> Field(format, output) {
+  Field(
+    Input(name, label, help_text, field.input.render, ""),
+    field.default,
+    field.transform,
+  )
 }
 
-pub fn set_label(field: Field(format), label: String) -> Field(format) {
-  case field {
-    Field(name, _, help_text, render, value) ->
-      Field(name, label, help_text, render, value)
-    InvalidField(name, _, help_text, render, value, error) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn name(field: Field(format, b), name: String) -> Field(format, b) {
+  Field(..field, input: input.set_name(field.input, name))
 }
 
-pub fn set_help_text(field: Field(format), help_text: String) -> Field(format) {
-  case field {
-    Field(name, label, _, render, value) ->
-      Field(name, label, help_text, render, value)
-    InvalidField(name, label, _, render, value, error) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn label(field: Field(format, b), label: String) -> Field(format, b) {
+  Field(..field, input: input.set_label(field.input, label))
 }
 
-pub fn set_render(
-  field: Field(format),
-  render: fn(Field(format)) -> format,
-) -> Field(format) {
-  case field {
-    Field(name, label, help_text, _, value) ->
-      Field(name, label, help_text, render, value)
-    InvalidField(name, label, help_text, _, value, error) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn help_text(field: Field(format, b), help_text: String) -> Field(format, b) {
+  Field(..field, input: input.set_help_text(field.input, help_text))
 }
 
-pub fn set_value(field: Field(format), value: String) -> Field(format) {
-  case field {
-    Field(name, label, help_text, render, _) ->
-      Field(name, label, help_text, render, value)
-    InvalidField(name, label, help_text, render, _, error) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn optional(field: Field(format, b)) -> Field(format, option.Option(b)) {
+  Field(input: field.input, default: option.None, transform: fn(str) {
+    case str {
+      "" -> Ok(option.None)
+      _ -> result.map(field.transform(str), option.Some)
+    }
+  })
 }
 
-pub fn set_error(field: Field(format), error: String) -> Field(format) {
-  case field {
-    Field(name, label, help_text, render, value) ->
-      InvalidField(name, label, help_text, render, value, error)
-    InvalidField(name, label, help_text, render, value, _) ->
-      InvalidField(name, label, help_text, render, value, error)
-  }
+pub fn validate(
+  field: Field(format, b),
+  next: fn(b) -> Result(b, String),
+) -> Field(format, b) {
+  let Field(field, default, previous_transform) = field
+
+  Field(field, default, fn(str) {
+    case previous_transform(str) {
+      Ok(value) -> next(value)
+      Error(error) -> Error(error)
+    }
+  })
+}
+
+pub fn transform(
+  field: Field(format, b),
+  next: fn(b) -> Result(c, String),
+  default: c,
+) -> Field(format, c) {
+  let Field(field, _, previous_transform) = field
+
+  Field(field, default, fn(str) {
+    case previous_transform(str) {
+      Ok(value) -> next(value)
+      Error(error) -> Error(error)
+    }
+  })
 }

@@ -1,15 +1,16 @@
-import forma/field
+import forma/field.{field}
 import forma/forma_use/forma
-import forma/generator/string_input
-import forma/input.{input}
+import forma/input
+import forma/string_fields
 import forma/validation
+import gleam/option
 import gleeunit
 import gleeunit/should
 
-fn should_be_field_no_error(field: field.Field(String)) {
+fn should_be_field_no_error(field: input.Input(String)) {
   should.equal(
     field,
-    field.Field(
+    input.Input(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
@@ -19,10 +20,10 @@ fn should_be_field_no_error(field: field.Field(String)) {
   )
 }
 
-fn should_be_field_with_error(field: field.Field(String), str: String) {
+fn should_be_field_with_error(field: input.Input(String), str: String) {
   should.equal(
     field,
-    field.InvalidField(
+    input.InvalidInput(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
@@ -49,14 +50,14 @@ fn empty_form(val) {
 }
 
 fn one_field_form() {
-  use a <- forma.with(input("a", string_input.text_input()))
+  use a <- forma.with(field("a", string_fields.text_field()))
   forma.create_form("hello " <> a)
 }
 
 fn two_field_form() {
   {
-    use a <- forma.with(input("a", string_input.text_input()))
-    use b <- forma.with(input("b", string_input.text_input()))
+    use a <- forma.with(field("a", string_fields.text_field()))
+    use b <- forma.with(field("b", string_fields.text_field()))
 
     forma.create_form(#(a, b))
   }
@@ -64,18 +65,25 @@ fn two_field_form() {
 
 fn three_field_form() {
   use a <- forma.with(
-    input("a", string_input.text_input())
-    |> input.validate(validation.must_be_longer_than(3)),
+    field("x", string_fields.text_field())
+    |> field.name("a")
+    |> field.label("A")
+    |> field.validate(validation.must_be_longer_than(3)),
   )
-  use b <- forma.with(input("b", string_input.integer_input()))
-  use c <- forma.with(input.full("c", "C", "help!", string_input.number_input()))
+  use b <- forma.with(field("b", string_fields.integer_field()))
+  use c <- forma.with(field.full(
+    "c",
+    "C",
+    "help!",
+    string_fields.number_field(),
+  ))
 
   forma.create_form(#(a, b, c))
 }
 
 pub fn empty_form_test() {
   empty_form(1)
-  |> forma.get_fields
+  |> forma.get_inputs
   |> should.equal([])
 }
 
@@ -98,11 +106,6 @@ pub fn parse_single_field_form_test() {
   |> should.equal(Ok("hello world"))
 
   one_field_form()
-  |> forma.data([])
-  |> forma.parse
-  |> should.equal(Ok("hello "))
-
-  one_field_form()
   |> forma.data([#("a", "ignored"), #("a", "world")])
   |> forma.parse
   |> should.equal(Ok("hello world"))
@@ -113,24 +116,6 @@ pub fn parse_double_field_form_test() {
   |> forma.data([#("a", "hello"), #("b", "world")])
   |> forma.parse
   |> should.equal(Ok(#("hello", "world")))
-
-  // missing second
-  two_field_form()
-  |> forma.data([#("a", "hello")])
-  |> forma.parse
-  |> should.equal(Ok(#("hello", "")))
-
-  // missing first
-  two_field_form()
-  |> forma.data([#("b", "world")])
-  |> forma.parse
-  |> should.equal(Ok(#("", "world")))
-
-  // missing both
-  two_field_form()
-  |> forma.data([])
-  |> forma.parse
-  |> should.equal(Ok(#("", "")))
 
   // wrong order
   two_field_form()
@@ -150,16 +135,52 @@ pub fn parse_double_field_form_test() {
   |> should.equal(Ok(#("hello", "world")))
 }
 
+pub fn parse_double_optional_field_form_test() {
+  let f = {
+    use a <- forma.with(
+      field("a", string_fields.text_field()) |> field.optional,
+    )
+    use b <- forma.with(
+      field("b", string_fields.text_field()) |> field.optional,
+    )
+
+    forma.create_form(#(a, b))
+  }
+
+  f
+  |> forma.data([#("a", "hello"), #("b", "world")])
+  |> forma.parse
+  |> should.equal(Ok(#(option.Some("hello"), option.Some("world"))))
+
+  // missing second
+  f
+  |> forma.data([#("a", "hello")])
+  |> forma.parse
+  |> should.equal(Ok(#(option.Some("hello"), option.None)))
+
+  // missing first
+  f
+  |> forma.data([#("b", "world")])
+  |> forma.parse
+  |> should.equal(Ok(#(option.None, option.Some("world"))))
+
+  // missing both
+  f
+  |> forma.data([])
+  |> forma.parse
+  |> should.equal(Ok(#(option.None, option.None)))
+}
+
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     {
-      use a <- forma.with(input("a", string_input.integer_input()))
+      use a <- forma.with(field("a", string_fields.integer_field()))
       forma.create_form(a)
     }
     |> forma.data([#("first", "world")])
     |> forma.parse
 
-  let assert [field] = forma.get_fields(f)
+  let assert [field] = forma.get_inputs(f)
   field |> should_be_field_with_error("Must be a whole number")
 }
 
@@ -169,7 +190,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> forma.data([#("a", "string"), #("b", "1"), #("c", "string")])
     |> forma.parse
     |> get_form_from_error_result
-    |> forma.get_fields
+    |> forma.get_inputs
 
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_no_error
@@ -180,7 +201,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> forma.data([#("a", "string"), #("b", "string"), #("c", "string")])
     |> forma.parse
     |> get_form_from_error_result
-    |> forma.get_fields
+    |> forma.get_inputs
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_with_error("Must be a number")
@@ -190,27 +211,27 @@ pub fn parse_triple_field_form_with_error_test() {
     |> forma.data([#("a", "string"), #("b", "string"), #("c", "3.4")])
     |> forma.parse
     |> get_form_from_error_result
-    |> forma.get_fields
+    |> forma.get_inputs
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert [fielda, fieldb, fieldc] =
     three_field_form()
-    |> forma.data([#("a", ""), #("b", "string"), #("c", "3.4")])
+    |> forma.data([#("a", "."), #("b", "string"), #("c", "3.4")])
     |> forma.parse
     |> get_form_from_error_result
-    |> forma.get_fields
+    |> forma.get_inputs
   fielda |> should_be_field_with_error("Must be longer than 3 characters")
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert [fielda, fieldb, fieldc] =
     three_field_form()
-    |> forma.data([#("a", ""), #("b", "1"), #("c", "3.4")])
+    |> forma.data([#("a", "."), #("b", "1"), #("c", "3.4")])
     |> forma.parse
     |> get_form_from_error_result
-    |> forma.get_fields
+    |> forma.get_inputs
   fielda |> should_be_field_with_error("Must be longer than 3 characters")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
@@ -237,10 +258,10 @@ pub fn decoded_and_try_test() {
   let assert Error(form) =
     forma.parse_and_try(f, fn(_, form) {
       form
-      |> forma.field_update("a", fn(field) { field.set_error(field, "woops") })
+      |> forma.update_input("a", input.set_error(_, "woops"))
       |> Error
     })
-  let assert [fielda, fieldb, fieldc] = forma.get_fields(form)
+  let assert [fielda, fieldb, fieldc] = forma.get_inputs(form)
   fielda |> should_be_field_with_error("woops")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error

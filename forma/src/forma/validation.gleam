@@ -4,7 +4,10 @@ import gleam/result
 import gleam/string
 
 pub fn string(str: String) -> Result(String, String) {
-  Ok(str)
+  case string.trim(str) {
+    "" -> Error("Must not be empty")
+    trimmed -> Ok(trimmed)
+  }
 }
 
 pub fn email(input: String) -> Result(String, String) {
@@ -25,17 +28,20 @@ pub fn must_be_longer_than(length: Int) -> fn(String) -> Result(String, String) 
   }
 }
 
-pub fn trim(str: String) -> Result(String, String) {
-  Ok(string.trim(str))
-}
-
 pub fn int(str: String) -> Result(Int, String) {
-  str |> int.parse |> result.replace_error("Must be a whole number")
+  str
+  |> string.trim
+  |> int.parse
+  |> result.replace_error("Must be a whole number")
 }
 
 pub fn number(str: String) -> Result(Float, String) {
-  // TODO accept whole numbers too
-  str |> float.parse |> result.replace_error("Must be a number")
+  let str = string.trim(str)
+  case float.parse(str) {
+    Ok(value) -> Ok(value)
+    Error(_) -> int.parse(str) |> result.map(int.to_float)
+  }
+  |> result.replace_error("Must be a number")
 }
 
 pub fn and(

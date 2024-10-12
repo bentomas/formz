@@ -6,10 +6,9 @@
 // - list fields
 // - form sets
 // - csrf token
-// - required/option
 
-import forma/field.{type Field, Field}
-import forma/input.{type Input}
+import forma/field.{type Field}
+import forma/input.{type Input, Input}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -18,14 +17,11 @@ pub type HasDecoder
 
 pub type NoDecoder
 
-pub type FieldsWithErrors(format) =
-  List(Field(format))
-
 pub opaque type Form(format, output, decoder, has_decoder) {
   Form(
-    fields: List(Field(format)),
-    parse_with: fn(List(Field(format)), decoder) ->
-      Result(output, FieldsWithErrors(format)),
+    fields: List(Input(format)),
+    parse_with: fn(List(Input(format)), decoder) ->
+      Result(output, List(Input(format))),
     decoder: Option(decoder),
   )
 }
@@ -41,37 +37,37 @@ pub fn add(
     form_output,
     has_decoder,
   ),
-  definition: Input(format, decoder_step_input),
+  definition: Field(format, decoder_step_input),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
-  let Form(fields, parse_with, decoder) = form
+  let Form(inputs, parse_with, decoder) = form
 
   // create new form with the new field and update the parse
   // function to handle the new details from the type of the
   // field
   Form(
-    fields: [definition.field, ..fields],
-    parse_with: fn(fields, decoder: form_output) {
+    fields: [definition.input, ..inputs],
+    parse_with: fn(inputs, decoder: form_output) {
       // can do let assert because we know there's at least one field since
       // we just added one
-      let assert [field, ..rest] = fields
-      case parse_with(rest, decoder), definition.transform(field.value) {
+      let assert [input, ..rest] = inputs
+      case parse_with(rest, decoder), definition.transform(input.value) {
         // the form we've already parsed has no errors and the field
         // we just parsed has no errors.  so we can move on to the next
         Ok(next), Ok(value) -> Ok(next(value))
 
         // the form already has errors even though this one succeeded.
         // so add this to the list and stop anymore parsing
-        Error(fields), Ok(_value) -> Error([field, ..fields])
+        Error(inputs), Ok(_value) -> Error([input, ..inputs])
 
         // form was good so far, but this field errored, so need to
         // mark this field as invalid and return all the fields we've got
         // so far
-        Ok(_), Error(error) -> Error([field.set_error(field, error), ..rest])
+        Ok(_), Error(error) -> Error([input.set_error(input, error), ..rest])
 
         // form already has errors and this field errored, so add this field
         // to the list
         Error(fields), Error(error) ->
-          Error([field.set_error(field, error), ..fields])
+          Error([input.set_error(input, error), ..fields])
       }
     },
     decoder:,
@@ -80,7 +76,7 @@ pub fn add(
 
 pub fn data(
   form: Form(a, b, format, has_decoder),
-  input: List(#(String, String)),
+  field: List(#(String, String)),
 ) -> Form(a, b, format, has_decoder) {
   case form {
     Form(fields, parse_with, decoder) -> {
@@ -88,7 +84,7 @@ pub fn data(
       // we always prepend fields, so reverse to get correct order
       // TODO I think we're going to make it so order doesn't matter
       |> list.reverse
-      |> do_add_input_data(input, [])
+      |> do_add_input_data(field, [])
       |> Form(parse_with, decoder)
     }
     // FormWithErrors(..) -> form
@@ -96,9 +92,9 @@ pub fn data(
 }
 
 fn do_add_input_data(
-  fields: List(Field(format)),
+  fields: List(Input(format)),
   data: List(#(String, String)),
-  acc: List(Field(format)),
+  acc: List(Input(format)),
 ) {
   case fields, data {
     // no more fields, we've return all the fields with data we have accumulated
@@ -106,12 +102,12 @@ fn do_add_input_data(
     // no more data!  return all the fields we have left plus the ones we accumulated
     _, [] -> list.append(fields, acc)
     // we have a field and data, and the names match. update field to have data
-    [Field(name: field_name, ..) as field, ..fields_rest],
+    [Input(name: field_name, ..) as field, ..fields_rest],
       [#(data_name, value), ..data_rest]
       if field_name == data_name
     ->
       do_add_input_data(fields_rest, data_rest, [
-        field.set_value(field, value),
+        input.set_value(field, value),
         ..acc
       ])
     // at this point we still have fields and data left, but the first
@@ -151,30 +147,14 @@ pub fn parse_and_try(
   parse(form) |> result.try(fun(_, form))
 }
 
-pub fn get_fields(form: Form(format, a, b, has_decoder)) -> List(Field(format)) {
+pub fn get_inputs(form: Form(format, a, b, has_decoder)) -> List(Input(format)) {
   form.fields |> list.reverse
 }
 
-pub fn set_field_error(
+pub fn update_input(
   form: Form(format, output, decoder, has_decoder),
   name: String,
-  error: String,
-) -> Form(format, output, decoder, has_decoder) {
-  let updated =
-    form.fields
-    |> list.map(fn(field) {
-      case field.name == name {
-        True -> field.set_error(field, error)
-        False -> field
-      }
-    })
-  Form(updated, form.parse_with, form.decoder)
-}
-
-pub fn field_update(
-  form: Form(format, output, decoder, has_decoder),
-  name: String,
-  fun: fn(Field(format)) -> Field(format),
+  fun: fn(Input(format)) -> Input(format),
 ) -> Form(format, output, decoder, has_decoder) {
   form.fields
   |> list.map(fn(field) {

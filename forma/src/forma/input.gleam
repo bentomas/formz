@@ -1,94 +1,78 @@
-import forma/field.{type Field, Field}
-import forma/validation
-import justin
-
-pub fn text_input(widget: fn(Field(format)) -> format) -> Input(format, String) {
-  Input(field.empty_field(widget), "", validation.string)
-}
-
-pub fn email_input(widget: fn(Field(format)) -> format) -> Input(format, String) {
-  Input(field.empty_field(widget), "", validation.email)
-}
-
-pub fn integer_input(widget: fn(Field(format)) -> format) -> Input(format, Int) {
-  let transform = validation.trim |> validation.and(validation.int)
-  Input(field.empty_field(widget), 0, transform)
-}
-
-pub fn number_input(widget: fn(Field(format)) -> format) -> Input(format, Float) {
-  let transform = validation.trim |> validation.and(validation.number)
-  Input(field.empty_field(widget), 0.0, transform)
-}
-
-pub type Input(format, output) {
+pub type Input(format) {
   Input(
-    field: Field(format),
-    default: output,
-    transform: fn(String) -> Result(output, String),
+    name: String,
+    label: String,
+    help_text: String,
+    render: fn(Input(format)) -> format,
+    value: String,
+  )
+  InvalidInput(
+    name: String,
+    label: String,
+    help_text: String,
+    render: fn(Input(format)) -> format,
+    value: String,
+    error: String,
   )
 }
 
-pub fn input(
-  name: String,
-  input: Input(format, output),
-) -> Input(format, output) {
-  Input(
-    Field(name, justin.sentence_case(name), "", input.field.render, ""),
-    input.default,
-    input.transform,
-  )
+pub fn empty_field(render: fn(Input(format)) -> format) -> Input(format) {
+  Input("", "", "", render, "")
 }
 
-pub fn full(
-  name: String,
-  label: String,
-  help_text: String,
-  input: Input(format, output),
-) -> Input(format, output) {
-  Input(
-    Field(name, label, help_text, input.field.render, ""),
-    input.default,
-    input.transform,
-  )
+pub fn set_name(field: Input(format), name: String) -> Input(format) {
+  case field {
+    Input(_, label, help_text, render, value) ->
+      Input(name, label, help_text, render, value)
+    InvalidInput(_, label, help_text, render, value, error) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
 
-pub fn name(input: Input(format, b), name: String) -> Input(format, b) {
-  Input(..input, field: field.set_name(input.field, name))
+pub fn set_label(field: Input(format), label: String) -> Input(format) {
+  case field {
+    Input(name, _, help_text, render, value) ->
+      Input(name, label, help_text, render, value)
+    InvalidInput(name, _, help_text, render, value, error) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
 
-pub fn label(input: Input(format, b), label: String) -> Input(format, b) {
-  Input(..input, field: field.set_label(input.field, label))
+pub fn set_help_text(field: Input(format), help_text: String) -> Input(format) {
+  case field {
+    Input(name, label, _, render, value) ->
+      Input(name, label, help_text, render, value)
+    InvalidInput(name, label, _, render, value, error) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
 
-pub fn help_text(input: Input(format, b), help_text: String) -> Input(format, b) {
-  Input(..input, field: field.set_help_text(input.field, help_text))
+pub fn set_render(
+  field: Input(format),
+  render: fn(Input(format)) -> format,
+) -> Input(format) {
+  case field {
+    Input(name, label, help_text, _, value) ->
+      Input(name, label, help_text, render, value)
+    InvalidInput(name, label, help_text, _, value, error) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
 
-pub fn validate(
-  input: Input(format, b),
-  next: fn(b) -> Result(b, String),
-) -> Input(format, b) {
-  let Input(field, default, previous_transform) = input
-
-  Input(field, default, fn(str) {
-    case previous_transform(str) {
-      Ok(value) -> next(value)
-      Error(error) -> Error(error)
-    }
-  })
+pub fn set_value(field: Input(format), value: String) -> Input(format) {
+  case field {
+    Input(name, label, help_text, render, _) ->
+      Input(name, label, help_text, render, value)
+    InvalidInput(name, label, help_text, render, _, error) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
 
-pub fn transform(
-  input: Input(format, b),
-  next: fn(b) -> Result(c, String),
-  default: c,
-) -> Input(format, c) {
-  let Input(field, _, previous_transform) = input
-
-  Input(field, default, fn(str) {
-    case previous_transform(str) {
-      Ok(value) -> next(value)
-      Error(error) -> Error(error)
-    }
-  })
+pub fn set_error(field: Input(format), error: String) -> Input(format) {
+  case field {
+    Input(name, label, help_text, render, value) ->
+      InvalidInput(name, label, help_text, render, value, error)
+    InvalidInput(name, label, help_text, render, value, _) ->
+      InvalidInput(name, label, help_text, render, value, error)
+  }
 }
