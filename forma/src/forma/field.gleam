@@ -22,6 +22,11 @@ pub fn number_field(widget: fn(Input(format)) -> format) -> Field(format, Float)
   Field(input.empty_field(widget), 0.0, transform)
 }
 
+pub fn boolean_field(widget: fn(Input(format)) -> format) -> Field(format, Bool) {
+  let transform = validation.boolean
+  Field(input.empty_field(widget), False, transform)
+}
+
 pub type Field(format, output) {
   Field(
     input: Input(format),

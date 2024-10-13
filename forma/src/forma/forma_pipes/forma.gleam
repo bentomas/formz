@@ -5,7 +5,9 @@
 // TODO
 // - list fields
 // - form sets
+// - decoders/toy.decoder
 // - csrf token
+// - overwrite error messages
 
 import forma/field.{type Field}
 import forma/input.{type Input, Input}
