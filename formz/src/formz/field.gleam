@@ -1,5 +1,5 @@
-import forma/input.{type Input, Input}
-import forma/validation
+import formz/input.{type Input, Input}
+import formz/validation
 import gleam/option
 import gleam/result
 import justin

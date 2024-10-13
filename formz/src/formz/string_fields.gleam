@@ -1,5 +1,5 @@
-import forma/field
-import forma/input.{type Input}
+import formz/field
+import formz/input.{type Input}
 
 pub fn checkbox_widget(_f) -> String {
   "<input type=\"checkbox\">"

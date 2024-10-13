@@ -1,4 +1,4 @@
-import forma/validation
+import formz/validation
 import gleeunit
 import gleeunit/should
 

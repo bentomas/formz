@@ -1,7 +1,7 @@
 ///////   field related functions
 
-import forma/field.{type Field}
-import forma/input.{type Input, Input}
+import formz/field.{type Field}
+import formz/input.{type Input, Input}
 import gleam/dict
 import gleam/list
 import gleam/result

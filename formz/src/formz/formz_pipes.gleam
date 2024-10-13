@@ -9,8 +9,8 @@
 // - csrf token
 // - overwrite error messages
 
-import forma/field.{type Field}
-import forma/input.{type Input, Input}
+import formz/field.{type Field}
+import formz/input.{type Input, Input}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
