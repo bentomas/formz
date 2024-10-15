@@ -2,6 +2,7 @@ import formz/input.{type Input, Input}
 import formz/validation
 import gleam/option
 import gleam/result
+import gleam/string
 import justin
 
 pub fn text_field(widget: fn(Input(format)) -> format) -> Field(format, String) {
@@ -40,7 +41,18 @@ pub fn field(
   field: Field(format, output),
 ) -> Field(format, output) {
   Field(
-    Input(name, justin.sentence_case(name), "", field.input.render, ""),
+    Input(name, justin.sentence_case(name), "", field.input.render, False, ""),
+    field.default,
+    field.transform,
+  )
+}
+
+pub fn hidden(
+  name: String,
+  field: Field(format, output),
+) -> Field(format, output) {
+  Field(
+    Input(name, "", "", field.input.render, True, ""),
     field.default,
     field.transform,
   )
@@ -53,34 +65,45 @@ pub fn full(
   field: Field(format, output),
 ) -> Field(format, output) {
   Field(
-    Input(name, label, help_text, field.input.render, ""),
+    Input(name, label, help_text, field.input.render, False, ""),
     field.default,
     field.transform,
   )
 }
 
-pub fn name(field: Field(format, b), name: String) -> Field(format, b) {
+pub fn set_name(field: Field(format, b), name: String) -> Field(format, b) {
   Field(..field, input: input.set_name(field.input, name))
 }
 
-pub fn label(field: Field(format, b), label: String) -> Field(format, b) {
+pub fn set_label(field: Field(format, b), label: String) -> Field(format, b) {
   Field(..field, input: input.set_label(field.input, label))
 }
 
-pub fn help_text(field: Field(format, b), help_text: String) -> Field(format, b) {
+pub fn set_help_text(
+  field: Field(format, b),
+  help_text: String,
+) -> Field(format, b) {
   Field(..field, input: input.set_help_text(field.input, help_text))
 }
 
-pub fn optional(field: Field(format, b)) -> Field(format, option.Option(b)) {
+pub fn set_value(field: Field(format, b), value: String) -> Field(format, b) {
+  Field(..field, input: input.set_value(field.input, value))
+}
+
+pub fn set_hidden(field: Field(format, b), hidden: Bool) -> Field(format, b) {
+  Field(..field, input: input.set_hidden(field.input, hidden))
+}
+
+pub fn set_optional(field: Field(format, b)) -> Field(format, option.Option(b)) {
   Field(input: field.input, default: option.None, transform: fn(str) {
-    case str {
+    case string.trim(str) {
       "" -> Ok(option.None)
       _ -> result.map(field.transform(str), option.Some)
     }
   })
 }
 
-pub fn validate(
+pub fn validates(
   field: Field(format, b),
   next: fn(b) -> Result(b, String),
 ) -> Field(format, b) {
@@ -94,7 +117,7 @@ pub fn validate(
   })
 }
 
-pub fn transform(
+pub fn transforms(
   field: Field(format, b),
   next: fn(b) -> Result(c, String),
   default: c,

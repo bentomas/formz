@@ -3,6 +3,7 @@
 // date time handling https://hexdocs.pm/birl/index.html
 
 // TODO
+// - hidden fields
 // - list fields
 // - form sets
 // - decoders/toy.decoder

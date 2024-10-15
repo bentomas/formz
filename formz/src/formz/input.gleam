@@ -4,6 +4,7 @@ pub type Input(format) {
     label: String,
     help_text: String,
     render: fn(Input(format)) -> format,
+    hidden: Bool,
     value: String,
   )
   InvalidInput(
@@ -11,39 +12,40 @@ pub type Input(format) {
     label: String,
     help_text: String,
     render: fn(Input(format)) -> format,
+    hidden: Bool,
     value: String,
     error: String,
   )
 }
 
 pub fn empty_field(render: fn(Input(format)) -> format) -> Input(format) {
-  Input("", "", "", render, "")
+  Input("", "", "", render, False, "")
 }
 
 pub fn set_name(field: Input(format), name: String) -> Input(format) {
   case field {
-    Input(_, label, help_text, render, value) ->
-      Input(name, label, help_text, render, value)
-    InvalidInput(_, label, help_text, render, value, error) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(_, label, help_text, render, hidden, value) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(_, label, help_text, render, hidden, value, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }
 
 pub fn set_label(field: Input(format), label: String) -> Input(format) {
   case field {
-    Input(name, _, help_text, render, value) ->
-      Input(name, label, help_text, render, value)
-    InvalidInput(name, _, help_text, render, value, error) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(name, _, help_text, render, hidden, value) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(name, _, help_text, render, hidden, value, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }
 
 pub fn set_help_text(field: Input(format), help_text: String) -> Input(format) {
   case field {
-    Input(name, label, _, render, value) ->
-      Input(name, label, help_text, render, value)
-    InvalidInput(name, label, _, render, value, error) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(name, label, _, render, hidden, value) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(name, label, _, render, hidden, value, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }
 
@@ -52,27 +54,36 @@ pub fn set_render(
   render: fn(Input(format)) -> format,
 ) -> Input(format) {
   case field {
-    Input(name, label, help_text, _, value) ->
-      Input(name, label, help_text, render, value)
-    InvalidInput(name, label, help_text, _, value, error) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(name, label, help_text, _, hidden, value) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(name, label, help_text, _, hidden, value, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
+  }
+}
+
+pub fn set_hidden(field: Input(format), hidden: Bool) -> Input(format) {
+  case field {
+    Input(name, label, help_text, render, _, value) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(name, label, help_text, render, _, value, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }
 
 pub fn set_value(field: Input(format), value: String) -> Input(format) {
   case field {
-    Input(name, label, help_text, render, _) ->
-      Input(name, label, help_text, render, value)
-    InvalidInput(name, label, help_text, render, _, error) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(name, label, help_text, render, hidden, _) ->
+      Input(name, label, help_text, render, hidden, value)
+    InvalidInput(name, label, help_text, render, hidden, _, error) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }
 
 pub fn set_error(field: Input(format), error: String) -> Input(format) {
   case field {
-    Input(name, label, help_text, render, value) ->
-      InvalidInput(name, label, help_text, render, value, error)
-    InvalidInput(name, label, help_text, render, value, _) ->
-      InvalidInput(name, label, help_text, render, value, error)
+    Input(name, label, help_text, render, hidden, value) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
+    InvalidInput(name, label, help_text, render, hidden, value, _) ->
+      InvalidInput(name, label, help_text, render, hidden, value, error)
   }
 }

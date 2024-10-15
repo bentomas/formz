@@ -79,19 +79,12 @@ pub fn data(
   input_data: List(#(String, String)),
 ) -> Form(format, output) {
   let data = dict.from_list(input_data)
-  let Form(fields, parse) = form
-  fields
-  |> list.map(fn(field) {
-    case dict.get(data, field.name) {
-      Ok(value) ->
-        Input(
-          name: field.name,
-          label: field.label,
-          help_text: field.help_text,
-          render: field.render,
-          value: value,
-        )
-      Error(_) -> field
+  let Form(inputs, parse) = form
+  inputs
+  |> list.map(fn(input) {
+    case dict.get(data, input.name) {
+      Ok(value) -> input.set_value(input, value)
+      Error(_) -> input
     }
   })
   |> Form(parse)
@@ -120,6 +113,15 @@ pub fn parse_and_try(
 
 pub fn get_inputs(form: Form(format, ouput)) -> List(Input(format)) {
   form.inputs
+}
+
+pub fn get_input(
+  form: Form(format, output),
+  name: String,
+) -> Result(Input(format), Nil) {
+  form.inputs
+  |> list.filter(fn(input) { input.name == name })
+  |> list.first
 }
 
 pub fn update_input(
