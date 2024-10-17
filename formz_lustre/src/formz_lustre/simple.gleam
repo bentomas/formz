@@ -22,7 +22,7 @@ pub fn generate_form(form) -> element.Element(msg) {
 }
 
 pub fn generate_visible_field(
-  f: Input(element.Element(msg)),
+  f: Input(element.Element(msg), Nil),
 ) -> element.Element(msg) {
   let label_el = html.label([], [html.text(f.label), html.text(": ")])
 
@@ -30,7 +30,7 @@ pub fn generate_visible_field(
     True -> element.none()
     False -> html.span([attribute.class("help_text")], [html.text(f.help_text)])
   }
-  let widget_el = html.span([attribute.class("widget")], [f.render(f)])
+  let widget_el = html.span([attribute.class("widget")], [f.render(f, Nil)])
 
   let errors_el = case f {
     Input(..) -> element.none()
@@ -46,7 +46,7 @@ pub fn generate_visible_field(
   ])
 }
 
-pub fn generate_hidden_field(f: Input(String)) -> String {
+pub fn generate_hidden_field(f: Input(String, Nil)) -> String {
   case f.hidden {
     False -> ""
     True -> {

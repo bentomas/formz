@@ -4,7 +4,8 @@ import lustre/element
 import lustre/element/html
 
 pub fn checkbox_widget(
-  input: Input(element.Element(msg)),
+  input: Input(element.Element(msg), Nil),
+  _,
 ) -> element.Element(msg) {
   html.input([
     attribute.type_("checkbox"),
@@ -15,7 +16,8 @@ pub fn checkbox_widget(
 }
 
 pub fn password_widget(
-  input: Input(element.Element(msg)),
+  input: Input(element.Element(msg), Nil),
+  _,
 ) -> element.Element(msg) {
   html.input([
     attribute.type_("password"),
@@ -24,7 +26,10 @@ pub fn password_widget(
   ])
 }
 
-pub fn text_widget(input: Input(element.Element(msg))) -> element.Element(msg) {
+pub fn text_widget(
+  input: Input(element.Element(msg), Nil),
+  _,
+) -> element.Element(msg) {
   let placeholder = ""
 
   html.input([
@@ -36,12 +41,16 @@ pub fn text_widget(input: Input(element.Element(msg))) -> element.Element(msg) {
 }
 
 pub fn textarea_widget(
-  input: Input(element.Element(msg)),
+  input: Input(element.Element(msg), _),
+  _,
 ) -> element.Element(msg) {
   html.textarea([attribute.name(input.name)], "")
 }
 
-pub fn hidden_widget(input: Input(element.Element(msg))) -> element.Element(msg) {
+pub fn hidden_widget(
+  input: Input(element.Element(msg), Nil),
+  _,
+) -> element.Element(msg) {
   html.input([
     attribute.type_("hidden"),
     attribute.name(input.name),

@@ -85,7 +85,9 @@ fn handle_post(req: Request, make_forms) -> Response {
   )
 }
 
-fn get_errors(form: formz.Form(format, a)) -> List(#(String, String)) {
+fn get_errors(
+  form: formz.Form(format, widget_args, a),
+) -> List(#(String, String)) {
   form
   |> formz.get_inputs
   |> list.filter_map(fn(f) {

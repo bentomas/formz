@@ -20,13 +20,13 @@ pub fn generate_form(form) -> String {
   }
 }
 
-pub fn generate_visible_field(f: Input(String)) -> String {
+pub fn generate_visible_field(f: Input(String, Nil)) -> String {
   let label_el = "<label>" <> f.label <> ": </label>"
   let description_el = case string.is_empty(f.help_text) {
     True -> ""
     False -> "<span class=\"description\">" <> f.help_text <> "</span>"
   }
-  let widget_el = "<span class=\"widget\">" <> f.render(f) <> "</span>"
+  let widget_el = "<span class=\"widget\">" <> f.render(f, Nil) <> "</span>"
 
   let errors_el = case f {
     Input(..) -> "<span class=\"error-placeholder\"></span>"
@@ -41,7 +41,7 @@ pub fn generate_visible_field(f: Input(String)) -> String {
   <> "</p>"
 }
 
-pub fn generate_hidden_field(f: Input(String)) -> String {
+pub fn generate_hidden_field(f: Input(String, Nil)) -> String {
   case f.hidden {
     False -> ""
     True -> {

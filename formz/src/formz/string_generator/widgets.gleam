@@ -1,6 +1,6 @@
 import formz/input.{type Input}
 
-pub fn checkbox_widget(f: Input(String)) -> String {
+pub fn checkbox_widget(f: Input(String, Nil), _) -> String {
   let aria_label_attr = case f.label {
     "" -> ""
     _ -> " aria-label=\"" <> f.label <> "\""
@@ -20,11 +20,11 @@ pub fn checkbox_widget(f: Input(String)) -> String {
   <> ">"
 }
 
-pub fn password_widget(f: Input(String)) -> String {
+pub fn password_widget(_f: Input(String, Nil), _) -> String {
   "<input type=\"password\">"
 }
 
-pub fn text_widget(f: Input(String)) -> String {
+pub fn text_widget(f: Input(String, Nil), _) -> String {
   let aria_label = case f.label {
     "" -> ""
     _ -> " aria-label=\"" <> f.label <> "\""
@@ -38,7 +38,7 @@ pub fn text_widget(f: Input(String)) -> String {
   <> ">"
 }
 
-pub fn textarea_widget(f: Input(String)) -> String {
+pub fn textarea_widget(_f: Input(String, Nil), _) -> String {
   // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
   // https://til.simonwillison.net/css/resizing-textarea
   "<textarea></textarea>"

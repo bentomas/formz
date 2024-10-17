@@ -6,17 +6,18 @@ import gleam/dict
 import gleam/list
 import gleam/result
 
-pub opaque type Form(format, output) {
+pub opaque type Form(format, widget_args, output) {
   Form(
-    inputs: List(Input(format)),
-    parse: fn(List(Input(format))) -> Result(output, List(Input(format))),
+    inputs: List(Input(format, widget_args)),
+    parse: fn(List(Input(format, widget_args))) ->
+      Result(output, List(Input(format, widget_args))),
   )
 }
 
 pub fn with(
-  field: Field(format, input_output),
-  fun: fn(input_output) -> Form(format, form_output),
-) -> Form(format, form_output) {
+  field: Field(format, widget_args, input_output),
+  fun: fn(input_output) -> Form(format, widget_args, form_output),
+) -> Form(format, widget_args, form_output) {
   // we pass in our default value, and we're going to throw away the
   // decoded result here, we just care about pulling out the fields
   // from the form.
@@ -29,7 +30,7 @@ pub fn with(
   // now create the parse function. parse function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
-  let parse = fn(inputs: List(Input(format))) {
+  let parse = fn(inputs: List(Input(format, widget_args))) {
     // pull out the latest version of this field to get latest input data
     let assert [input, ..next_inputs] = inputs
 
@@ -75,9 +76,9 @@ pub fn with(
 }
 
 pub fn data(
-  form: Form(format, output),
+  form: Form(format, widget_args, output),
   input_data: List(#(String, String)),
-) -> Form(format, output) {
+) -> Form(format, widget_args, output) {
   let data = dict.from_list(input_data)
   let Form(inputs, parse) = form
   inputs
@@ -90,11 +91,13 @@ pub fn data(
   |> Form(parse)
 }
 
-pub fn create_form(thing: thing) -> Form(format, thing) {
+pub fn create_form(thing: thing) -> Form(format, widget_args, thing) {
   Form([], fn(_) { Ok(thing) })
 }
 
-pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output)) {
+pub fn parse(
+  form: Form(format, widget_args, output),
+) -> Result(output, Form(format, widget_args, output)) {
   // we've tagged that we have a decoder with out has_decoder phantom type
   // so we can get away with let assert here
   let Form(fields, parse) = form
@@ -105,30 +108,33 @@ pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output))
 }
 
 pub fn parse_and_try(
-  form: Form(format, output),
-  apply fun: fn(output, Form(format, output)) -> Result(c, Form(format, output)),
-) -> Result(c, Form(format, output)) {
+  form: Form(format, widget_args, output),
+  apply fun: fn(output, Form(format, widget_args, output)) ->
+    Result(c, Form(format, widget_args, output)),
+) -> Result(c, Form(format, widget_args, output)) {
   parse(form) |> result.try(fun(_, form))
 }
 
-pub fn get_inputs(form: Form(format, ouput)) -> List(Input(format)) {
+pub fn get_inputs(
+  form: Form(format, widget_args, ouput),
+) -> List(Input(format, widget_args)) {
   form.inputs
 }
 
 pub fn get_input(
-  form: Form(format, output),
+  form: Form(format, widget_args, output),
   name: String,
-) -> Result(Input(format), Nil) {
+) -> Result(Input(format, widget_args), Nil) {
   form.inputs
   |> list.filter(fn(input) { input.name == name })
   |> list.first
 }
 
 pub fn update_input(
-  form: Form(format, output),
+  form: Form(format, widget_args, output),
   name: String,
-  fun: fn(Input(format)) -> Input(format),
-) -> Form(format, output) {
+  fun: fn(Input(format, widget_args)) -> Input(format, widget_args),
+) -> Form(format, widget_args, output) {
   form.inputs
   |> list.map(fn(field) {
     case field.name == name {
