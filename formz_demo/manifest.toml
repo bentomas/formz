@@ -45,4 +45,5 @@ gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 4.5.1 and < 5.0.0" }
 mist = { version = ">= 3.0.0 and < 4.0.0" }
 nakai = { version = ">= 1.0.0 and < 2.0.0" }
+simplifile = { version = ">= 2.2.0 and < 3.0.0" }
 wisp = { version = ">= 1.2.0 and < 2.0.0" }

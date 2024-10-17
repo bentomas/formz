@@ -16,17 +16,23 @@ import wisp.{type Response}
 pub fn build_page(
   name: String,
   code: String,
-  input_data: List(#(String, String)),
+  post_data: option.Option(List(#(String, String))),
   errors_list: List(#(String, String)),
   output: option.Option(a),
   string_form: formz.Form(String, a),
   lustre_form: formz.Form(element.Element(msg), a),
   nakai_form: formz.Form(nhtml.Node, a),
+  has_output_discrepancy: Bool,
+  has_error_discrepancy: Bool,
 ) -> Response {
   let html =
     html([], [
       html.head([], [
         html.title([], "Gleam formz!"),
+        html.link([
+          attribute.rel("stylesheet"),
+          attribute.href("/static/stylesheet.css"),
+        ]),
         html.link([
           attribute.rel("stylesheet"),
           attribute.href(
@@ -49,121 +55,28 @@ pub fn build_page(
           hljs.highlightAll();
           ",
         ),
-        html.style(
-          [],
-          "
-      body { font-family: sans-serif; }
-
-      h1 {
-        margin: 10px;
-        font-size: 1.5em;
-      }
-
-      .container {
-        display: grid;
-        grid-template-columns: auto minmax(300px, 600px);
-        grid-template-rows: auto;
-        grid-template-areas:
-            \"code post\"
-            \"forms forms\";
-        width: 100%;
-      }
-
-      .code {
-        grid-area: code;
-        float;
-        white-space: pre;
-        margin: 0 7px 20px;
-
-        code {
-          font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
-          font-weight: normal;
-          font-size: 1.1em;
-        }
-      }
-
-      .post {
-        > div {
-          margin: 0 7px 20px;
-          grid-area: post;
-
-          > div {
-            font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
-            min-height: 18px;
-          }
-
-          > div.success {
-            padding: 10px;
-            background: #90EE90;
-          }
-
-          > div.error {
-            padding: 10px;
-            background: #FF5733;
-          }
-
-          h2 {
-            background: #444;
-            color: #fafafa;
-            padding: 5px;
-            margin: 0;
-            font-size: 12px;
-            text-transform: uppercase;
-            font-weight: normal;
-          }
-        }
-      }
-
-      table.input_data {
-        border-spacing: 0;
-        border-collapse: collapse;
-        width: 100%;
-
-        th {
-          text-align: left;
-          font-weight: normal;
-          background: #bbb;
-          padding: 10px;
-        }
-
-        td:nth-child(1), td:nth-child(2) {
-          font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
-        }
-        td {
-          background: #eee;
-          padding: 10px;
-        }
-      }
-
-      table.forms {
-        width: 100%;
-        border-spacing: 7px 0;
-        grid-area: forms;
-
-        th {
-          text-align: left;
-          font-weight: normal;
-          background: #bbb;
-          padding: 10px;
-        }
-
-        td {
-          background: #eee;
-          padding: 10px;
-        }
-      }
-      ",
-        ),
       ]),
       html.body([], [
-        html.h1([], [html.text(name)]),
+        html.h1([], [
+          html.a([attribute.href("/")], [html.text("Formz")]),
+          html.text(": "),
+          html.a([attribute.href("")], [html.text(name)]),
+        ]),
         html.div([attribute.class("container")], [
           html.pre([attribute.class("code")], [
             html.code([attribute.class("langauge-gleam")], [
               html.text(code |> string.trim),
             ]),
           ]),
-          show_post(input_data, errors_list, output),
+          post_data
+            |> option.map(show_post(
+              _,
+              errors_list,
+              output,
+              has_output_discrepancy,
+              has_error_discrepancy,
+            ))
+            |> option.unwrap(element.none()),
           show_forms(string_form, lustre_form, nakai_form),
         ]),
       ]),
@@ -177,10 +90,14 @@ pub fn show_post(
   input_data: List(#(String, String)),
   errors: List(#(String, String)),
   output: option.Option(a),
+  has_output_discrepancy: Bool,
+  has_error_discrepancy: Bool,
 ) {
   let input_rows =
     element.fragment(
-      list.map(input_data, fn(t) {
+      input_data
+      // |> list.reverse
+      |> list.map(fn(t) {
         let #(key, value) = t
         let error = list.key_find(errors, key) |> result.unwrap("")
         html.tr([], [
@@ -191,38 +108,63 @@ pub fn show_post(
       }),
     )
 
+  let errors_no_post =
+    errors
+    |> list.filter_map(fn(t) {
+      let #(key, _) = t
+      case list.key_find(input_data, key) {
+        Ok(_) -> Error(Nil)
+        Error(_) -> Ok(t)
+      }
+    })
+
+  let error_rows = case errors_no_post {
+    [] -> element.none()
+    _ ->
+      element.fragment(
+        list.map(errors_no_post, fn(t) {
+          let #(key, value) = t
+          html.tr([], [
+            html.td([], [html.text(key)]),
+            html.td([], [html.text("<EMPTY>")]),
+            html.td([], [html.text(value)]),
+          ])
+        }),
+      )
+  }
   let output_row = case output {
     option.None -> ""
     option.Some(val) -> string.inspect(val)
   }
 
-  case input_data {
-    [] -> element.none()
-    _ ->
-      html.div([attribute.class("post")], [
-        html.div([], [
-          html.h2([], [html.text("Post data")]),
-          html.table([attribute.class("input_data")], [
-            html.tr([], [
-              html.th([], [html.text("Key")]),
-              html.th([], [html.text("Value")]),
-              html.th([], [html.text("Error")]),
-            ]),
-            input_rows,
-          ]),
-          html.h2([], [html.text("Output")]),
-          html.div(
-            [
-              attribute.classes([
-                #("success", option.is_some(output)),
-                #("error", option.is_none(output)),
-              ]),
-            ],
-            [html.text(output_row)],
-          ),
+  html.div([attribute.class("post")], [
+    html.div([], [
+      html.h2([attribute.classes([#("discrepancy", has_error_discrepancy)])], [
+        html.text("Post data"),
+      ]),
+      html.table([attribute.class("input_data")], [
+        html.tr([], [
+          html.th([], [html.text("Key")]),
+          html.th([], [html.text("Input value")]),
+          html.th([], [html.text("Error")]),
         ]),
-      ])
-  }
+        input_rows,
+        error_rows,
+      ]),
+      html.h2([attribute.classes([#("discrepancy", has_output_discrepancy)])], [
+        html.text("Output"),
+      ]),
+      html.div(
+        [
+          attribute.classes([
+            #("success", option.is_some(output)),
+            #("error", option.is_none(output)),
+          ]),
+        ],
+        [html.text(output_row)],
+      ),
+    ]),
+  ])
 }
 
 fn show_forms(
@@ -248,20 +190,16 @@ fn show_forms(
             ],
             [],
           ),
-          html.input([
-            attribute.type_("hidden"),
-            attribute.value("string"),
-            attribute.name("__generator"),
+          html.p([], [
+            html.button([attribute.type_("submit")], [html.text("Submit")]),
           ]),
         ]),
       ]),
       html.td([], [
         html.form([attribute.method("POST")], [
           simple_lustre.generate_form(lustre_form),
-          html.input([
-            attribute.type_("hidden"),
-            attribute.value("lustre"),
-            attribute.name("__generator"),
+          html.p([], [
+            html.button([attribute.type_("submit")], [html.text("Submit")]),
           ]),
         ]),
       ]),
@@ -276,10 +214,8 @@ fn show_forms(
             ],
             [],
           ),
-          html.input([
-            attribute.type_("hidden"),
-            attribute.value("nakai"),
-            attribute.name("__generator"),
+          html.p([], [
+            html.button([attribute.type_("submit")], [html.text("Submit")]),
           ]),
         ]),
       ]),

@@ -3,10 +3,15 @@ import nakai/attr
 import nakai/html
 
 pub fn checkbox_widget(input: Input(html.Node)) -> html.Node {
+  let checked_attr = case input.value {
+    "" -> attr.Attr("x", "x")
+    _ -> attr.checked()
+  }
   html.input([
     attr.type_("checkbox"),
     attr.name(input.name),
-    attr.value(input.value),
+    attr.value("1"),
+    checked_attr,
   ])
 }
 

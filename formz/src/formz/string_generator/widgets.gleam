@@ -1,7 +1,23 @@
 import formz/input.{type Input}
 
 pub fn checkbox_widget(f: Input(String)) -> String {
-  "<input type=\"checkbox\">"
+  let aria_label_attr = case f.label {
+    "" -> ""
+    _ -> " aria-label=\"" <> f.label <> "\""
+  }
+
+  let checked_attr = case f.value {
+    "1" -> " checked"
+    _ -> ""
+  }
+
+  "<input "
+  <> { " name=\"" <> f.name <> "\"" }
+  <> { " type=\"checkbox\"" }
+  <> { " value=\"1\"" }
+  <> { aria_label_attr }
+  <> { checked_attr }
+  <> ">"
 }
 
 pub fn password_widget(f: Input(String)) -> String {

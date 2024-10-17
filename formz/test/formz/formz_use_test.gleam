@@ -1,7 +1,7 @@
 import formz/field.{field}
 import formz/formz_use as formz
 import formz/input
-import formz/string_fields
+import formz/string_generator/fields
 import formz/validation
 import gleam/option
 import gleeunit
@@ -50,14 +50,14 @@ fn empty_form(val) {
 }
 
 fn one_field_form() {
-  use a <- formz.with(field("a", string_fields.text_field()))
+  use a <- formz.with(field("a", fields.text_field()))
   formz.create_form("hello " <> a)
 }
 
 fn two_field_form() {
   {
-    use a <- formz.with(field("a", string_fields.text_field()))
-    use b <- formz.with(field("b", string_fields.text_field()))
+    use a <- formz.with(field("a", fields.text_field()))
+    use b <- formz.with(field("b", fields.text_field()))
 
     formz.create_form(#(a, b))
   }
@@ -65,18 +65,13 @@ fn two_field_form() {
 
 fn three_field_form() {
   use a <- formz.with(
-    field("x", string_fields.text_field())
+    field("x", fields.text_field())
     |> field.name("a")
     |> field.label("A")
     |> field.validate(validation.must_be_longer_than(3)),
   )
-  use b <- formz.with(field("b", string_fields.integer_field()))
-  use c <- formz.with(field.full(
-    "c",
-    "C",
-    "help!",
-    string_fields.number_field(),
-  ))
+  use b <- formz.with(field("b", fields.integer_field()))
+  use c <- formz.with(field.full("c", "C", "help!", fields.number_field()))
 
   formz.create_form(#(a, b, c))
 }
@@ -137,12 +132,8 @@ pub fn parse_double_field_form_test() {
 
 pub fn parse_double_optional_field_form_test() {
   let f = {
-    use a <- formz.with(
-      field("a", string_fields.text_field()) |> field.optional,
-    )
-    use b <- formz.with(
-      field("b", string_fields.text_field()) |> field.optional,
-    )
+    use a <- formz.with(field("a", fields.text_field()) |> field.optional)
+    use b <- formz.with(field("b", fields.text_field()) |> field.optional)
 
     formz.create_form(#(a, b))
   }
@@ -174,7 +165,7 @@ pub fn parse_double_optional_field_form_test() {
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     {
-      use a <- formz.with(field("a", string_fields.integer_field()))
+      use a <- formz.with(field("a", fields.integer_field()))
       formz.create_form(a)
     }
     |> formz.data([#("first", "world")])

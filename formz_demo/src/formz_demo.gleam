@@ -1,5 +1,5 @@
-import app/router
-import app/web.{Context}
+import formz_demo/router
+import formz_demo/web.{Context}
 import gleam/erlang/process
 import mist
 import wisp

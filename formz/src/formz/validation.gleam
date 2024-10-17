@@ -45,22 +45,9 @@ pub fn number(str: String) -> Result(Float, String) {
 }
 
 pub fn boolean(str: String) -> Result(Bool, String) {
-  // https://github.com/hayleigh-dot-dev/decipher/blob/v1.2.1/src/decipher.gleam#L115-L115
   case string.trim(str) {
-    "true" -> Ok(True)
-    "True" -> Ok(True)
-    "on" -> Ok(True)
-    "On" -> Ok(True)
-    "yes" -> Ok(True)
-    "Yes" -> Ok(True)
-    "false" -> Ok(False)
-    "False" -> Ok(False)
-    "off" -> Ok(False)
-    "Off" -> Ok(False)
-    "no" -> Ok(False)
-    "No" -> Ok(False)
-    "" -> Ok(False)
-    _ -> Error("Must be true or false")
+    "1" -> Ok(True)
+    _ -> Error("Must be checked")
   }
 }
 

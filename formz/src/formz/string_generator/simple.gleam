@@ -35,8 +35,8 @@ pub fn generate_visible_field(f: Input(String)) -> String {
 
   "<p class=\"simple_field\">"
   <> label_el
-  <> description_el
   <> widget_el
+  <> description_el
   <> errors_el
   <> "</p>"
 }

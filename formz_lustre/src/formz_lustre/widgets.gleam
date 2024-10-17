@@ -9,7 +9,8 @@ pub fn checkbox_widget(
   html.input([
     attribute.type_("checkbox"),
     attribute.name(input.name),
-    attribute.value(input.value),
+    attribute.value("1"),
+    attribute.checked(input.value == "1"),
   ])
 }
 

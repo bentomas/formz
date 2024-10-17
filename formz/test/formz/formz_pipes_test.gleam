@@ -1,7 +1,7 @@
 import formz/field.{field}
 import formz/formz_pipes as formz
 import formz/input
-import formz/string_fields
+import formz/string_generator/fields
 import gleam/list
 import gleeunit
 import gleeunit/should
@@ -33,7 +33,7 @@ pub fn parse_empty_form_test() {
 
 pub fn parse_single_field_form_test() {
   formz.new()
-  |> formz.add(field("first", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
   |> formz.data([#("first", "world")])
   |> formz.decodes(fn(str) { "hello " <> str })
   |> formz.parse
@@ -42,8 +42,8 @@ pub fn parse_single_field_form_test() {
 
 pub fn parse_double_field_form_test() {
   formz.new()
-  |> formz.add(field("first", string_fields.text_field()))
-  |> formz.add(field("second", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
+  |> formz.add(field("second", fields.text_field()))
   |> formz.data([#("first", "hello"), #("second", "world")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
@@ -52,16 +52,16 @@ pub fn parse_double_field_form_test() {
 
 pub fn parse_double_field_form_extra_data_test() {
   formz.new()
-  |> formz.add(field("first", string_fields.text_field()))
-  |> formz.add(field("second", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
+  |> formz.add(field("second", fields.text_field()))
   |> formz.data([#("first", "1"), #("second", "2")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
   |> should.equal(Ok("1 2"))
 
   formz.new()
-  |> formz.add(field("first", string_fields.text_field()))
-  |> formz.add(field("second", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
+  |> formz.add(field("second", fields.text_field()))
   |> formz.data([#("first", "1"), #("second", "2"), #("second", "3")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
@@ -70,7 +70,7 @@ pub fn parse_double_field_form_extra_data_test() {
 
 pub fn integer_field_test() {
   formz.new()
-  |> formz.add(field("first", string_fields.integer_field()))
+  |> formz.add(field("first", fields.integer_field()))
   |> formz.data([#("first", " 1 ")])
   |> formz.decodes(fn(i) { i })
   |> formz.parse
@@ -80,13 +80,13 @@ pub fn integer_field_test() {
 pub fn can_decodes_in_any_order_test() {
   formz.new()
   |> formz.decodes(fn(str) { "hello " <> str })
-  |> formz.add(field("first", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
   |> formz.data([#("first", "world")])
   |> formz.parse
   |> should.equal(Ok("hello world"))
 
   formz.new()
-  |> formz.add(field("first", string_fields.text_field()))
+  |> formz.add(field("first", fields.text_field()))
   |> formz.data([#("first", "world")])
   |> formz.decodes(fn(str) { "hello " <> str })
   |> formz.parse
@@ -96,7 +96,7 @@ pub fn can_decodes_in_any_order_test() {
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     formz.new()
-    |> formz.add(field("first", string_fields.integer_field()))
+    |> formz.add(field("first", fields.integer_field()))
     |> formz.data([#("first", "world")])
     |> formz.decodes(fn(_) { 1 })
     |> formz.parse
@@ -108,8 +108,8 @@ pub fn parse_single_field_form_with_error_test() {
 pub fn parse_double_field_form_with_error_test() {
   let form =
     formz.new()
-    |> formz.add(field("a", string_fields.integer_field()))
-    |> formz.add(field("b", string_fields.integer_field()))
+    |> formz.add(field("a", fields.integer_field()))
+    |> formz.add(field("b", fields.integer_field()))
     |> formz.decodes(fn(_) { fn(_) { 1 } })
 
   let assert Error(f) =
@@ -143,9 +143,9 @@ pub fn parse_double_field_form_with_error_test() {
 pub fn parse_triple_field_form_with_error_test() {
   let form =
     formz.new()
-    |> formz.add(field("a", string_fields.integer_field()))
-    |> formz.add(field("b", string_fields.integer_field()))
-    |> formz.add(field("c", string_fields.integer_field()))
+    |> formz.add(field("a", fields.integer_field()))
+    |> formz.add(field("b", fields.integer_field()))
+    |> formz.add(field("c", fields.integer_field()))
     |> formz.decodes(fn(_) { fn(_) { fn(_) { 1 } } })
 
   let assert Error(f) =
@@ -224,9 +224,9 @@ fn should_be_field_with_error(field: input.Input(String), str: String) {
 pub fn parse_and_try_test() {
   let f =
     formz.new()
-    |> formz.add(field("a", string_fields.integer_field()))
-    |> formz.add(field("b", string_fields.integer_field()))
-    |> formz.add(field("c", string_fields.integer_field()))
+    |> formz.add(field("a", fields.integer_field()))
+    |> formz.add(field("b", fields.integer_field()))
+    |> formz.add(field("c", fields.integer_field()))
     |> formz.decodes(fn(_) { fn(_) { fn(_) { 1 } } })
     |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
 

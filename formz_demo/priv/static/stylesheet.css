@@ -1,0 +1,115 @@
+body { font-family: sans-serif; }
+
+h1 {
+  margin: 10px;
+  font-size: 1.5em;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: auto minmax(300px, 600px);
+  grid-template-rows: auto;
+  grid-template-areas:
+      "code post"
+      "forms forms";
+  width: 100%;
+}
+
+.code {
+  grid-area: code;
+  float;
+  white-space: pre;
+  margin: 0 7px 20px;
+
+  code {
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-weight: normal;
+    font-size: 1.1em;
+  }
+}
+
+.post {
+  > div {
+    margin: 0 7px 20px;
+    grid-area: post;
+
+    > div {
+      font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+      min-height: 18px;
+    }
+
+    > div.success {
+      padding: 10px;
+      background: #90EE90;
+    }
+
+    > div.error {
+      padding: 10px;
+      background: #FF5733;
+    }
+
+    h2 {
+      background: #444;
+      color: #fafafa;
+      padding: 5px;
+      margin: 0;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: normal;
+    }
+
+    h2.discrepancy {
+        position: relative;
+        backdground: pink;
+    }
+    h2.discrepancy:after{
+        content: 'uh oh';
+        position: absolute;
+        right: 1em;
+        color: red;
+        font-weight: bold;
+    }
+  }
+}
+
+table.input_data {
+  border-spacing: 0;
+  border-collapse: collapse;
+  width: 100%;
+
+  th {
+    text-align: left;
+    font-weight: normal;
+    background: #bbb;
+    padding: 10px;
+  }
+
+  td:nth-child(1), td:nth-child(2) {
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  }
+  td:nth-child(3) {
+      color: #bd2901;
+  }
+  td {
+    background: #eee;
+    padding: 10px;
+  }
+}
+
+table.forms {
+  width: 100%;
+  border-spacing: 7px 0;
+  grid-area: forms;
+
+  th {
+    text-align: left;
+    font-weight: normal;
+    background: #bbb;
+    padding: 10px;
+  }
+
+  td {
+    background: #eee;
+    padding: 10px;
+  }
+}
