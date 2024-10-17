@@ -5,8 +5,9 @@ import lustre/element
 import lustre/element/html.{html}
 import wisp.{type Request, type Response}
 
-import formz_demo/examples/example_1
-import formz_demo/examples/example_2
+import formz_demo/examples/example_1/example_1
+import formz_demo/examples/example_2/example_2
+import formz_demo/examples/example_3/example_3
 
 import formz_demo/web.{type Context}
 
@@ -17,6 +18,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     [] -> index()
     ["example-1"] -> run.handle(req, example_1.make_forms)
     ["example-2"] -> run.handle(req, example_2.make_forms)
+    ["example-3"] -> run.handle(req, example_3.make_forms)
     _ -> wisp.not_found()
   }
 }
@@ -42,6 +44,11 @@ pub fn index() -> Response {
           html.li([], [
             html.a([attribute.href("/example-2")], [
               html.text(example_2.make_forms().1),
+            ]),
+          ]),
+          html.li([], [
+            html.a([attribute.href("/example-3")], [
+              html.text(example_3.make_forms().1),
             ]),
           ]),
         ]),
