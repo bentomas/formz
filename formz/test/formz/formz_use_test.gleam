@@ -7,7 +7,7 @@ import gleam/option
 import gleeunit
 import gleeunit/should
 
-fn should_be_field_no_error(field: input.Input(String)) {
+fn should_be_field_no_error(field: input.Input(String, widget_args)) {
   should.equal(
     field,
     input.Input(
@@ -16,11 +16,15 @@ fn should_be_field_no_error(field: input.Input(String)) {
       help_text: field.help_text,
       value: field.value,
       render: field.render,
+      hidden: field.hidden,
     ),
   )
 }
 
-fn should_be_field_with_error(field: input.Input(String), str: String) {
+fn should_be_field_with_error(
+  field: input.Input(String, widget_args),
+  str: String,
+) {
   should.equal(
     field,
     input.InvalidInput(
@@ -29,14 +33,15 @@ fn should_be_field_with_error(field: input.Input(String), str: String) {
       help_text: field.help_text,
       value: field.value,
       render: field.render,
+      hidden: field.hidden,
       error: str,
     ),
   )
 }
 
 fn get_form_from_error_result(
-  result: Result(output, formz.Form(format, output)),
-) -> formz.Form(format, output) {
+  result: Result(output, formz.Form(format, widget_args, output)),
+) -> formz.Form(format, widget_args, output) {
   let assert Error(form) = result
   form
 }
@@ -66,9 +71,9 @@ fn two_field_form() {
 fn three_field_form() {
   use a <- formz.with(
     field("x", fields.text_field())
-    |> field.name("a")
-    |> field.label("A")
-    |> field.validate(validation.must_be_longer_than(3)),
+    |> field.set_name("a")
+    |> field.set_label("A")
+    |> field.validates(validation.must_be_longer_than(3)),
   )
   use b <- formz.with(field("b", fields.integer_field()))
   use c <- formz.with(field.full("c", "C", "help!", fields.number_field()))
@@ -132,8 +137,8 @@ pub fn parse_double_field_form_test() {
 
 pub fn parse_double_optional_field_form_test() {
   let f = {
-    use a <- formz.with(field("a", fields.text_field()) |> field.optional)
-    use b <- formz.with(field("b", fields.text_field()) |> field.optional)
+    use a <- formz.with(field("a", fields.text_field()) |> field.set_optional)
+    use b <- formz.with(field("b", fields.text_field()) |> field.set_optional)
 
     formz.create_form(#(a, b))
   }
@@ -213,7 +218,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
     |> get_form_from_error_result
     |> formz.get_inputs
-  fielda |> should_be_field_with_error("Must be longer than 3 characters")
+  fielda |> should_be_field_with_error("Must be longer than 3")
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_no_error
 
@@ -223,7 +228,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
     |> get_form_from_error_result
     |> formz.get_inputs
-  fielda |> should_be_field_with_error("Must be longer than 3 characters")
+  fielda |> should_be_field_with_error("Must be longer than 3")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
 }

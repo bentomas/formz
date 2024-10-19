@@ -6,9 +6,10 @@
 // - hidden fields
 // - list fields
 // - form sets
-// - decoders/toy.decoder
+// - decoders/toy.decoder?
 // - csrf token
 // - overwrite error messages
+// - emit warning on duplicate named fields
 
 import formz/field.{type Field}
 import formz/input.{type Input, Input}

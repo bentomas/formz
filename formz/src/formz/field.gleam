@@ -1,6 +1,8 @@
 import formz/input.{type Input, Input}
 import formz/validation
+import gleam/list
 import gleam/option
+import gleam/pair
 import gleam/result
 import gleam/string
 import justin
@@ -36,6 +38,32 @@ pub fn boolean_field(
 ) -> Field(format, widget_args, Bool) {
   let transform = validation.boolean
   Field(input.empty_field(widget), False, transform)
+}
+
+pub fn enum_field(
+  variants: List(#(String, enum)),
+  widget: fn(Input(format, widget_args), widget_args) -> format,
+) -> Field(format, widget_args, enum) {
+  let transform = validation.enum(variants)
+  // todo should i force this to be a non empty list?
+  // https://github.com/giacomocavalieri/non_empty_list
+  // on the one hand it needs to be non empty, on the other
+  // hand it's an unfamiliar type to most gleam users
+  let assert Ok(first) = list.first(variants)
+  Field(input.empty_field(widget), pair.second(first), transform)
+}
+
+pub fn list_field(
+  variants: List(#(String, enum)),
+  widget: fn(Input(format, widget_args), widget_args) -> format,
+) -> Field(format, widget_args, enum) {
+  let transform = validation.list_item(variants)
+  // todo should i force this to be a non empty list?
+  // https://github.com/giacomocavalieri/non_empty_list
+  // on the one hand it needs to be non empty, on the other
+  // hand it's an unfamiliar type to most gleam users
+  let assert Ok(first) = list.first(variants)
+  Field(input.empty_field(widget), pair.second(first), transform)
 }
 
 pub type Field(format, widget_args, output) {
@@ -143,8 +171,8 @@ pub fn validates(
 
 pub fn transforms(
   field: Field(format, widget_args, b),
-  next: fn(b) -> Result(c, String),
   default: c,
+  next: fn(b) -> Result(c, String),
 ) -> Field(format, widget_args, c) {
   let Field(field, _, previous_transform) = field
 

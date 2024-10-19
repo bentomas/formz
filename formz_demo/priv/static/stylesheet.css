@@ -10,8 +10,9 @@ h1 {
   grid-template-columns: auto minmax(300px, 600px);
   grid-template-rows: auto;
   grid-template-areas:
+      "forms forms"
       "code post"
-      "forms forms";
+      ;
   width: 100%;
 }
 
@@ -100,6 +101,7 @@ table.forms {
   width: 100%;
   border-spacing: 7px 0;
   grid-area: forms;
+  margin-bottom: 17px;
 
   th {
     text-align: left;
