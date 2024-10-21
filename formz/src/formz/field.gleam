@@ -78,11 +78,11 @@ pub fn field(
   name: String,
   field: Field(format, widget_args, output),
 ) -> Field(format, widget_args, output) {
-  Field(
-    Input(name, justin.sentence_case(name), "", field.input.render, False, ""),
-    field.default,
-    field.transform,
-  )
+  let label = case field.input.name {
+    "" -> justin.sentence_case(name)
+    _ -> field.input.name
+  }
+  field |> set_name(name) |> set_label(label)
 }
 
 pub fn hidden(
