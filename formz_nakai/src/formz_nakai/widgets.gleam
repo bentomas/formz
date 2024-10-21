@@ -5,7 +5,7 @@ import nakai/attr
 import nakai/html
 
 pub fn checkbox_widget() {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     let checked_attr = case input.value {
       "" -> attr.Attr("x", "x")
       _ -> attr.checked()
@@ -20,7 +20,7 @@ pub fn checkbox_widget() {
 }
 
 pub fn password_widget() {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     html.input([
       attr.type_("password"),
       attr.name(input.name),
@@ -30,7 +30,7 @@ pub fn password_widget() {
 }
 
 pub fn text_widget() {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     let placeholder = ""
 
     html.input([
@@ -43,13 +43,13 @@ pub fn text_widget() {
 }
 
 pub fn textarea_widget() {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     html.textarea([attr.name(input.name)], [])
   }
 }
 
 pub fn hidden_widget() {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     html.input([
       attr.type_("hidden"),
       attr.name(input.name),
@@ -59,7 +59,7 @@ pub fn hidden_widget() {
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  fn(input: Input(html.Node, Nil), _) -> html.Node {
+  fn(input: Input(html.Node), _) -> html.Node {
     html.select(
       [attr.name(input.name)],
       list.map(variants, fn(variant) {

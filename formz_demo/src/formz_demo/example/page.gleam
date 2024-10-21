@@ -17,11 +17,10 @@ pub fn build_page(
   name: String,
   code: String,
   post_data: option.Option(List(#(String, String))),
-  errors_list: List(#(String, String)),
   output: option.Option(a),
-  string_form: formz.Form(String, Nil, a),
-  lustre_form: formz.Form(element.Element(msg), Nil, a),
-  nakai_form: formz.Form(nhtml.Node, Nil, a),
+  string_form: formz.Form(String, a),
+  lustre_form: formz.Form(element.Element(msg), a),
+  nakai_form: formz.Form(nhtml.Node, a),
   has_output_discrepancy: Bool,
   has_error_discrepancy: Bool,
 ) -> Response {
@@ -168,9 +167,9 @@ pub fn show_post(
 }
 
 fn show_forms(
-  string_form: formz.Form(String, Nil, j),
-  lustre_form: formz.Form(element.Element(msg), Nil, j),
-  nakai_form: formz.Form(nhtml.Node, Nil, j),
+  string_form: formz.Form(String, j),
+  lustre_form: formz.Form(element.Element(msg), j),
+  nakai_form: formz.Form(nhtml.Node, j),
 ) -> element.Element(msg) {
   html.table([attribute.classes([#("forms", True)])], [
     html.tr([], [

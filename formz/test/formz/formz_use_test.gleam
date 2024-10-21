@@ -7,7 +7,7 @@ import gleam/option
 import gleeunit
 import gleeunit/should
 
-fn should_be_field_no_error(field: input.Input(String, widget_args)) {
+fn should_be_field_no_error(field: input.Input(String)) {
   should.equal(
     field,
     input.Input(
@@ -21,10 +21,7 @@ fn should_be_field_no_error(field: input.Input(String, widget_args)) {
   )
 }
 
-fn should_be_field_with_error(
-  field: input.Input(String, widget_args),
-  str: String,
-) {
+fn should_be_field_with_error(field: input.Input(String), str: String) {
   should.equal(
     field,
     input.InvalidInput(
@@ -40,8 +37,8 @@ fn should_be_field_with_error(
 }
 
 fn get_form_from_error_result(
-  result: Result(output, formz.Form(format, widget_args, output)),
-) -> formz.Form(format, widget_args, output) {
+  result: Result(output, formz.Form(format, output)),
+) -> formz.Form(format, output) {
   let assert Error(form) = result
   form
 }
@@ -183,7 +180,7 @@ pub fn parse_single_field_form_with_error_test() {
 pub fn parse_triple_field_form_with_error_test() {
   let assert [fielda, fieldb, fieldc] =
     three_field_form()
-    |> formz.data([#("a", "string"), #("b", "1"), #("c", "string")])
+    |> formz.data([#("a", "xxxx"), #("b", "1"), #("c", "x")])
     |> formz.parse
     |> get_form_from_error_result
     |> formz.get_inputs
@@ -231,6 +228,33 @@ pub fn parse_triple_field_form_with_error_test() {
   fielda |> should_be_field_with_error("Must be longer than 3")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
+}
+
+pub fn sub_form_test() {
+  let f1 = {
+    use a <- formz.with(field("a", fields.integer_field()))
+    use b <- formz.with(field("b", fields.integer_field()))
+    use c <- formz.with(field("c", fields.integer_field()))
+
+    formz.create_form(#(a, b, c))
+  }
+
+  let f2 = {
+    use a <- formz.sub_form("name", "Name", f1)
+    use b <- formz.with(field("d", fields.integer_field()))
+
+    formz.create_form(#(a, b))
+  }
+
+  f2
+  |> formz.data([
+    #("name.a", "1"),
+    #("name.b", "2"),
+    #("name.c", "3"),
+    #("d", "4"),
+  ])
+  |> formz.parse
+  |> should.equal(Ok(#(#(1, 2, 3), 4)))
 }
 
 pub fn decoded_and_try_test() {

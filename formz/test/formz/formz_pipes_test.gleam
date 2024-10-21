@@ -194,7 +194,7 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldc |> should_be_field_no_error
 }
 
-fn should_be_field_no_error(field: input.Input(String, widget_args)) {
+fn should_be_field_no_error(field: input.Input(String)) {
   should.equal(
     field,
     input.Input(
@@ -208,10 +208,7 @@ fn should_be_field_no_error(field: input.Input(String, widget_args)) {
   )
 }
 
-fn should_be_field_with_error(
-  field: input.Input(String, widget_args),
-  str: String,
-) {
+fn should_be_field_with_error(field: input.Input(String), str: String) {
   should.equal(
     field,
     input.InvalidInput(

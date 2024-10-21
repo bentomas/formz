@@ -21,29 +21,28 @@ pub type HasDecoder
 
 pub type NoDecoder
 
-pub opaque type Form(format, widget_args, output, decoder, has_decoder) {
+pub opaque type Form(format, output, decoder, has_decoder) {
   Form(
-    fields: List(Input(format, widget_args)),
-    parse_with: fn(List(Input(format, widget_args)), decoder) ->
-      Result(output, List(Input(format, widget_args))),
+    fields: List(Input(format)),
+    parse_with: fn(List(Input(format)), decoder) ->
+      Result(output, List(Input(format))),
     decoder: Option(decoder),
   )
 }
 
-pub fn new() -> Form(format, args, a, a, NoDecoder) {
+pub fn new() -> Form(format, a, a, NoDecoder) {
   Form([], fn(_, output) { Ok(output) }, None)
 }
 
 pub fn add(
   form: Form(
     format,
-    widget_args,
     fn(decoder_step_input) -> decoder_step_output,
     form_output,
     has_decoder,
   ),
-  definition: Field(format, widget_args, decoder_step_input),
-) -> Form(format, widget_args, decoder_step_output, form_output, has_decoder) {
+  definition: Field(format, decoder_step_input),
+) -> Form(format, decoder_step_output, form_output, has_decoder) {
   let Form(inputs, parse_with, decoder) = form
 
   // create new form with the new field and update the parse
@@ -80,9 +79,9 @@ pub fn add(
 }
 
 pub fn data(
-  form: Form(format, widget_args, a, b, has_decoder),
+  form: Form(format, a, b, has_decoder),
   field: List(#(String, String)),
-) -> Form(format, widget_args, a, b, has_decoder) {
+) -> Form(format, a, b, has_decoder) {
   case form {
     Form(fields, parse_with, decoder) -> {
       fields
@@ -97,9 +96,9 @@ pub fn data(
 }
 
 fn do_add_input_data(
-  fields: List(Input(format, args)),
+  fields: List(Input(format)),
   data: List(#(String, String)),
-  acc: List(Input(format, args)),
+  acc: List(Input(format)),
 ) {
   case fields, data {
     // no more fields, we've return all the fields with data we have accumulated
@@ -125,16 +124,16 @@ fn do_add_input_data(
 }
 
 pub fn decodes(
-  form: Form(format, widget_args, output, decoder, has_decoder),
+  form: Form(format, output, decoder, has_decoder),
   decoder: decoder,
-) -> Form(format, widget_args, output, decoder, HasDecoder) {
+) -> Form(format, output, decoder, HasDecoder) {
   let Form(fields, parse_with, _) = form
   Form(fields, parse_with, Some(decoder))
 }
 
 pub fn parse(
-  form: Form(format, widget_args, output, decoder, HasDecoder),
-) -> Result(output, Form(format, widget_args, output, decoder, HasDecoder)) {
+  form: Form(format, output, decoder, HasDecoder),
+) -> Result(output, Form(format, output, decoder, HasDecoder)) {
   // we've tagged that we have a decoder with out has_decoder phantom type
   // so we can get away with let assert here
   let assert Form(fields, parse_with, Some(decoder)) = form
@@ -145,24 +144,22 @@ pub fn parse(
 }
 
 pub fn parse_and_try(
-  form: Form(format, widget_args, output, decoder, HasDecoder),
-  apply fun: fn(output, Form(format, widget_args, output, decoder, HasDecoder)) ->
-    Result(c, Form(format, widget_args, output, decoder, HasDecoder)),
-) -> Result(c, Form(format, widget_args, output, decoder, HasDecoder)) {
+  form: Form(format, output, decoder, HasDecoder),
+  apply fun: fn(output, Form(format, output, decoder, HasDecoder)) ->
+    Result(c, Form(format, output, decoder, HasDecoder)),
+) -> Result(c, Form(format, output, decoder, HasDecoder)) {
   parse(form) |> result.try(fun(_, form))
 }
 
-pub fn get_inputs(
-  form: Form(format, widget_args, a, b, has_decoder),
-) -> List(Input(format, widget_args)) {
+pub fn get_inputs(form: Form(format, a, b, has_decoder)) -> List(Input(format)) {
   form.fields |> list.reverse
 }
 
 pub fn update_input(
-  form: Form(format, widget_args, output, decoder, has_decoder),
+  form: Form(format, output, decoder, has_decoder),
   name: String,
-  fun: fn(Input(format, widget_args)) -> Input(format, widget_args),
-) -> Form(format, widget_args, output, decoder, has_decoder) {
+  fun: fn(Input(format)) -> Input(format),
+) -> Form(format, output, decoder, has_decoder) {
   form.fields
   |> list.map(fn(field) {
     case field.name == name {

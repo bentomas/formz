@@ -3,7 +3,7 @@ import gleam/list
 import gleam/string
 
 pub fn checkbox_widget() {
-  fn(input: Input(String, Nil), _) -> String {
+  fn(input: Input(String), _args: input.Args) -> String {
     let aria_label_attr = case input.label {
       "" -> ""
       _ -> " aria-label=\"" <> input.label <> "\""
@@ -25,11 +25,13 @@ pub fn checkbox_widget() {
 }
 
 pub fn password_widget() {
-  fn(_input: Input(String, Nil), _) -> String { "<input type=\"password\">" }
+  fn(_input: Input(String), _args: input.Args) -> String {
+    "<input type=\"password\">"
+  }
 }
 
 pub fn text_widget() {
-  fn(input: Input(String, Nil), _) -> String {
+  fn(input: Input(String), _args: input.Args) -> String {
     let aria_label = case input.label {
       "" -> ""
       _ -> " aria-label=\"" <> input.label <> "\""
@@ -45,17 +47,15 @@ pub fn text_widget() {
 }
 
 pub fn textarea_widget() {
-  fn(_input: Input(String, Nil), _) -> String {
+  fn(_input: Input(String), _args: input.Args) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
     "<textarea></textarea>"
   }
 }
 
-pub fn select_widget(
-  variants: List(#(String, value)),
-) -> fn(Input(String, Nil), _) -> String {
-  fn(input: Input(String, Nil), _) {
+pub fn select_widget(variants: List(#(String, value))) {
+  fn(input: Input(String), _args: input.Args) {
     let choices =
       list.map(variants, fn(variant) {
         let val = string.inspect(variant.1)

@@ -6,7 +6,7 @@ import lustre/element
 import lustre/element/html
 
 pub fn checkbox_widget() {
-  fn(input: Input(element.Element(msg), Nil), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     html.input([
       attribute.type_("checkbox"),
       attribute.name(input.name),
@@ -17,7 +17,7 @@ pub fn checkbox_widget() {
 }
 
 pub fn password_widget() {
-  fn(input: Input(element.Element(msg), Nil), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     html.input([
       attribute.type_("password"),
       attribute.name(input.name),
@@ -27,7 +27,7 @@ pub fn password_widget() {
 }
 
 pub fn text_widget() {
-  fn(input: Input(element.Element(msg), Nil), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     let placeholder = ""
 
     html.input([
@@ -40,13 +40,13 @@ pub fn text_widget() {
 }
 
 pub fn textarea_widget() {
-  fn(input: Input(element.Element(msg), _), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     html.textarea([attribute.name(input.name)], "")
   }
 }
 
 pub fn hidden_widget() {
-  fn(input: Input(element.Element(msg), Nil), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     html.input([
       attribute.type_("hidden"),
       attribute.name(input.name),
@@ -56,7 +56,7 @@ pub fn hidden_widget() {
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  fn(input: Input(element.Element(msg), Nil), _) -> element.Element(msg) {
+  fn(input: Input(element.Element(msg)), _) -> element.Element(msg) {
     html.select(
       [attribute.name(input.name)],
       list.map(variants, fn(variant) {
