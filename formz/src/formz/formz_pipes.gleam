@@ -3,13 +3,12 @@
 // date time handling https://hexdocs.pm/birl/index.html
 
 // TODO
-// - hidden fields
-// - list fields
 // - form sets
 // - decoders/toy.decoder?
 // - csrf token
 // - overwrite error messages
 // - emit warning on duplicate named fields
+// - clean names so snake_case?
 
 import formz/field.{type Field}
 import formz/input.{type Input, Input}

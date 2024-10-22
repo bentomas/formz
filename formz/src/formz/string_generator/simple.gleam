@@ -1,5 +1,6 @@
 import formz/formz_use as formz
 import formz/input.{type Input, Input, InvalidInput}
+import formz/string_generator/widgets
 import gleam/list
 import gleam/string
 
@@ -45,14 +46,5 @@ pub fn generate_visible_field(f: Input(String)) -> String {
 }
 
 pub fn generate_hidden_field(f: Input(String)) -> String {
-  case f.hidden {
-    False -> ""
-    True -> {
-      "<input type=\"hidden\" name=\""
-      <> f.name
-      <> "\" value=\""
-      <> f.value
-      <> "\" />"
-    }
-  }
+  widgets.hidden_widget()(f, input.WidgetArgs("", input.Value))
 }

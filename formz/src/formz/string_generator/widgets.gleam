@@ -25,11 +25,16 @@ fn aria_label_attr(labelled_by: input.InputLabelled, label: String) -> String {
     input.Id(id) -> " aria-labelledby=\"" <> id <> "\""
 
     // we'll use the label value as the aria-label
-    input.Value ->
+    input.Value -> {
+      let sanitized_label =
+        label
+        |> string.replace("\"", "&quot;")
+        |> string.replace(">", "&gt;")
       case label {
         "" -> ""
-        _ -> " aria-label=\"" <> label <> "\""
+        _ -> " aria-label=\"" <> sanitized_label <> "\""
       }
+    }
   }
 }
 
@@ -38,9 +43,13 @@ fn type_attr(type_: String) -> String {
 }
 
 fn value_attr(value: String) -> String {
+  let sanitized_value =
+    value
+    |> string.replace("\"", "&quot;")
+    |> string.replace(">", "&gt;")
   case value {
     "" -> ""
-    _ -> " value=\"" <> value <> "\""
+    _ -> " value=\"" <> sanitized_value <> "\""
   }
 }
 
@@ -62,15 +71,21 @@ pub fn checkbox_widget() {
 }
 
 pub fn password_widget() {
-  fn(_input: Input(String), _args: WidgetArgs) -> String {
-    "<input type=\"password\">"
+  fn(input: Input(String), args: WidgetArgs) -> String {
+    "<input"
+    <> type_attr("password")
+    <> name_attr(input.name)
+    <> id_attr(args.id)
+    // <> value_attr(input.value)
+    <> aria_label_attr(args.labelled_by, input.label)
+    <> ">"
   }
 }
 
-pub fn text_widget() {
+pub fn text_like_widget(type_: String) {
   fn(input: Input(String), args: WidgetArgs) -> String {
     "<input"
-    <> type_attr("text")
+    <> type_attr(type_)
     <> name_attr(input.name)
     <> id_attr(args.id)
     <> value_attr(input.value)
@@ -80,29 +95,51 @@ pub fn text_widget() {
 }
 
 pub fn textarea_widget() {
-  fn(_input: Input(String), _args: WidgetArgs) -> String {
+  fn(input: Input(String), args: WidgetArgs) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
-    "<textarea></textarea>"
+    "<textarea"
+    <> name_attr(input.name)
+    <> id_attr(args.id)
+    <> aria_label_attr(args.labelled_by, input.label)
+    <> ">"
+    <> input.value
+    <> "</textarea>"
+  }
+}
+
+pub fn hidden_widget() {
+  fn(input: Input(String), _args: WidgetArgs) -> String {
+    "<input"
+    <> type_attr("hidden")
+    <> name_attr(input.name)
+    <> value_attr(input.value)
+    <> ">"
   }
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  fn(input: Input(String), _args: WidgetArgs) {
+  fn(input: Input(String), args: WidgetArgs) {
     let choices =
       list.map(variants, fn(variant) {
         let val = string.inspect(variant.1)
-        let selected = case input.value == val {
+        let selected_attr = case input.value == val {
           True -> " selected"
           _ -> ""
         }
-        { "<option value=\"" <> val <> "\"" <> selected <> ">" }
+        { "<option" <> value_attr(val) <> selected_attr <> ">" }
         <> variant.0
         <> "</option>"
       })
       |> string.join("")
 
-    { "<select " <> { " name=\"" <> input.name <> "\"" } <> ">" }
+    {
+      "<select"
+      <> name_attr(input.name)
+      <> id_attr(args.id)
+      <> aria_label_attr(args.labelled_by, input.label)
+      <> ">"
+    }
     <> choices
     <> { "</select>" }
   }
