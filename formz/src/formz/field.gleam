@@ -8,33 +8,33 @@ import gleam/string
 import justin
 
 pub fn text_field(
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, String) {
   Field(input.empty_field(widget), "", validation.string)
 }
 
 pub fn email_field(
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, String) {
   Field(input.empty_field(widget), "", validation.email)
 }
 
 pub fn integer_field(
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, Int) {
   let transform = validation.int
   Field(input.empty_field(widget), 0, transform)
 }
 
 pub fn number_field(
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, Float) {
   let transform = validation.number
   Field(input.empty_field(widget), 0.0, transform)
 }
 
 pub fn boolean_field(
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, Bool) {
   let transform = validation.boolean
   Field(input.empty_field(widget), False, transform)
@@ -42,7 +42,7 @@ pub fn boolean_field(
 
 pub fn enum_field(
   variants: List(#(String, enum)),
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, enum) {
   let transform = validation.enum(variants)
   // todo should i force this to be a non empty list?
@@ -55,7 +55,7 @@ pub fn enum_field(
 
 pub fn list_field(
   variants: List(#(String, enum)),
-  widget: fn(Input(format), input.Args) -> format,
+  widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, enum) {
   let transform = validation.list_item(variants)
   // todo should i force this to be a non empty list?
@@ -90,7 +90,7 @@ pub fn hidden(
   field: Field(format, output),
 ) -> Field(format, output) {
   Field(
-    Input(name, "", "", field.input.render, True, ""),
+    Input(name, "", "", field.input.widget, True, ""),
     field.default,
     field.transform,
   )
@@ -103,7 +103,14 @@ pub fn full(
   field: Field(format, output),
 ) -> Field(format, output) {
   Field(
-    Input(name, label, help_text, field.input.render, False, ""),
+    Input(
+      name,
+      label,
+      help_text,
+      field.input.widget,
+      field.input.hidden,
+      field.input.value,
+    ),
     field.default,
     field.transform,
   )

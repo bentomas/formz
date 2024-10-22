@@ -1,5 +1,5 @@
 import formz/formz_use as formz
-import formz/input.{type Input, Input, InvalidInput}
+import formz/input.{type Input, Input, InvalidInput, WidgetArgs}
 import gleam/list
 import gleam/string
 import nakai/attr
@@ -28,7 +28,9 @@ pub fn generate_visible_field(f: Input(html.Node)) -> html.Node {
     False -> html.span([attr.class("help_text")], [html.Text(f.help_text)])
   }
   let widget_el =
-    html.span([attr.class("widget")], [f.render(f, input.Args(f.name))])
+    html.span([attr.class("widget")], [
+      f.widget(f, WidgetArgs(id: f.name, labelled_by: input.Element)),
+    ])
 
   let errors_el = case f {
     Input(..) -> html.Nothing

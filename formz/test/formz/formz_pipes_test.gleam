@@ -202,7 +202,7 @@ fn should_be_field_no_error(field: input.Input(String)) {
       label: field.label,
       help_text: field.help_text,
       value: field.value,
-      render: field.render,
+      widget: field.widget,
       hidden: field.hidden,
     ),
   )
@@ -216,7 +216,7 @@ fn should_be_field_with_error(field: input.Input(String), str: String) {
       label: field.label,
       help_text: field.help_text,
       value: field.value,
-      render: field.render,
+      widget: field.widget,
       hidden: field.hidden,
       error: str,
     ),

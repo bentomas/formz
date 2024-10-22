@@ -1,5 +1,5 @@
 import formz/formz_use as formz
-import formz/input.{type Input, Input, InvalidInput}
+import formz/input.{type Input, Input, InvalidInput, WidgetArgs}
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -31,7 +31,9 @@ pub fn generate_visible_field(
     False -> html.span([attribute.class("help_text")], [html.text(f.help_text)])
   }
   let widget_el =
-    html.span([attribute.class("widget")], [f.render(f, input.Args(f.name))])
+    html.span([attribute.class("widget")], [
+      f.widget(f, WidgetArgs(id: f.name, labelled_by: input.Element)),
+    ])
 
   let errors_el = case f {
     Input(..) -> element.none()

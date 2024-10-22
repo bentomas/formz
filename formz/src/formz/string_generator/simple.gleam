@@ -27,7 +27,9 @@ pub fn generate_visible_field(f: Input(String)) -> String {
     False -> "<span class=\"description\">" <> f.help_text <> "</span>"
   }
   let widget_el =
-    "<span class=\"widget\">" <> f.render(f, input.Args(f.name)) <> "</span>"
+    "<span class=\"widget\">"
+    <> f.widget(f, input.WidgetArgs(f.name, input.Element))
+    <> "</span>"
 
   let errors_el = case f {
     Input(..) -> "<span class=\"error-placeholder\"></span>"
