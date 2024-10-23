@@ -7,9 +7,8 @@ import gleam/string
 pub fn generate_form(form) -> String {
   {
     form
-    |> formz.get_inputs
-    |> list.filter(fn(f) { !f.hidden })
-    |> list.map(generate_visible_field)
+    |> formz.get_items
+    |> list.map(generate_visible_item)
     |> string.join("\n")
   }
   <> {
@@ -21,28 +20,48 @@ pub fn generate_form(form) -> String {
   }
 }
 
-pub fn generate_visible_field(f: Input(String)) -> String {
-  let label_el = "<label for=\"" <> f.name <> "\">" <> f.label <> ": </label>"
-  let description_el = case string.is_empty(f.help_text) {
-    True -> ""
-    False -> "<span class=\"description\">" <> f.help_text <> "</span>"
-  }
-  let widget_el =
-    "<span class=\"widget\">"
-    <> f.widget(f, input.WidgetArgs(f.name, input.Element))
-    <> "</span>"
+pub fn generate_visible_item(item: formz.FormItem(String)) -> String {
+  case item {
+    formz.Item(f) ->
+      case f.hidden {
+        True -> ""
+        False -> {
+          let label_el =
+            "<label for=\"" <> f.name <> "\">" <> f.label <> ": </label>"
+          let description_el = case string.is_empty(f.help_text) {
+            True -> ""
+            False -> "<span class=\"description\">" <> f.help_text <> "</span>"
+          }
+          let widget_el =
+            "<span class=\"widget\">"
+            <> f.widget(f, input.WidgetArgs(f.name, input.Element))
+            <> "</span>"
 
-  let errors_el = case f {
-    Input(..) -> "<span class=\"error-placeholder\"></span>"
-    InvalidInput(error:, ..) -> "<span class=\"errors\">" <> error <> "</span>"
-  }
+          let errors_el = case f {
+            Input(..) -> "<span class=\"error-placeholder\"></span>"
+            InvalidInput(error:, ..) ->
+              "<span class=\"errors\">" <> error <> "</span>"
+          }
 
-  "<p class=\"simple_field\">"
-  <> label_el
-  <> widget_el
-  <> description_el
-  <> errors_el
-  <> "</p>"
+          "<p class=\"simple_field\">"
+          <> label_el
+          <> widget_el
+          <> description_el
+          <> errors_el
+          <> "</p>"
+        }
+      }
+    formz.Fieldset(name, items) -> {
+      "<fieldset><legend>"
+      <> name
+      <> "</legend>"
+      <> {
+        list.map(items, generate_visible_item)
+        |> string.join("\n")
+      }
+      <> "</fieldset>"
+    }
+  }
 }
 
 pub fn generate_hidden_field(f: Input(String)) -> String {

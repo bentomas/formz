@@ -78,6 +78,10 @@ h1 {
     padding: 0 13px;
     background: #f3f3f3;
     margin: 0 7px 15px;
+
+    fieldset {
+        margin: 15px 0;
+    }
   }
 
   .code {
