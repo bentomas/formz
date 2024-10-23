@@ -22,7 +22,7 @@ pub fn generate_form(form) -> String {
 }
 
 pub fn generate_visible_field(f: Input(String)) -> String {
-  let label_el = "<label>" <> f.label <> ": </label>"
+  let label_el = "<label for=\"" <> f.name <> "\">" <> f.label <> ": </label>"
   let description_el = case string.is_empty(f.help_text) {
     True -> ""
     False -> "<span class=\"description\">" <> f.help_text <> "</span>"

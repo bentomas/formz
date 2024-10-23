@@ -131,6 +131,13 @@ pub fn set_help_text(
   Field(..field, input: input.set_help_text(field.input, help_text))
 }
 
+pub fn set_widget(
+  field: Field(format, b),
+  widget: fn(Input(format), input.WidgetArgs) -> format,
+) -> Field(format, b) {
+  Field(..field, input: input.set_widget(field.input, widget))
+}
+
 pub fn set_value(field: Field(format, b), value: String) -> Field(format, b) {
   Field(..field, input: input.set_value(field.input, value))
 }

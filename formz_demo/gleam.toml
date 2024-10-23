@@ -24,6 +24,8 @@ wisp = ">= 1.2.0 and < 2.0.0"
 lustre = ">= 4.5.1 and < 5.0.0"
 nakai = ">= 1.0.0 and < 2.0.0"
 simplifile = ">= 2.2.0 and < 3.0.0"
+justin = ">= 1.0.1 and < 2.0.0"
+pprint = ">= 1.0.3 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

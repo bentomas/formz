@@ -1,99 +1,80 @@
 import formz/formz_use as formz
-import formz/input
 import formz_demo/example/page
 import gleam/http.{Get, Post}
-import gleam/list
 import gleam/option
 import simplifile
 import wisp.{type Request, type Response}
 
-pub fn handle(req: Request, make_forms) -> Response {
+pub type ExampleRun(format, output, output2, msg) {
+  ExampleRun(
+    dir: String,
+    make_form: fn() -> formz.Form(format, output),
+    get_handler: fn(formz.Form(format, output)) -> formz.Form(format, output),
+    post_handler: fn(wisp.FormData, formz.Form(format, output)) ->
+      Result(output2, formz.Form(format, output)),
+    format_form: fn(formz.Form(format, output)) -> format,
+    formatted_form_to_string: fn(format) -> String,
+  )
+}
+
+pub fn handle(
+  req: Request,
+  example: ExampleRun(format, output, output2, msg),
+) -> Response {
   case req.method {
-    Get -> handle_get(make_forms)
-    Post -> handle_post(req, make_forms)
+    Get -> handle_get(example)
+    Post -> handle_post(req, example)
     _ -> wisp.method_not_allowed(allowed: [Get, Post])
   }
 }
 
-fn handle_get(make_forms) {
-  let #(dir, name, string_form, lustre_form, nakai_form) = make_forms()
-  let assert Ok(code) =
-    simplifile.read("./src/formz_demo/examples/" <> dir <> "/strings.gleam")
+fn get_code(key: String) {
+  let assert Ok(form_code) =
+    simplifile.read("./src/formz_demo/examples/" <> key <> ".gleam")
+  form_code
+}
+
+fn handle_get(example: ExampleRun(format, output, output2, msg)) {
+  let form = example.make_form() |> example.get_handler
+
   page.build_page(
-    name,
-    code,
+    example.dir,
+    get_code(example.dir),
     option.None,
-    [],
     option.None,
-    string_form,
-    lustre_form,
-    nakai_form,
-    True,
-    True,
+    form,
+    form
+      |> example.format_form
+      |> example.formatted_form_to_string,
   )
 }
 
-fn handle_post(req: Request, make_forms) -> Response {
+fn handle_post(
+  req: Request,
+  example: ExampleRun(format, output, output2, msg),
+) -> Response {
   use formdata <- wisp.require_form(req)
 
-  let #(dir, name, string_form, lustre_form, nakai_form) = make_forms()
+  let form =
+    example.make_form()
+    |> example.post_handler(formdata, _)
 
-  let assert Ok(code) =
-    simplifile.read("./src/formz_demo/examples/" <> dir <> "/strings.gleam")
-
-  let input_data = formdata.values
-
-  let #(string_form, string_output, string_errors) = case
-    string_form |> formz.data(input_data) |> formz.parse
-  {
-    Ok(r) -> #(string_form |> formz.data(input_data), option.Some(r), [])
-    Error(f) -> #(f, option.None, get_errors(f))
-  }
-  let #(lustre_form, lustre_output, lustre_errors) = case
-    lustre_form |> formz.data(input_data) |> formz.parse
-  {
-    Ok(r) -> #(lustre_form |> formz.data(input_data), option.Some(r), [])
-    Error(f) -> #(f, option.None, get_errors(f))
-  }
-  let #(nakai_form, nakai_output, nakai_errors) = case
-    nakai_form |> formz.data(input_data) |> formz.parse
-  {
-    Ok(r) -> #(nakai_form |> formz.data(input_data), option.Some(r), [])
-    Error(f) -> #(f, option.None, get_errors(f))
-  }
-
-  let has_output_discrepancy = case string_output, lustre_output, nakai_output {
-    a, b, c if a == b && a == c -> False
-    _, _, _ -> True
-  }
-  let has_error_discrepancy = case string_errors, lustre_errors, nakai_errors {
-    a, b, c if a == b && a == c -> False
-    _, _, _ -> True
+  let #(form, form_output) = case form {
+    Ok(r) -> #(
+      example.make_form() |> formz.data(formdata.values),
+      option.Some(r),
+    )
+    Error(form_with_errors) -> #(form_with_errors, option.None)
   }
 
   page.build_page(
-    name,
-    code,
-    option.Some(input_data),
-    get_errors(string_form),
-    string_output,
-    string_form,
-    lustre_form,
-    nakai_form,
-    has_output_discrepancy,
-    has_error_discrepancy,
+    example.dir,
+    get_code(example.dir),
+    option.Some(formdata.values),
+    form_output,
+    form,
+    form
+      |> example.format_form
+      |> example.formatted_form_to_string,
   )
-}
-
-fn get_errors(
-  form: formz.Form(format, widget_args, a),
-) -> List(#(String, String)) {
-  form
-  |> formz.get_inputs
-  |> list.filter_map(fn(f) {
-    case f {
-      input.Input(..) -> Error(Nil)
-      input.InvalidInput(error:, ..) -> Ok(#(f.name, error))
-    }
-  })
 }
