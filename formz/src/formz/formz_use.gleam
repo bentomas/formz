@@ -17,7 +17,6 @@ pub opaque type Form(format, output) {
 pub type FormItem(format) {
   Item(Input(format))
   Fieldset(String, List(FormItem(format)))
-  Section(String, List(FormItem(format)))
 }
 
 pub fn with(
@@ -118,7 +117,7 @@ pub fn sub_form(
       // form was good so far, but this sub form errored, so need to
       // hop on error track
       Ok(_), Error(error_fields) ->
-        Error([Fieldset(name, error_fields), ..inputs])
+        Error([Fieldset(name, error_fields), ..next_inputs])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
@@ -139,9 +138,6 @@ pub fn next_item(
     [Fieldset(_, []), ..rest] -> next_item(rest)
     [Fieldset(name, [first, ..rest_1]), ..rest_2] ->
       next_item(list.flatten([[first], [Fieldset(name, rest_1)], rest_2]))
-    [Section(_, []), ..rest] -> next_item(rest)
-    [Section(name, [first, ..rest_1]), ..rest_2] ->
-      next_item(list.flatten([[first], [Fieldset(name, rest_1)], rest_2]))
   }
 }
 
@@ -153,7 +149,6 @@ fn map_items(
     case item {
       Item(input) -> Item(fun(input))
       Fieldset(name, items) -> Fieldset(name, map_items(items, fun))
-      Section(name, items) -> Section(name, map_items(items, fun))
     }
   })
 }
@@ -167,8 +162,6 @@ fn do_get_inputs(items: List(FormItem(format)), acc) {
     [] -> acc
     [Item(input), ..rest] -> do_get_inputs(rest, [input, ..acc])
     [Fieldset(_, items), ..rest] ->
-      do_get_inputs(list.flatten([items, rest]), acc)
-    [Section(_, items), ..rest] ->
       do_get_inputs(list.flatten([items, rest]), acc)
   }
 }

@@ -257,6 +257,40 @@ pub fn sub_form_test() {
   |> should.equal(Ok(#(#(1, 2, 3), 4)))
 }
 
+pub fn sub_form_error_test() {
+  let f1 = {
+    use a <- formz.with(field("a", fields.integer_field()))
+    use b <- formz.with(field("b", fields.integer_field()))
+    use c <- formz.with(field("c", fields.integer_field()))
+
+    formz.create_form(#(a, b, c))
+  }
+
+  let f2 = {
+    use a <- formz.sub_form("name", "Name", f1)
+    use b <- formz.with(field("d", fields.integer_field()))
+
+    formz.create_form(#(a, b))
+  }
+
+  let assert [inputa, inputb, inputc, inputd] =
+    f2
+    |> formz.data([
+      #("name.a", "a"),
+      #("name.b", "2"),
+      #("name.c", "3"),
+      #("d", "4"),
+    ])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.get_inputs
+
+  inputa |> should_be_field_with_error("Must be a whole number")
+  inputb |> should_be_field_no_error
+  inputc |> should_be_field_no_error
+  inputd |> should_be_field_no_error
+}
+
 pub fn decoded_and_try_test() {
   let f =
     three_field_form()
