@@ -61,7 +61,7 @@ pub fn enum(
   }
 }
 
-pub fn list_item(
+pub fn enum_by_index(
   variants: List(#(String, enum)),
 ) -> fn(String) -> Result(enum, String) {
   fn(str) {

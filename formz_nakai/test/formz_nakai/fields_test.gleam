@@ -73,9 +73,10 @@ pub fn enum_field_test() {
   fields_should_be_equal_except_widget(nakai_field, string_field)
 }
 
-pub fn list_field_test() {
-  let string_field = string_fields.list_field([#("a", "A"), #("b", "B")])
-  let nakai_field = nakai_fields.list_field([#("a", "A"), #("b", "B")])
+pub fn indexed_enum_field_test() {
+  let string_field =
+    string_fields.indexed_enum_field([#("a", "A"), #("b", "B")])
+  let nakai_field = nakai_fields.indexed_enum_field([#("a", "A"), #("b", "B")])
 
   fields_should_be_equal_except_widget(nakai_field, string_field)
 }

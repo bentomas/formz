@@ -53,11 +53,11 @@ pub fn enum_field(
   Field(input.empty_field(widget), pair.second(first), transform)
 }
 
-pub fn list_field(
+pub fn indexed_enum_field(
   variants: List(#(String, enum)),
   widget: fn(Input(format), input.WidgetArgs) -> format,
 ) -> Field(format, enum) {
-  let transform = validation.list_item(variants)
+  let transform = validation.enum_by_index(variants)
   // todo should i force this to be a non empty list?
   // https://github.com/giacomocavalieri/non_empty_list
   // on the one hand it needs to be non empty, on the other

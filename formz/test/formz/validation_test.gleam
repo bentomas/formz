@@ -102,22 +102,22 @@ pub fn enum_test() {
 
 pub fn list_item_test() {
   "x"
-  |> validation.list_item(variants() |> list.take(1))
+  |> validation.enum_by_index(variants() |> list.take(1))
   |> should.equal(Error("Must be A"))
   "x"
-  |> validation.list_item(variants() |> list.take(2))
+  |> validation.enum_by_index(variants() |> list.take(2))
   |> should.equal(Error("Must be one of A, B"))
   "x"
-  |> validation.list_item(variants() |> list.take(3))
+  |> validation.enum_by_index(variants() |> list.take(3))
   |> should.equal(Error("Must be one of A, B, C"))
   "x"
-  |> validation.list_item(variants() |> list.take(4))
+  |> validation.enum_by_index(variants() |> list.take(4))
   |> should.equal(Error("Must be one of A, B, C, D"))
   "x"
-  |> validation.list_item(variants())
+  |> validation.enum_by_index(variants())
   |> should.equal(Error("Must be one of A, B, C, D..."))
-  "0" |> validation.list_item(variants()) |> should.equal(Ok(A))
-  "24" |> validation.list_item(variants()) |> should.equal(Ok(Y))
+  "0" |> validation.enum_by_index(variants()) |> should.equal(Ok(A))
+  "24" |> validation.enum_by_index(variants()) |> should.equal(Ok(Y))
 }
 
 pub fn boolean_test() {

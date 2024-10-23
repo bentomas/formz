@@ -30,7 +30,12 @@ pub fn hidden_field() {
   field.text_field(widgets.hidden_widget()) |> field.set_hidden(True)
 }
 
-pub fn list_field(variants: List(#(String, enum))) {
+pub fn indexed_enum_field(variants: List(#(String, enum))) {
   let keys_indexed = list.index_map(variants, fn(t, i) { #(t.0, i) })
-  field.list_field(variants, widgets.select_widget(keys_indexed))
+  field.indexed_enum_field(variants, widgets.select_widget(keys_indexed))
+}
+
+pub fn list_field(variants: List(String)) {
+  let tuple_list = list.map(variants, fn(s) { #(s, s) })
+  indexed_enum_field(tuple_list)
 }

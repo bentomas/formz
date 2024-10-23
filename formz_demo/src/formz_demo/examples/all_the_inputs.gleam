@@ -13,9 +13,10 @@ pub fn make_form() {
   use e <- formz.with(field("e", fields.email_field()))
   use f <- formz.with(field("f", fields.hidden_field()))
   use g <- formz.with(field("g", fields.enum_field(letters())))
-  use h <- formz.with(field("h", fields.list_field(choices)))
+  use h <- formz.with(field("h", fields.indexed_enum_field(choices)))
+  use i <- formz.with(field("i", fields.list_field(["Dog", "Cat", "Bird"])))
 
-  formz.create_form(#(a, b, c, d, e, f, g, h))
+  formz.create_form(#(a, b, c, d, e, f, g, h, i))
 }
 
 pub fn handle_get(form) {
