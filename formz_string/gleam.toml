@@ -1,4 +1,4 @@
-name = "formz_lustre"
+name = "formz_string"
 version = "1.0.0"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
@@ -15,8 +15,6 @@ version = "1.0.0"
 [dependencies]
 formz = { path = "../formz" }
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
-lustre = ">= 4.5.1 and < 5.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
-formz_string = { path = "../formz_string" }

@@ -1,22 +1,29 @@
 pub type Input(format) {
-  Input(
+  Valid(
     name: String,
     label: String,
     help_text: String,
-    widget: fn(Input(format), WidgetArgs) -> format,
+    disabled: Bool,
+    required: Bool,
+    widget: Widget(format),
     hidden: Bool,
     value: String,
   )
-  InvalidInput(
+  Invalid(
     name: String,
     label: String,
     help_text: String,
-    widget: fn(Input(format), WidgetArgs) -> format,
+    disabled: Bool,
+    required: Bool,
+    widget: Widget(format),
     hidden: Bool,
     value: String,
     error: String,
   )
 }
+
+pub type Widget(format) =
+  fn(Input(format), WidgetArgs) -> format
 
 pub type WidgetArgs {
   WidgetArgs(id: String, labelled_by: InputLabelled)
@@ -28,72 +35,379 @@ pub type InputLabelled {
   Id(element_id: String)
 }
 
-pub fn empty_field(widget: fn(Input(format), _) -> format) -> Input(format) {
-  Input("", "", "", widget, False, "")
-}
-
 pub fn set_name(field: Input(format), name: String) -> Input(format) {
   case field {
-    Input(_, label, help_text, widget, hidden, value) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(_, label, help_text, widget, hidden, value, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _name,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _name,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
 pub fn set_label(field: Input(format), label: String) -> Input(format) {
   case field {
-    Input(name, _, help_text, widget, hidden, value) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(name, _, help_text, widget, hidden, value, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _label,
+      name:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _label,
+      name:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
 pub fn set_help_text(field: Input(format), help_text: String) -> Input(format) {
   case field {
-    Input(name, label, _, widget, hidden, value) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(name, label, _, widget, hidden, value, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _help_text,
+      name:,
+      label:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _help_text,
+      name:,
+      label:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
-pub fn set_widget(
-  field: Input(format),
-  widget: fn(Input(format), WidgetArgs) -> format,
-) -> Input(format) {
+pub fn set_widget(field: Input(format), widget: Widget(format)) -> Input(format) {
   case field {
-    Input(name, label, help_text, _, hidden, value) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(name, label, help_text, _, hidden, value, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _widget,
+      name:,
+      label:,
+      help_text:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _widget,
+      name:,
+      label:,
+      help_text:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
 pub fn set_hidden(field: Input(format), hidden: Bool) -> Input(format) {
   case field {
-    Input(name, label, help_text, widget, _, value) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(name, label, help_text, widget, _, value, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _hidden,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _hidden,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
+}
+
+pub fn set_disabled(field: Input(format), disabled: Bool) -> Input(format) {
+  case field {
+    Valid(
+      _disabled,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      value:,
+      hidden:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _disabled,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
 pub fn set_value(field: Input(format), value: String) -> Input(format) {
   case field {
-    Input(name, label, help_text, widget, hidden, _) ->
-      Input(name, label, help_text, widget, hidden, value)
-    InvalidInput(name, label, help_text, widget, hidden, _, error) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      _value,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _value,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }
 
 pub fn set_error(field: Input(format), error: String) -> Input(format) {
   case field {
-    Input(name, label, help_text, widget, hidden, value) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
-    InvalidInput(name, label, help_text, widget, hidden, value, _) ->
-      InvalidInput(name, label, help_text, widget, hidden, value, error)
+    Valid(
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+        error:,
+      )
+    Invalid(
+      _error,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
   }
 }

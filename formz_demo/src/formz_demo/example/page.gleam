@@ -46,6 +46,19 @@ pub fn build_page(
   wisp.ok() |> wisp.html_body(html)
 }
 
+fn get_inputs(form: formz.Form(format, ouput)) {
+  form |> formz.get_items |> do_get_inputs([]) |> list.reverse
+}
+
+fn do_get_inputs(items: List(formz.FormItem(format)), acc) {
+  case items {
+    [] -> acc
+    [formz.Item(input), ..rest] -> do_get_inputs(rest, [input, ..acc])
+    [formz.Set(_, items), ..rest] ->
+      do_get_inputs(list.flatten([items, rest]), acc)
+  }
+}
+
 pub fn show_post(
   input_data: option.Option(List(#(String, String))),
   output: option.Option(a),
@@ -56,7 +69,7 @@ pub fn show_post(
     option.Some(input_data) -> {
       let fields_no_post =
         form
-        |> formz.get_inputs
+        |> get_inputs
         |> list.map(fn(i) {
           html.tr([], [
             html.td([], [html.text(i.name)]),
@@ -69,8 +82,8 @@ pub fn show_post(
             ]),
             html.td([], [
               html.text(case i {
-                input.Input(..) -> ""
-                input.InvalidInput(error:, ..) -> error
+                input.Valid(..) -> ""
+                input.Invalid(error:, ..) -> error
               }),
             ]),
           ])

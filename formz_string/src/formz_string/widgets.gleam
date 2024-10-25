@@ -140,6 +140,10 @@ pub fn select_widget(variants: List(#(String, value))) {
       <> aria_label_attr(args.labelled_by, input.label)
       <> ">"
     }
+    // TODO make this placeholder option not selectable? with disabled selected attributes
+    // https://stackoverflow.com/questions/5805059/how-do-i-make-a-placeholder-for-a-select-box
+    <> { "<option value>Select...</option>" }
+    <> { "<hr>" }
     <> choices
     <> { "</select>" }
   }

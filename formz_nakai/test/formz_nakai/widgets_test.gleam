@@ -1,11 +1,11 @@
-import formz/input.{type Input, type WidgetArgs, Input, WidgetArgs}
+import formz/input.{type WidgetArgs, WidgetArgs}
 import gleam/string
 import gleeunit
 import gleeunit/should
 import nakai
 
-import formz/string_generator/widgets as string_widgets
 import formz_nakai/widgets
+import formz_string/widgets as string_widgets
 
 pub fn main() {
   gleeunit.main()
@@ -19,25 +19,52 @@ fn remove_checked_true(str: String) -> String {
   string.replace(str, "checked=\"true\"", "checked")
 }
 
+fn remove_empty_attributes(str: String) -> String {
+  string.replace(str, "=\"\"", "")
+}
+
 fn convert_to_string(input) {
   input
   |> nakai.to_inline_string
   |> remove_self_closing_slash
   |> remove_checked_true
+  |> remove_empty_attributes
 }
 
 fn test_inputs(
   name name,
   label label,
-  help help,
+  help help_text,
   hidden hidden,
+  disabled disabled,
+  required required,
   value value,
   args args,
   string string_widget,
   widget widget,
 ) {
-  let string_input = Input(name, label, help, string_widget, hidden, value)
-  let input = Input(name, label, help, widget, hidden, value)
+  let string_input =
+    input.Valid(
+      name:,
+      label:,
+      help_text:,
+      widget: string_widget,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    )
+  let input =
+    input.Valid(
+      name:,
+      label:,
+      help_text:,
+      widget: widget,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    )
 
   input.widget(input, args)
   |> convert_to_string
@@ -52,10 +79,11 @@ pub fn text_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
-
   test_inputs(
     string_widgets.text_like_widget("text"),
     widgets.text_like_widget("text"),
@@ -63,6 +91,8 @@ pub fn text_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -74,6 +104,8 @@ pub fn text_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "val",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -85,6 +117,8 @@ pub fn text_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -98,6 +132,8 @@ pub fn checkbox_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Id("div")),
   )
@@ -108,6 +144,8 @@ pub fn checkbox_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "on",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -119,6 +157,8 @@ pub fn checkbox_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "on",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -132,6 +172,8 @@ pub fn password_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Id("div")),
   )
@@ -142,6 +184,8 @@ pub fn password_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "xxxx",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -153,6 +197,8 @@ pub fn password_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "xxxx",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -166,6 +212,8 @@ pub fn textarea_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Id("div")),
   )
@@ -176,6 +224,8 @@ pub fn textarea_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -187,6 +237,8 @@ pub fn textarea_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -200,6 +252,8 @@ pub fn hidden_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Id("div")),
   )
@@ -210,6 +264,8 @@ pub fn hidden_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -221,6 +277,8 @@ pub fn hidden_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Element),
   )
@@ -235,6 +293,8 @@ pub fn select_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "",
     args: WidgetArgs("id", labelled_by: input.Id("div")),
   )
@@ -245,6 +305,8 @@ pub fn select_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Value),
   )
@@ -256,6 +318,8 @@ pub fn select_widget_test() {
     label: "A",
     help: "help",
     hidden: False,
+    disabled: False,
+    required: True,
     value: "1",
     args: WidgetArgs("id", labelled_by: input.Element),
   )

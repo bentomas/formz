@@ -1,41 +1,50 @@
 import formz/field
+import formz/validation
 import formz_nakai/widgets
 import gleam/list
 
 pub fn text_field() {
-  field.text_field(widgets.text_like_widget("text"))
+  field.Definition(widgets.text_like_widget("text"), validation.string, "")
 }
 
 pub fn email_field() {
-  field.email_field(widgets.text_like_widget("email"))
+  field.Definition(widgets.text_like_widget("email"), validation.email, "")
 }
 
 pub fn integer_field() {
-  field.integer_field(widgets.text_like_widget("number"))
+  field.Definition(widgets.text_like_widget("number"), validation.int, 0)
 }
 
 pub fn number_field() {
-  field.number_field(widgets.text_like_widget("number"))
+  field.Definition(widgets.text_like_widget("number"), validation.number, 0.0)
 }
 
 pub fn boolean_field() {
-  field.boolean_field(widgets.checkbox_widget())
+  field.Definition(widgets.checkbox_widget(), validation.boolean, False)
 }
 
 pub fn enum_field(variants: List(#(String, enum))) {
-  field.enum_field(variants, widgets.select_widget(variants))
+  let assert Ok(#(_, first)) = list.first(variants)
+  field.Definition(
+    widgets.select_widget(variants),
+    validation.enum(variants)
+      |> validation.replace_error("Please select an option"),
+    first,
+  )
 }
 
 pub fn indexed_enum_field(variants: List(#(String, enum))) {
   let keys_indexed = list.index_map(variants, fn(t, i) { #(t.0, i) })
-  field.indexed_enum_field(variants, widgets.select_widget(keys_indexed))
+  let assert Ok(#(_, first)) = list.first(variants)
+  field.Definition(
+    widgets.select_widget(keys_indexed),
+    validation.enum_by_index(variants)
+      |> validation.replace_error("Please select an option"),
+    first,
+  )
 }
 
 pub fn list_field(variants: List(String)) {
   let tuple_list = list.map(variants, fn(s) { #(s, s) })
   indexed_enum_field(tuple_list)
-}
-
-pub fn hidden_field() {
-  field.text_field(widgets.hidden_widget()) |> field.set_hidden(True)
 }

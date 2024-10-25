@@ -1,6 +1,5 @@
 import formz/field.{field}
 import formz/formz_use as formz
-import formz/input
 import formz/string_generator/fields
 
 pub fn make_form() {
@@ -11,17 +10,11 @@ pub fn make_form() {
   use c <- formz.with(field("c", fields.number_field()))
   use d <- formz.with(field("d", fields.boolean_field()))
   use e <- formz.with(field("e", fields.email_field()))
-  use f <- formz.with(field("f", fields.hidden_field()))
-  use g <- formz.with(field("g", fields.enum_field(letters())))
-  use h <- formz.with(field("h", fields.indexed_enum_field(choices)))
-  use i <- formz.with(field("i", fields.list_field(["Dog", "Cat", "Bird"])))
+  use f <- formz.with(field("g", fields.enum_field(letters())))
+  use g <- formz.with(field("h", fields.indexed_enum_field(choices)))
+  use h <- formz.with(field("i", fields.list_field(["Dog", "Cat", "Bird"])))
 
-  formz.create_form(#(a, b, c, d, e, f, g, h, i))
-}
-
-pub fn handle_get(form) {
-  form
-  |> formz.update_input("f", input.set_value(_, "hidden"))
+  formz.create_form(#(a, b, c, d, e, f, g, h))
 }
 
 pub type Alphabet {

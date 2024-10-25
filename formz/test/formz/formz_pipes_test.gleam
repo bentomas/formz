@@ -197,13 +197,15 @@ pub fn parse_triple_field_form_with_error_test() {
 fn should_be_field_no_error(field: input.Input(String)) {
   should.equal(
     field,
-    input.Input(
+    input.Valid(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
       value: field.value,
       widget: field.widget,
       hidden: field.hidden,
+      disabled: field.disabled,
+      required: field.required,
     ),
   )
 }
@@ -211,7 +213,7 @@ fn should_be_field_no_error(field: input.Input(String)) {
 fn should_be_field_with_error(field: input.Input(String), str: String) {
   should.equal(
     field,
-    input.InvalidInput(
+    input.Invalid(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
@@ -219,34 +221,36 @@ fn should_be_field_with_error(field: input.Input(String), str: String) {
       widget: field.widget,
       hidden: field.hidden,
       error: str,
+      disabled: field.disabled,
+      required: field.required,
     ),
   )
 }
 
-pub fn parse_and_try_test() {
+pub fn try_test() {
   let f =
     formz.new()
     |> formz.add(field("a", fields.integer_field()))
     |> formz.add(field("b", fields.integer_field()))
     |> formz.add(field("c", fields.integer_field()))
-    |> formz.decodes(fn(_) { fn(_) { fn(_) { 1 } } })
+    |> formz.decodes(fn(a) { fn(b) { fn(c) { [a, b, c] } } })
     |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
 
   // can succeed
-  formz.parse_and_try(f, fn(_, _) { Ok(3) })
+  formz.try(f, fn(_, _) { Ok(3) })
   |> should.equal(Ok(3))
 
   // can change type
-  formz.parse_and_try(f, fn(_, _) { Ok("it worked") })
+  formz.try(f, fn(_, _) { Ok("it worked") })
   |> should.equal(Ok("it worked"))
 
   // can error
-  formz.parse_and_try(f, fn(_, form) { Error(form) })
+  formz.try(f, fn(_, form) { Error(form) })
   |> should.equal(Error(f))
 
   // can change field
   let assert Error(form) =
-    formz.parse_and_try(f, fn(_, form) {
+    formz.try(f, fn(_, form) {
       Error(formz.update_input(form, "a", input.set_error(_, "woops")))
     })
   let assert [fielda, fieldb, fieldc] = formz.get_inputs(form)

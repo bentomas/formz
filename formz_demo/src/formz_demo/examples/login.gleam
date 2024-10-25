@@ -24,7 +24,7 @@ pub fn make_form() {
 }
 
 pub fn handle_post(formdata: wisp.FormData, form) {
-  use cred, form <- formz.parse_and_try(form |> formz.data(formdata.values))
+  use cred, form <- formz.try(form |> formz.data(formdata.values))
 
   case cred {
     Credentials("admin", "l33t") -> Ok(User(cred.username))

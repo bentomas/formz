@@ -1,6 +1,6 @@
 import formz/formz_use as formz
-import formz/input.{type Input, Input, InvalidInput}
-import formz/string_generator/widgets
+import formz/input
+import formz_string/widgets
 import gleam/list
 import gleam/string
 
@@ -8,20 +8,15 @@ pub fn generate_form(form) -> String {
   {
     form
     |> formz.get_items
-    |> list.map(generate_visible_item)
-    |> string.join("\n")
-  }
-  <> {
-    form
-    |> formz.get_inputs
-    |> list.filter(fn(f) { f.hidden })
-    |> list.map(generate_hidden_field)
+    |> list.map(generate_item)
     |> string.join("\n")
   }
 }
 
-pub fn generate_visible_item(item: formz.FormItem(String)) -> String {
+pub fn generate_item(item: formz.FormItem(String)) -> String {
   case item {
+    formz.Item(f) if f.hidden == True ->
+      widgets.hidden_widget()(f, input.WidgetArgs("", input.Value))
     formz.Item(f) ->
       case f.hidden {
         True -> ""
@@ -38,8 +33,8 @@ pub fn generate_visible_item(item: formz.FormItem(String)) -> String {
             <> "</span>"
 
           let errors_el = case f {
-            Input(..) -> "<span class=\"error-placeholder\"></span>"
-            InvalidInput(error:, ..) ->
+            input.Valid(..) -> "<span class=\"error-placeholder\"></span>"
+            input.Invalid(error:, ..) ->
               "<span class=\"errors\">" <> error <> "</span>"
           }
 
@@ -51,19 +46,15 @@ pub fn generate_visible_item(item: formz.FormItem(String)) -> String {
           <> "</p>"
         }
       }
-    formz.Fieldset(name, items) -> {
+    formz.Set(s, items) -> {
       "<fieldset><legend>"
-      <> name
+      <> s.label
       <> "</legend>"
       <> {
-        list.map(items, generate_visible_item)
+        list.map(items, generate_item)
         |> string.join("\n")
       }
       <> "</fieldset>"
     }
   }
-}
-
-pub fn generate_hidden_field(f: Input(String)) -> String {
-  widgets.hidden_widget()(f, input.WidgetArgs("", input.Value))
 }

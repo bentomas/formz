@@ -9,6 +9,7 @@ import lustre/element/html.{html}
 import wisp.{type Request, type Response}
 
 import formz_demo/examples/all_the_inputs
+import formz_demo/examples/custom_output
 import formz_demo/examples/hello_world
 import formz_demo/examples/labels
 import formz_demo/examples/login
@@ -37,7 +38,7 @@ fn get_examples() {
         run.ExampleRun(
           dir,
           all_the_inputs.make_form,
-          all_the_inputs.handle_get,
+          defaults.handle_get,
           defaults.handle_post,
           defaults.format_string_form,
           defaults.formatted_string_form_to_string,
@@ -80,6 +81,19 @@ fn get_examples() {
           defaults.handle_post,
           defaults.format_string_form,
           defaults.formatted_string_form_to_string,
+        ),
+      )
+    }),
+    #("custom_output", fn(req, dir) {
+      run.handle(
+        req,
+        run.ExampleRun(
+          dir,
+          custom_output.make_form,
+          defaults.handle_get,
+          defaults.handle_post,
+          custom_output.format_form,
+          defaults.formatted_lustre_form_to_string,
         ),
       )
     }),

@@ -124,16 +124,19 @@ pub fn select_widget(variants: List(#(String, value))) {
         id_attr(args.id),
         aria_label_attr(args.labelled_by, input.label),
       ]),
-      list.map(variants, fn(variant) {
-        let val = string.inspect(variant.1)
-        let selected_attr = case input.value == val {
-          True -> [attr.selected()]
-          _ -> []
-        }
-        html.option(list.flatten([value_attr(val), selected_attr]), [
-          html.Text(variant.0),
-        ])
-      }),
+      list.flatten([
+        [html.option([attr.value("")], [html.Text("Select...")]), html.hr([])],
+        list.map(variants, fn(variant) {
+          let val = string.inspect(variant.1)
+          let selected_attr = case input.value == val {
+            True -> [attr.selected()]
+            _ -> []
+          }
+          html.option(list.flatten([value_attr(val), selected_attr]), [
+            html.Text(variant.0),
+          ])
+        }),
+      ]),
     )
   }
 }

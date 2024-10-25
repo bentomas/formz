@@ -6,12 +6,15 @@
 // - form sets
 // - decoders/toy.decoder?
 // - csrf token
-// - overwrite error messages
 // - emit warning on duplicate named fields
 // - clean names so snake_case?
+// - disabled fields
+// - optional fields? (can do optional validation, but that isn't reflected in the html)
+// - errors on hidden fields?
+// - custom types for input.hidden, input.disabled, input.required?
 
 import formz/field.{type Field}
-import formz/input.{type Input, Input}
+import formz/input.{type Input, Valid}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -105,7 +108,7 @@ fn do_add_input_data(
     // no more data!  return all the fields we have left plus the ones we accumulated
     _, [] -> list.append(fields, acc)
     // we have a field and data, and the names match. update field to have data
-    [Input(name: field_name, ..) as field, ..fields_rest],
+    [Valid(name: field_name, ..) as field, ..fields_rest],
       [#(data_name, value), ..data_rest]
       if field_name == data_name
     ->
@@ -142,7 +145,7 @@ pub fn parse(
   }
 }
 
-pub fn parse_and_try(
+pub fn try(
   form: Form(format, output, decoder, HasDecoder),
   apply fun: fn(output, Form(format, output, decoder, HasDecoder)) ->
     Result(c, Form(format, output, decoder, HasDecoder)),
