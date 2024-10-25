@@ -1,7 +1,6 @@
 import formz/field.{field}
 import formz/formz_use as formz
-import formz/input.{input}
-import formz/string_generator/fields
+import formz_string/fields
 
 pub fn make_form() {
   use name <- formz.with(

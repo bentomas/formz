@@ -1,6 +1,6 @@
 import formz/field
 import formz/formz_use as formz
-import formz/string_generator/fields
+import formz_string/fields
 
 pub fn make_form() {
   use billing_address <- formz.sub_form(

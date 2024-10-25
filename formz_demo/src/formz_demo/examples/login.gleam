@@ -1,8 +1,8 @@
 import formz/field.{field}
 import formz/formz_use as formz
 import formz/input
-import formz/string_generator/fields
-import formz/string_generator/widgets
+import formz_string/fields
+import formz_string/widgets
 import wisp
 
 pub type Credentials {

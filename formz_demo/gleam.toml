@@ -16,6 +16,7 @@ version = "1.0.0"
 formz = { path = "../formz" }
 formz_lustre = { path = "../formz_lustre" }
 formz_nakai = { path = "../formz_nakai" }
+formz_string = { path = "../formz_string" }
 gleam_http = ">= 3.7.0 and < 4.0.0"
 gleam_erlang = ">= 0.27.0 and < 1.0.0"
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"

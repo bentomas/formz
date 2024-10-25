@@ -1,7 +1,7 @@
 import formz/formz_use as formz
-import formz/string_generator/simple
 import formz_lustre/simple as lustre_simple
 import formz_nakai/simple as nakai_simple
+import formz_string/simple
 import lustre/element
 import nakai
 import nakai/html

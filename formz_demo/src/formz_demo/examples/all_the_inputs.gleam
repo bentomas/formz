@@ -1,6 +1,6 @@
 import formz/field.{field}
 import formz/formz_use as formz
-import formz/string_generator/fields
+import formz_string/fields
 
 pub fn make_form() {
   let choices = [#("Yes", True), #("Maybe", True), #("No", False)]
