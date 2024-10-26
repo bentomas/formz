@@ -1,4 +1,4 @@
-import formz/input.{type Input, type WidgetArgs}
+import formz/field.{type Field, type WidgetArgs}
 import gleam/list
 import gleam/string
 import nakai/attr
@@ -19,13 +19,13 @@ fn name_attr(name: String) -> List(attr.Attr) {
 }
 
 fn aria_label_attr(
-  labelled_by: input.InputLabelled,
+  labelled_by: field.InputLabelled,
   label: String,
 ) -> List(attr.Attr) {
   case labelled_by {
-    input.Element -> []
-    input.Id(id) -> [attr.aria_labelledby(id)]
-    input.Value ->
+    field.Element -> []
+    field.Id(id) -> [attr.aria_labelledby(id)]
+    field.Value ->
       case label {
         "" -> []
         _ -> [attr.aria_label(label)]
@@ -45,8 +45,8 @@ fn value_attr(value: String) -> List(attr.Attr) {
 }
 
 pub fn checkbox_widget() {
-  fn(input: Input(html.Node), args: input.WidgetArgs) -> html.Node {
-    let checked_attr = case input.value {
+  field.widget(fn(field: Field(html.Node), args: field.WidgetArgs) -> html.Node {
+    let checked_attr = case field.value {
       "on" -> [attr.checked()]
       _ -> []
     }
@@ -54,81 +54,81 @@ pub fn checkbox_widget() {
     html.input(
       list.flatten([
         type_attr("checkbox"),
-        name_attr(input.name),
+        name_attr(field.name),
         id_attr(args.id),
         checked_attr,
-        aria_label_attr(args.labelled_by, input.label),
+        aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  }
+  })
 }
 
 pub fn password_widget() {
-  fn(input: Input(html.Node), args: WidgetArgs) -> html.Node {
+  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
     html.input(
       list.flatten([
         type_attr("password"),
-        name_attr(input.name),
+        name_attr(field.name),
         id_attr(args.id),
-        // value_attr(input.value),
-        aria_label_attr(args.labelled_by, input.label),
+        // value_attr(field.value),
+        aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  }
+  })
 }
 
 pub fn text_like_widget(type_: String) {
-  fn(input: Input(html.Node), args: WidgetArgs) -> html.Node {
+  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
     html.input(
       list.flatten([
         type_attr(type_),
-        name_attr(input.name),
+        name_attr(field.name),
         id_attr(args.id),
-        value_attr(input.value),
-        aria_label_attr(args.labelled_by, input.label),
+        value_attr(field.value),
+        aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  }
+  })
 }
 
 pub fn textarea_widget() {
-  fn(input: Input(html.Node), args: WidgetArgs) -> html.Node {
+  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
     html.textarea(
       list.flatten([
-        name_attr(input.name),
+        name_attr(field.name),
         id_attr(args.id),
-        aria_label_attr(args.labelled_by, input.label),
+        aria_label_attr(args.labelled_by, field.label),
       ]),
-      [html.Text(input.value)],
+      [html.Text(field.value)],
     )
-  }
+  })
 }
 
 pub fn hidden_widget() {
-  fn(input: Input(html.Node), _) -> html.Node {
+  field.widget(fn(field: Field(html.Node), _) -> html.Node {
     html.input(
       list.flatten([
         type_attr("hidden"),
-        name_attr(input.name),
-        value_attr(input.value),
+        name_attr(field.name),
+        value_attr(field.value),
       ]),
     )
-  }
+  })
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  fn(input: Input(html.Node), args: WidgetArgs) -> html.Node {
+  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
     html.select(
       list.flatten([
-        name_attr(input.name),
+        name_attr(field.name),
         id_attr(args.id),
-        aria_label_attr(args.labelled_by, input.label),
+        aria_label_attr(args.labelled_by, field.label),
       ]),
       list.flatten([
         [html.option([attr.value("")], [html.Text("Select...")]), html.hr([])],
         list.map(variants, fn(variant) {
           let val = string.inspect(variant.1)
-          let selected_attr = case input.value == val {
+          let selected_attr = case field.value == val {
             True -> [attr.selected()]
             _ -> []
           }
@@ -138,5 +138,5 @@ pub fn select_widget(variants: List(#(String, value))) {
         }),
       ]),
     )
-  }
+  })
 }

@@ -1,5 +1,5 @@
+import formz/field.{WidgetArgs}
 import formz/formz_use as formz
-import formz/input.{WidgetArgs}
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -33,12 +33,15 @@ pub fn generate_item(
       }
       let widget_el =
         html.span([attribute.class("widget")], [
-          f.widget(f, WidgetArgs(id: f.name, labelled_by: input.Element)),
+          field.run_widget(
+            f,
+            WidgetArgs(id: f.name, labelled_by: field.Element),
+          ),
         ])
 
       let errors_el = case f {
-        input.Valid(..) -> element.none()
-        input.Invalid(error:, ..) ->
+        field.Valid(..) -> element.none()
+        field.Invalid(error:, ..) ->
           html.span([attribute.class("errors")], [html.text(error)])
       }
 

@@ -1,4 +1,4 @@
-import formz/field
+import formz/field.{field}
 import formz/formz_use as formz
 import formz_string/fields
 
@@ -18,10 +18,10 @@ pub fn make_form() {
 }
 
 fn address_form() {
-  use street <- formz.with(field.field("street", fields.text_field()))
-  use city <- formz.with(field.field("city", fields.text_field()))
-  use state <- formz.with(field.field("state", fields.list_field(states_list())))
-  use postal_code <- formz.with(field.field("postal_code", fields.text_field()))
+  use street <- formz.with(field("street"), fields.text_field())
+  use city <- formz.with(field("city"), fields.text_field())
+  use state <- formz.with(field("state"), fields.list_field(states_list()))
+  use postal_code <- formz.with(field.field("postal_code"), fields.text_field())
 
   formz.create_form(Address(street:, city:, state:, postal_code:))
 }

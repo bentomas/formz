@@ -1,4 +1,4 @@
-import formz/input.{type Input, type WidgetArgs}
+import formz/field.{type Field, type WidgetArgs}
 import gleam/list
 import gleam/string
 
@@ -16,16 +16,16 @@ fn name_attr(name: String) -> String {
   }
 }
 
-fn aria_label_attr(labelled_by: input.InputLabelled, label: String) -> String {
+fn aria_label_attr(labelled_by: field.InputLabelled, label: String) -> String {
   case labelled_by {
     // there should be a label with a for attribute pointing to this id
-    input.Element -> ""
+    field.Element -> ""
 
     // we have the id of the element that labels this input
-    input.Id(id) -> " aria-labelledby=\"" <> id <> "\""
+    field.Id(id) -> " aria-labelledby=\"" <> id <> "\""
 
     // we'll use the label value as the aria-label
-    input.Value -> {
+    field.Value -> {
       let sanitized_label =
         label
         |> string.replace("\"", "&quot;")
@@ -54,76 +54,76 @@ fn value_attr(value: String) -> String {
 }
 
 pub fn checkbox_widget() {
-  fn(input: Input(String), args: WidgetArgs) -> String {
-    let checked_attr = case input.value {
+  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
+    let checked_attr = case field.value {
       "on" -> " checked"
       _ -> ""
     }
 
     "<input"
     <> type_attr("checkbox")
-    <> name_attr(input.name)
+    <> name_attr(field.name)
     <> id_attr(args.id)
     <> checked_attr
-    <> aria_label_attr(args.labelled_by, input.label)
+    <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  }
+  })
 }
 
 pub fn password_widget() {
-  fn(input: Input(String), args: WidgetArgs) -> String {
+  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
     "<input"
     <> type_attr("password")
-    <> name_attr(input.name)
+    <> name_attr(field.name)
     <> id_attr(args.id)
-    // <> value_attr(input.value)
-    <> aria_label_attr(args.labelled_by, input.label)
+    // <> value_attr(field.value)
+    <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  }
+  })
 }
 
 pub fn text_like_widget(type_: String) {
-  fn(input: Input(String), args: WidgetArgs) -> String {
+  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
     "<input"
     <> type_attr(type_)
-    <> name_attr(input.name)
+    <> name_attr(field.name)
     <> id_attr(args.id)
-    <> value_attr(input.value)
-    <> aria_label_attr(args.labelled_by, input.label)
+    <> value_attr(field.value)
+    <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  }
+  })
 }
 
 pub fn textarea_widget() {
-  fn(input: Input(String), args: WidgetArgs) -> String {
+  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
     "<textarea"
-    <> name_attr(input.name)
+    <> name_attr(field.name)
     <> id_attr(args.id)
-    <> aria_label_attr(args.labelled_by, input.label)
+    <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-    <> input.value
+    <> field.value
     <> "</textarea>"
-  }
+  })
 }
 
 pub fn hidden_widget() {
-  fn(input: Input(String), _args: WidgetArgs) -> String {
+  field.widget(fn(field: Field(String), _args: WidgetArgs) -> String {
     "<input"
     <> type_attr("hidden")
-    <> name_attr(input.name)
-    <> value_attr(input.value)
+    <> name_attr(field.name)
+    <> value_attr(field.value)
     <> ">"
-  }
+  })
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  fn(input: Input(String), args: WidgetArgs) {
+  field.widget(fn(field: Field(String), args: WidgetArgs) {
     let choices =
       list.map(variants, fn(variant) {
         let val = string.inspect(variant.1)
-        let selected_attr = case input.value == val {
+        let selected_attr = case field.value == val {
           True -> " selected"
           _ -> ""
         }
@@ -135,9 +135,9 @@ pub fn select_widget(variants: List(#(String, value))) {
 
     {
       "<select"
-      <> name_attr(input.name)
+      <> name_attr(field.name)
       <> id_attr(args.id)
-      <> aria_label_attr(args.labelled_by, input.label)
+      <> aria_label_attr(args.labelled_by, field.label)
       <> ">"
     }
     // TODO make this placeholder option not selectable? with disabled selected attributes
@@ -146,5 +146,5 @@ pub fn select_widget(variants: List(#(String, value))) {
     <> { "<hr>" }
     <> choices
     <> { "</select>" }
-  }
+  })
 }

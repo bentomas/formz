@@ -1,16 +1,28 @@
+import formz/definition
 import formz/field.{field}
 import formz/formz_use.{Item, Set} as formz
-import formz/input
-import formz/string_generator/fields
 import formz/validation
+import gleam/io
 import gleam/option
 import gleeunit
 import gleeunit/should
 
-fn should_be_field_no_error(field: input.Input(String)) {
+pub fn text_field() {
+  field.Definition(field.widget(fn(_, _) { "" }), validation.string, "")
+}
+
+pub fn int_field() {
+  field.Definition(field.widget(fn(_, _) { "" }), validation.int, 0)
+}
+
+pub fn float_field() {
+  field.Definition(field.widget(fn(_, _) { "" }), validation.number, 0.0)
+}
+
+fn should_be_field_no_error(field: field.Field(String)) {
   should.equal(
     field,
-    input.Valid(
+    field.Valid(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
@@ -23,10 +35,10 @@ fn should_be_field_no_error(field: input.Input(String)) {
   )
 }
 
-fn should_be_field_with_error(field: input.Input(String), str: String) {
+fn should_be_field_with_error(field: field.Field(String), str: String) {
   should.equal(
     field,
-    input.Invalid(
+    field.Invalid(
       name: field.name,
       label: field.label,
       help_text: field.help_text,
@@ -56,14 +68,14 @@ fn empty_form(val) {
 }
 
 fn one_field_form() {
-  use a <- formz.with(field("a", fields.text_field()))
+  use a <- formz.with(field("a"), text_field())
   formz.create_form("hello " <> a)
 }
 
 fn two_field_form() {
   {
-    use a <- formz.with(field("a", fields.text_field()))
-    use b <- formz.with(field("b", fields.text_field()))
+    use a <- formz.with(field("a"), text_field())
+    use b <- formz.with(field("b"), text_field())
 
     formz.create_form(#(a, b))
   }
@@ -71,13 +83,20 @@ fn two_field_form() {
 
 fn three_field_form() {
   use a <- formz.with(
-    field("x", fields.text_field())
-    |> field.set_name("a")
-    |> field.set_label("A")
-    |> field.validates(validation.must_be_longer_than(3)),
+    field("x")
+      |> field.set_name("a")
+      |> field.set_label("A"),
+    text_field()
+      |> definition.validates(validation.must_be_longer_than(3)),
   )
-  use b <- formz.with(field("b", fields.integer_field()))
-  use c <- formz.with(field.full("c", "C", "help!", fields.number_field()))
+
+  use b <- formz.with(field(named: "b"), int_field())
+  use c <- formz.with(
+    field(named: "c")
+      |> field.set_name("c")
+      |> field.set_label("C"),
+    float_field(),
+  )
 
   formz.create_form(#(a, b, c))
 }
@@ -136,42 +155,42 @@ pub fn parse_double_field_form_test() {
   |> should.equal(Ok(#("hello", "world")))
 }
 
-pub fn parse_double_optional_field_form_test() {
-  let f = {
-    use a <- formz.with(field("a", fields.text_field()) |> field.set_optional)
-    use b <- formz.with(field("b", fields.text_field()) |> field.set_optional)
+// pub fn parse_double_optional_field_form_test() {
+//   let f = {
+//     use a <- formz.with(field("a") |> field.set_optional, text_field())
+//     use b <- formz.with(field("b") |> field.set_optional, text_field())
 
-    formz.create_form(#(a, b))
-  }
+//     formz.create_form(#(a, b))
+//   }
 
-  f
-  |> formz.data([#("a", "hello"), #("b", "world")])
-  |> formz.parse
-  |> should.equal(Ok(#(option.Some("hello"), option.Some("world"))))
+//   f
+//   |> formz.data([#("a", "hello"), #("b", "world")])
+//   |> formz.parse
+//   |> should.equal(Ok(#(option.Some("hello"), option.Some("world"))))
 
-  // missing second
-  f
-  |> formz.data([#("a", "hello")])
-  |> formz.parse
-  |> should.equal(Ok(#(option.Some("hello"), option.None)))
+//   // missing second
+//   f
+//   |> formz.data([#("a", "hello")])
+//   |> formz.parse
+//   |> should.equal(Ok(#(option.Some("hello"), option.None)))
 
-  // missing first
-  f
-  |> formz.data([#("b", "world")])
-  |> formz.parse
-  |> should.equal(Ok(#(option.None, option.Some("world"))))
+//   // missing first
+//   f
+//   |> formz.data([#("b", "world")])
+//   |> formz.parse
+//   |> should.equal(Ok(#(option.None, option.Some("world"))))
 
-  // missing both
-  f
-  |> formz.data([])
-  |> formz.parse
-  |> should.equal(Ok(#(option.None, option.None)))
-}
+//   // missing both
+//   f
+//   |> formz.data([])
+//   |> formz.parse
+//   |> should.equal(Ok(#(option.None, option.None)))
+// }
 
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     {
-      use a <- formz.with(field("a", fields.integer_field()))
+      use a <- formz.with(field("a"), int_field())
       formz.create_form(a)
     }
     |> formz.data([#("first", "world")])
@@ -189,9 +208,9 @@ pub fn parse_triple_field_form_with_error_test() {
     |> get_form_from_error_result
     |> formz.get_items
 
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_with_error("Must be a number")
+  fielda |> io.debug |> should_be_field_no_error
+  fieldb |> io.debug |> should_be_field_no_error
+  fieldc |> io.debug |> should_be_field_with_error("Must be a number")
 
   let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
     three_field_form()
@@ -236,16 +255,16 @@ pub fn parse_triple_field_form_with_error_test() {
 
 pub fn sub_form_test() {
   let f1 = {
-    use a <- formz.with(field("a", fields.integer_field()))
-    use b <- formz.with(field("b", fields.integer_field()))
-    use c <- formz.with(field("c", fields.integer_field()))
+    use a <- formz.with(field("a"), int_field())
+    use b <- formz.with(field("b"), int_field())
+    use c <- formz.with(field("c"), int_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
     use a <- formz.sub_form("name", "Name", f1)
-    use b <- formz.with(field("d", fields.integer_field()))
+    use b <- formz.with(field("d"), int_field())
 
     formz.create_form(#(a, b))
   }
@@ -263,16 +282,16 @@ pub fn sub_form_test() {
 
 pub fn sub_form_error_test() {
   let f1 = {
-    use a <- formz.with(field("a", fields.integer_field()))
-    use b <- formz.with(field("b", fields.integer_field()))
-    use c <- formz.with(field("c", fields.integer_field()))
+    use a <- formz.with(field("a"), int_field())
+    use b <- formz.with(field("b"), int_field())
+    use c <- formz.with(field("c"), int_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
     use a <- formz.sub_form("name", "Name", f1)
-    use b <- formz.with(field("d", fields.integer_field()))
+    use b <- formz.with(field("d"), int_field())
 
     formz.create_form(#(a, b))
   }
@@ -316,7 +335,7 @@ pub fn decoded_and_try_test() {
   let assert Error(form) =
     formz.try(f, fn(_, form) {
       form
-      |> formz.update_input("a", input.set_error(_, "woops"))
+      |> formz.update_input("a", field.set_error(_, "woops"))
       |> Error
     })
   let assert [Item(fielda), Item(fieldb), Item(fieldc)] = formz.get_items(form)

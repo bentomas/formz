@@ -1,5 +1,5 @@
+import formz/field
 import formz/formz_use as formz
-import formz/input
 import formz_string/widgets
 import gleam/list
 import gleam/string
@@ -16,7 +16,11 @@ pub fn generate_form(form) -> String {
 pub fn generate_item(item: formz.FormItem(String)) -> String {
   case item {
     formz.Item(f) if f.hidden == True ->
-      widgets.hidden_widget()(f, input.WidgetArgs("", input.Value))
+      "<input"
+      <> { " type=\"hidden\"" }
+      <> { " name=\"" <> f.name <> "\"" }
+      <> { " value\"" <> f.value <> "\"" }
+      <> ">"
     formz.Item(f) ->
       case f.hidden {
         True -> ""
@@ -29,12 +33,12 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
           }
           let widget_el =
             "<span class=\"widget\">"
-            <> f.widget(f, input.WidgetArgs(f.name, input.Element))
+            <> field.run_widget(f, field.WidgetArgs(f.name, field.Element))
             <> "</span>"
 
           let errors_el = case f {
-            input.Valid(..) -> "<span class=\"error-placeholder\"></span>"
-            input.Invalid(error:, ..) ->
+            field.Valid(..) -> "<span class=\"error-placeholder\"></span>"
+            field.Invalid(error:, ..) ->
               "<span class=\"errors\">" <> error <> "</span>"
           }
 

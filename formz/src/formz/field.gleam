@@ -1,120 +1,455 @@
-import formz/input.{type Input}
-import gleam/option
-import gleam/result
-import gleam/string
 import justin
 
-pub type Field(format, output) {
-  Field(
-    input: Input(format),
-    placeholder: output,
-    transform: fn(String) -> Result(output, String),
+pub type Field(format) {
+  Valid(
+    name: String,
+    label: String,
+    help_text: String,
+    disabled: Bool,
+    required: Bool,
+    widget: Widget(format),
+    hidden: Bool,
+    value: String,
+  )
+  Invalid(
+    name: String,
+    label: String,
+    help_text: String,
+    disabled: Bool,
+    required: Bool,
+    widget: Widget(format),
+    hidden: Bool,
+    value: String,
+    error: String,
   )
 }
 
 pub type Definition(format, output) {
   Definition(
-    widget: input.Widget(format),
+    widget: Widget(format),
     transform: fn(String) -> Result(output, String),
     placeholder: output,
   )
 }
 
-pub fn field(
-  name: String,
-  definition: Definition(format, output),
-) -> Field(format, output) {
-  Field(
-    input.Valid(
-      name,
-      justin.sentence_case(name),
-      help_text: "",
-      widget: definition.widget,
-      hidden: False,
-      value: "",
-      disabled: False,
-      required: True,
-    ),
-    definition.placeholder,
-    definition.transform,
+pub opaque type Widget(format) {
+  Widget(fn(Field(format), WidgetArgs) -> format)
+}
+
+pub type WidgetArgs {
+  WidgetArgs(id: String, labelled_by: InputLabelled)
+}
+
+pub type InputLabelled {
+  Element
+  Value
+  Id(element_id: String)
+}
+
+pub fn field(named name: String) -> Field(format) {
+  Valid(
+    name: name,
+    label: justin.sentence_case(name),
+    help_text: "",
+    disabled: False,
+    required: False,
+    widget: Widget(fn(_, _) { panic }),
+    hidden: False,
+    value: "",
   )
 }
 
-pub fn set_name(field: Field(format, b), name: String) -> Field(format, b) {
-  Field(..field, input: input.set_name(field.input, name))
+pub fn widget(fun: fn(Field(format), WidgetArgs) -> format) -> Widget(format) {
+  Widget(fun)
 }
 
-pub fn set_label(field: Field(format, b), label: String) -> Field(format, b) {
-  Field(..field, input: input.set_label(field.input, label))
+pub fn set_name(field: Field(format), name: String) -> Field(format) {
+  case field {
+    Valid(
+      _name,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _name,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn set_help_text(
-  field: Field(format, b),
-  help_text: String,
-) -> Field(format, b) {
-  Field(..field, input: input.set_help_text(field.input, help_text))
+pub fn set_label(field: Field(format), label: String) -> Field(format) {
+  case field {
+    Valid(
+      _label,
+      name:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _label,
+      name:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn set_widget(
-  field: Field(format, b),
-  widget: fn(Input(format), input.WidgetArgs) -> format,
-) -> Field(format, b) {
-  Field(..field, input: input.set_widget(field.input, widget))
+pub fn set_help_text(field: Field(format), help_text: String) -> Field(format) {
+  case field {
+    Valid(
+      _help_text,
+      name:,
+      label:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _help_text,
+      name:,
+      label:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn set_value(field: Field(format, b), value: String) -> Field(format, b) {
-  Field(..field, input: input.set_value(field.input, value))
+pub fn set_widget(field: Field(format), widget: Widget(format)) -> Field(format) {
+  case field {
+    Valid(
+      _widget,
+      name:,
+      label:,
+      help_text:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _widget,
+      name:,
+      label:,
+      help_text:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn set_visibility(
-  field: Field(format, b),
-  visibility: Bool,
-) -> Field(format, b) {
-  Field(..field, input: input.set_hidden(field.input, visibility))
+pub fn set_visibility(field: Field(format), hidden: Bool) -> Field(format) {
+  case field {
+    Valid(
+      _hidden,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _hidden,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      disabled:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn make_visible(field: Field(format, b)) -> Field(format, b) {
+pub fn make_hidden(field: Field(format)) -> Field(format) {
   set_visibility(field, True)
 }
 
-pub fn make_hidden(field: Field(format, b)) -> Field(format, b) {
+pub fn make_visible(field: Field(format)) -> Field(format) {
   set_visibility(field, False)
 }
 
-pub fn set_optional(field: Field(format, b)) -> Field(format, option.Option(b)) {
-  Field(input: field.input, placeholder: option.None, transform: fn(str) {
-    case string.trim(str) {
-      "" -> Ok(option.None)
-      _ -> result.map(field.transform(str), option.Some)
-    }
-  })
+pub fn set_disabled(field: Field(format), disabled: Bool) -> Field(format) {
+  case field {
+    Valid(
+      _disabled,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      value:,
+      hidden:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _disabled,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      required:,
+      value:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn validates(
-  field: Field(format, b),
-  next: fn(b) -> Result(b, String),
-) -> Field(format, b) {
-  let Field(field, placeholder, previous_transform) = field
-
-  Field(field, placeholder, fn(str) {
-    case previous_transform(str) {
-      Ok(value) -> next(value)
-      Error(error) -> Error(error)
-    }
-  })
+pub fn set_value(field: Field(format), value: String) -> Field(format) {
+  case field {
+    Valid(
+      _value,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+    ) ->
+      Valid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+      )
+    Invalid(
+      _value,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      error:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
 }
 
-pub fn transforms(
-  field: Field(format, b),
-  placeholder: c,
-  next: fn(b) -> Result(c, String),
-) -> Field(format, c) {
-  let Field(field, _, previous_transform) = field
+pub fn set_error(field: Field(format), error: String) -> Field(format) {
+  case field {
+    Valid(
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      value:,
+      disabled:,
+      required:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        disabled:,
+        required:,
+        error:,
+      )
+    Invalid(
+      _error,
+      name:,
+      label:,
+      help_text:,
+      widget:,
+      hidden:,
+      disabled:,
+      required:,
+      value:,
+    ) ->
+      Invalid(
+        name:,
+        label:,
+        help_text:,
+        widget:,
+        hidden:,
+        value:,
+        error:,
+        disabled:,
+        required:,
+      )
+  }
+}
 
-  Field(field, placeholder, fn(str) {
-    case previous_transform(str) {
-      Ok(value) -> next(value)
-      Error(error) -> Error(error)
-    }
-  })
+pub fn run_widget(f: Field(format), args: WidgetArgs) -> format {
+  let Widget(fun) = f.widget
+
+  fun(f, args)
 }

@@ -1,5 +1,5 @@
+import formz/field
 import formz/formz_use as formz
-import formz/input
 import gleam/list
 import gleam/option
 import gleam/result
@@ -82,8 +82,8 @@ pub fn show_post(
             ]),
             html.td([], [
               html.text(case i {
-                input.Valid(..) -> ""
-                input.Invalid(error:, ..) -> error
+                field.Valid(..) -> ""
+                field.Invalid(error:, ..) -> error
               }),
             ]),
           ])

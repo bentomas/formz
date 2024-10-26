@@ -1,6 +1,6 @@
+import formz/definition
 import formz/field.{field}
 import formz/formz_use as formz
-import formz/input
 import formz_string/fields
 import formz_string/widgets
 import wisp
@@ -14,10 +14,10 @@ pub type User {
 }
 
 pub fn make_form() {
-  use username <- formz.with(field("username", fields.text_field()))
+  use username <- formz.with(field("username"), fields.text_field())
   use password <- formz.with(
-    field("password", fields.text_field())
-    |> field.set_widget(widgets.password_widget()),
+    field("password"),
+    fields.text_field() |> definition.set_widget(widgets.password_widget()),
   )
 
   formz.create_form(Credentials(username, password))
@@ -30,11 +30,11 @@ pub fn handle_post(formdata: wisp.FormData, form) {
     Credentials("admin", "l33t") -> Ok(User(cred.username))
     Credentials("admin", _) ->
       form
-      |> formz.update_input("password", input.set_error(_, "wrong password"))
+      |> formz.update_input("password", field.set_error(_, "wrong password"))
       |> Error
     Credentials(_, _) ->
       form
-      |> formz.update_input("username", input.set_error(_, "wrong username"))
+      |> formz.update_input("username", field.set_error(_, "wrong username"))
       |> Error
   }
 }

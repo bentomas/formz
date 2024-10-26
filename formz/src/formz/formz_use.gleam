@@ -1,5 +1,4 @@
-import formz/field.{type Field}
-import formz/input.{type Input}
+import formz/field.{type Definition, type Field}
 import gleam/dict
 import gleam/list
 import gleam/result
@@ -13,7 +12,7 @@ pub opaque type Form(format, output) {
 }
 
 pub type FormItem(format) {
-  Item(input: Input(format))
+  Item(input: Field(format))
   Set(Fieldset(format), items: List(FormItem(format)))
 }
 
@@ -21,18 +20,25 @@ pub type Fieldset(format) {
   Fieldset(prefix: String, label: String)
 }
 
+pub fn create_form(thing: thing) -> Form(format, thing) {
+  Form([], fn(_) { Ok(thing) }, thing)
+}
+
 pub fn with(
-  field: Field(format, input_output),
+  field: Field(format),
+  definition: Definition(format, input_output),
   fun: fn(input_output) -> Form(format, form_output),
 ) -> Form(format, form_output) {
   // we pass in our placeholder value, and we're going to throw away the
   // decoded result here, we just care about pulling out the fields
   // from the form.
-  let next = fun(field.placeholder)
+  let next = fun(definition.placeholder)
+
+  let field = field |> field.set_widget(definition.widget)
 
   // prepend the new input to the inputs from the form we got in the
   // previous step.
-  let updated_inputs = [Item(field.input), ..next.items]
+  let updated_inputs = [Item(field), ..next.items]
 
   // now create the parse function. parse function accepts most recent
   // version of input list, since data can be added to it.  the list
@@ -42,14 +48,14 @@ pub fn with(
     let assert Ok(#(Item(input), next_inputs)) = next_item(inputs)
 
     // transform the input data using the transform/validate/decode/etc function
-    let input_output = field.transform(input.value)
+    let input_output = definition.transform(input.value)
 
     // pass our transformed input data to the next function/form. if
     // we errored we still do this with our placeholder so we can continue
     // processing all the fields in the form.  we will return a form
     // with an error, so if we're on the error track we'll throw away
     // the "output" made with this and just keep the errors.
-    let next_form = fun(input_output |> result.unwrap(field.placeholder))
+    let next_form = fun(input_output |> result.unwrap(definition.placeholder))
     let form_output = next_form.parse(next_inputs)
 
     // ok, check which track we're on
@@ -66,7 +72,7 @@ pub fn with(
       // so far
       Ok(_), Error(error) ->
         input
-        |> input.set_error(error)
+        |> field.set_error(error)
         |> Item
         |> list.prepend(next_inputs, _)
         |> Error
@@ -75,7 +81,7 @@ pub fn with(
       // to the list of errors
       Error(fields), Error(error) ->
         input
-        |> input.set_error(error)
+        |> field.set_error(error)
         |> Item
         |> list.prepend(fields, _)
         |> Error
@@ -94,7 +100,9 @@ pub fn sub_form(
 
   let sub_inputs =
     sub.items
-    |> map_items(fn(item) { item |> input.set_name(prefix <> "." <> item.name) })
+    |> map_inputs(fn(input) {
+      input |> field.set_name(prefix <> "." <> input.name)
+    })
 
   let updated_inputs = [Set(Fieldset(prefix, name), sub_inputs), ..next.items]
 
@@ -144,14 +152,14 @@ fn next_item(
   }
 }
 
-fn map_items(
+fn map_inputs(
   items: List(FormItem(format)),
-  fun: fn(Input(format)) -> Input(format),
+  fun: fn(Field(format)) -> Field(format),
 ) -> List(FormItem(format)) {
   list.map(items, fn(item) {
     case item {
       Item(input) -> Item(fun(input))
-      Set(s, items) -> Set(s, map_items(items, fun))
+      Set(s, items) -> Set(s, map_inputs(items, fun))
     }
   })
 }
@@ -173,19 +181,15 @@ pub fn data(
   input_data: List(#(String, String)),
 ) -> Form(format, output) {
   let data = dict.from_list(input_data)
-  let Form(inputs, parse, placeholder) = form
-  inputs
-  |> map_items(fn(input) {
-    case dict.get(data, input.name) {
-      Ok(value) -> input.set_value(input, value)
-      Error(_) -> input
+  let Form(items, parse, placeholder) = form
+  items
+  |> map_inputs(fn(field) {
+    case dict.get(data, field.name) {
+      Ok(value) -> field.set_value(field, value)
+      Error(_) -> field
     }
   })
   |> Form(parse, placeholder)
-}
-
-pub fn create_form(thing: thing) -> Form(format, thing) {
-  Form([], fn(_) { Ok(thing) }, thing)
 }
 
 pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output)) {
@@ -235,7 +239,7 @@ pub fn map_item(
 pub fn get_input(
   form: Form(format, output),
   name: String,
-) -> Result(Input(format), Nil) {
+) -> Result(Field(format), Nil) {
   form
   |> get_inputs
   |> list.filter(fn(input) { input.name == name })
@@ -245,7 +249,7 @@ pub fn get_input(
 pub fn map_input(
   form: Form(format, output),
   name: String,
-  fun: fn(Input(format)) -> a,
+  fun: fn(Field(format)) -> a,
 ) -> Result(a, Nil) {
   form |> get_input(name) |> result.map(fun)
 }
@@ -253,10 +257,10 @@ pub fn map_input(
 pub fn update_input(
   form: Form(format, output),
   name: String,
-  fun: fn(Input(format)) -> Input(format),
+  fun: fn(Field(format)) -> Field(format),
 ) -> Form(format, output) {
   form.items
-  |> map_items(fn(field) {
+  |> map_inputs(fn(field) {
     case field.name == name {
       True -> fun(field)
       False -> field

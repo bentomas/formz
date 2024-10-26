@@ -1,5 +1,5 @@
+import formz/field.{WidgetArgs}
 import formz/formz_use as formz
-import formz/input.{WidgetArgs}
 import gleam/list
 import gleam/string
 import nakai/attr
@@ -26,12 +26,15 @@ pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
       }
       let widget_el =
         html.span([attr.class("widget")], [
-          f.widget(f, WidgetArgs(id: f.name, labelled_by: input.Element)),
+          field.run_widget(
+            f,
+            WidgetArgs(id: f.name, labelled_by: field.Element),
+          ),
         ])
 
       let errors_el = case f {
-        input.Valid(..) -> html.Nothing
-        input.Invalid(error:, ..) ->
+        field.Valid(..) -> html.Nothing
+        field.Invalid(error:, ..) ->
           html.span([attr.class("errors")], [html.Text(error)])
       }
 
