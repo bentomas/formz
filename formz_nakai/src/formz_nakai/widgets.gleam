@@ -1,4 +1,6 @@
-import formz/field.{type Field, type WidgetArgs}
+import formz/field.{type Field}
+import formz/widget
+
 import gleam/list
 import gleam/string
 import nakai/attr
@@ -19,13 +21,13 @@ fn name_attr(name: String) -> List(attr.Attr) {
 }
 
 fn aria_label_attr(
-  labelled_by: field.InputLabelled,
+  labelled_by: widget.LabelledBy,
   label: String,
 ) -> List(attr.Attr) {
   case labelled_by {
-    field.Element -> []
-    field.Id(id) -> [attr.aria_labelledby(id)]
-    field.Value ->
+    widget.LabelledByLabelFor -> []
+    widget.LabelledByElementWithId(id) -> [attr.aria_labelledby(id)]
+    widget.LabelledByFieldValue ->
       case label {
         "" -> []
         _ -> [attr.aria_label(label)]
@@ -45,7 +47,7 @@ fn value_attr(value: String) -> List(attr.Attr) {
 }
 
 pub fn checkbox_widget() {
-  field.widget(fn(field: Field(html.Node), args: field.WidgetArgs) -> html.Node {
+  fn(field: Field, args: widget.Args) -> html.Node {
     let checked_attr = case field.value {
       "on" -> [attr.checked()]
       _ -> []
@@ -60,11 +62,11 @@ pub fn checkbox_widget() {
         aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  })
+  }
 }
 
 pub fn password_widget() {
-  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
+  fn(field: Field, args: widget.Args) -> html.Node {
     html.input(
       list.flatten([
         type_attr("password"),
@@ -74,11 +76,11 @@ pub fn password_widget() {
         aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  })
+  }
 }
 
 pub fn text_like_widget(type_: String) {
-  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
+  fn(field: Field, args: widget.Args) -> html.Node {
     html.input(
       list.flatten([
         type_attr(type_),
@@ -88,11 +90,11 @@ pub fn text_like_widget(type_: String) {
         aria_label_attr(args.labelled_by, field.label),
       ]),
     )
-  })
+  }
 }
 
 pub fn textarea_widget() {
-  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
+  fn(field: Field, args: widget.Args) -> html.Node {
     html.textarea(
       list.flatten([
         name_attr(field.name),
@@ -101,11 +103,11 @@ pub fn textarea_widget() {
       ]),
       [html.Text(field.value)],
     )
-  })
+  }
 }
 
 pub fn hidden_widget() {
-  field.widget(fn(field: Field(html.Node), _) -> html.Node {
+  fn(field: Field, _) -> html.Node {
     html.input(
       list.flatten([
         type_attr("hidden"),
@@ -113,11 +115,11 @@ pub fn hidden_widget() {
         value_attr(field.value),
       ]),
     )
-  })
+  }
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  field.widget(fn(field: Field(html.Node), args: WidgetArgs) -> html.Node {
+  fn(field: Field, args: widget.Args) -> html.Node {
     html.select(
       list.flatten([
         name_attr(field.name),
@@ -138,5 +140,5 @@ pub fn select_widget(variants: List(#(String, value))) {
         }),
       ]),
     )
-  })
+  }
 }

@@ -1,27 +1,23 @@
 import formz/field.{field}
+import formz/fieldset.{fieldset}
 import formz/formz_use as formz
-import formz_string/fields
+import formz_string/definitions
 
 pub fn make_form() {
-  use billing_address <- formz.sub_form(
-    "billing",
-    "Billing Address",
-    address_form(),
-  )
-  use shipping_address <- formz.sub_form(
-    "shipping",
-    "Shipping Address",
-    address_form(),
-  )
+  use billing_address <- formz.with_form(fieldset("billing"), address_form())
+  use shipping_address <- formz.with_form(fieldset("shipping"), address_form())
 
   formz.create_form(#(billing_address, shipping_address))
 }
 
 fn address_form() {
-  use street <- formz.with(field("street"), fields.text_field())
-  use city <- formz.with(field("city"), fields.text_field())
-  use state <- formz.with(field("state"), fields.list_field(states_list()))
-  use postal_code <- formz.with(field.field("postal_code"), fields.text_field())
+  use street <- formz.with(field("street"), definitions.text_field())
+  use city <- formz.with(field("city"), definitions.text_field())
+  use state <- formz.with(field("state"), definitions.list_field(states_list()))
+  use postal_code <- formz.with(
+    field.field("postal_code"),
+    definitions.text_field(),
+  )
 
   formz.create_form(Address(street:, city:, state:, postal_code:))
 }

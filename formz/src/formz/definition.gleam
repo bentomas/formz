@@ -1,10 +1,18 @@
-import formz/field.{type Definition, Definition}
+import formz/widget
+
+pub type Definition(format, output) {
+  Definition(
+    widget: widget.Widget(format),
+    transform: fn(String) -> Result(output, String),
+    placeholder: output,
+  )
+}
 
 pub fn validates(
-  definition: Definition(format, output),
+  kind: Definition(format, output),
   next: fn(output) -> Result(output, String),
 ) -> Definition(format, output) {
-  let Definition(widget, previous_transform, placeholder) = definition
+  let Definition(widget, previous_transform, placeholder) = kind
 
   Definition(
     widget,
@@ -19,11 +27,11 @@ pub fn validates(
 }
 
 pub fn transforms(
-  definition: Definition(format, a),
+  kind: Definition(format, a),
   placeholder: b,
   next: fn(a) -> Result(b, String),
 ) -> Definition(format, b) {
-  let Definition(widget, previous_transform, _) = definition
+  let Definition(widget, previous_transform, _) = kind
 
   Definition(
     widget,
@@ -38,8 +46,8 @@ pub fn transforms(
 }
 
 pub fn set_widget(
-  definition: Definition(format, a),
-  widget: field.Widget(format),
+  kind: Definition(format, a),
+  widget: widget.Widget(format),
 ) -> Definition(format, a) {
-  Definition(..definition, widget:)
+  Definition(..kind, widget:)
 }

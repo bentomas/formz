@@ -1,4 +1,7 @@
-import formz/field.{type Definition, type Field}
+import formz/definition.{type Definition}
+import formz/field
+import formz/subform
+import formz/widget
 import gleam/dict
 import gleam/list
 import gleam/result
@@ -12,12 +15,8 @@ pub opaque type Form(format, output) {
 }
 
 pub type FormItem(format) {
-  Item(input: Field(format))
-  Set(Fieldset(format), items: List(FormItem(format)))
-}
-
-pub type Fieldset(format) {
-  Fieldset(prefix: String, label: String)
+  Element(field.Field, widget: widget.Widget(format))
+  Set(subform.SubForm, items: List(FormItem(format)))
 }
 
 pub fn create_form(thing: thing) -> Form(format, thing) {
@@ -25,38 +24,35 @@ pub fn create_form(thing: thing) -> Form(format, thing) {
 }
 
 pub fn with(
-  field: Field(format),
-  definition: Definition(format, input_output),
-  fun: fn(input_output) -> Form(format, form_output),
+  field: field.Field,
+  is definition: Definition(format, input_output),
+  rest fun: fn(input_output) -> Form(format, form_output),
 ) -> Form(format, form_output) {
   // we pass in our placeholder value, and we're going to throw away the
   // decoded result here, we just care about pulling out the fields
   // from the form.
-  let next = fun(definition.placeholder)
+  let next_form = fun(definition.placeholder)
 
-  let field = field |> field.set_widget(definition.widget)
-
-  // prepend the new input to the inputs from the form we got in the
+  // prepend the new field to the items from the form we got in the
   // previous step.
-  let updated_inputs = [Item(field), ..next.items]
+  let updated_items = [Element(field, definition.widget), ..next_form.items]
 
   // now create the parse function. parse function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
-  let parse = fn(inputs: List(FormItem(format))) {
+  let parse = fn(items: List(FormItem(format))) {
     // pull out the latest version of this field to get latest input data
-    let assert Ok(#(Item(input), next_inputs)) = next_item(inputs)
+    let assert Ok(#(Element(field, widget), pop_elements)) = pop_element(items)
 
     // transform the input data using the transform/validate/decode/etc function
-    let input_output = definition.transform(input.value)
+    let input_output = definition.transform(field.value)
 
     // pass our transformed input data to the next function/form. if
     // we errored we still do this with our placeholder so we can continue
-    // processing all the fields in the form.  we will return a form
-    // with an error, so if we're on the error track we'll throw away
-    // the "output" made with this and just keep the errors.
+    // processing all the fields in the form.  if we're on the error track
+    // we'll throw away the "output" made with this and just keep the error
     let next_form = fun(input_output |> result.unwrap(definition.placeholder))
-    let form_output = next_form.parse(next_inputs)
+    let form_output = next_form.parse(pop_elements)
 
     // ok, check which track we're on
     case form_output, input_output {
@@ -65,55 +61,54 @@ pub fn with(
 
       // form has errors, but this field was good, so add it to the list
       // of fields as is.
-      Error(inputs), Ok(_value) -> Error([Item(input), ..inputs])
+      Error(items), Ok(_value) -> Error([Element(field, widget), ..items])
 
       // form was good so far, but this field errored, so need to
       // mark this field as invalid and return all the fields we've got
       // so far
       Ok(_), Error(error) ->
-        input
+        field
         |> field.set_error(error)
-        |> Item
-        |> list.prepend(next_inputs, _)
+        |> Element(widget)
+        |> list.prepend(pop_elements, _)
         |> Error
 
       // form already has errors and this field errored, so add this field
       // to the list of errors
-      Error(fields), Error(error) ->
-        input
+      Error(items), Error(error) ->
+        field
         |> field.set_error(error)
-        |> Item
-        |> list.prepend(fields, _)
+        |> Element(widget)
+        |> list.prepend(items, _)
         |> Error
     }
   }
-  Form(updated_inputs, parse: parse, placeholder: next.placeholder)
+  Form(items: updated_items, parse:, placeholder: next_form.placeholder)
 }
 
-pub fn sub_form(
-  prefix: String,
-  name: String,
+pub fn with_form(
+  subform: subform.SubForm,
   sub: Form(format, sub_output),
   fun: fn(sub_output) -> Form(format, form_output),
 ) -> Form(format, form_output) {
-  let next = fun(sub.placeholder)
+  let next_form = fun(sub.placeholder)
 
-  let sub_inputs =
+  let sub_items =
     sub.items
-    |> map_inputs(fn(input) {
-      input |> field.set_name(prefix <> "." <> input.name)
+    |> map_fields(fn(field) {
+      field |> field.set_name(subform.name <> "." <> field.name)
     })
 
-  let updated_inputs = [Set(Fieldset(prefix, name), sub_inputs), ..next.items]
+  let updated_items = [Set(subform, sub_items), ..next_form.items]
 
-  let parse = fn(inputs: List(FormItem(format))) {
+  let parse = fn(items: List(FormItem(format))) {
     // pull out the latest version of this field to get latest input data
-    let assert [Set(Fieldset(_, name), items), ..next_inputs] = inputs
+    let assert [Set(subform, sub_items), ..next_items] = items
 
-    let sub_output = sub.parse(items)
+    let sub_output = sub.parse(sub_items)
 
     let next_form = fun(sub_output |> result.unwrap(sub.placeholder))
-    let form_output = next_form.parse(next_inputs)
+    let form_output = next_form.parse(next_items)
 
     // ok, check which track we're on
     case form_output, sub_output {
@@ -122,58 +117,45 @@ pub fn sub_form(
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(inputs), Ok(_value) ->
-        Error([Set(Fieldset(prefix, name), items), ..inputs])
+      Error(items), Ok(_value) -> Error([Set(subform, items), ..items])
 
       // form was good so far, but this sub form errored, so need to
       // hop on error track
       Ok(_), Error(error_fields) ->
-        Error([Set(Fieldset(prefix, name), error_fields), ..next_inputs])
+        Error([Set(subform, error_fields), ..next_items])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
       Error(fields), Error(error_fields) ->
-        Error(list.prepend(fields, Set(Fieldset(prefix, name), error_fields)))
+        Error(list.prepend(fields, Set(subform, error_fields)))
     }
   }
-  Form(updated_inputs, parse: parse, placeholder: next.placeholder)
+  Form(updated_items, parse: parse, placeholder: next_form.placeholder)
 }
 
-fn next_item(
+fn pop_element(
   items: List(FormItem(format)),
 ) -> Result(#(FormItem(format), List(FormItem(format))), Nil) {
   case items {
     [] -> Error(Nil)
     [only] -> Ok(#(only, []))
-    [Item(input), ..rest] -> Ok(#(Item(input), rest))
-    [Set(_, []), ..rest] -> next_item(rest)
+    [Element(..) as item, ..rest] -> Ok(#(item, rest))
+    [Set(_, []), ..rest] -> pop_element(rest)
     [Set(s, [first, ..rest_1]), ..rest_2] ->
-      next_item(list.flatten([[first], [Set(s, rest_1)], rest_2]))
+      pop_element(list.flatten([[first], [Set(s, rest_1)], rest_2]))
   }
 }
 
-fn map_inputs(
+fn map_fields(
   items: List(FormItem(format)),
-  fun: fn(Field(format)) -> Field(format),
+  fun: fn(field.Field) -> field.Field,
 ) -> List(FormItem(format)) {
   list.map(items, fn(item) {
     case item {
-      Item(input) -> Item(fun(input))
-      Set(s, items) -> Set(s, map_inputs(items, fun))
+      Element(field, widget) -> Element(fun(field), widget)
+      Set(s, items) -> Set(s, map_fields(items, fun))
     }
   })
-}
-
-fn get_inputs(form: Form(format, ouput)) {
-  form.items |> do_get_inputs([]) |> list.reverse
-}
-
-fn do_get_inputs(items: List(FormItem(format)), acc) {
-  case items {
-    [] -> acc
-    [Item(input), ..rest] -> do_get_inputs(rest, [input, ..acc])
-    [Set(_, items), ..rest] -> do_get_inputs(list.flatten([items, rest]), acc)
-  }
 }
 
 pub fn data(
@@ -183,9 +165,9 @@ pub fn data(
   let data = dict.from_list(input_data)
   let Form(items, parse, placeholder) = form
   items
-  |> map_inputs(fn(field) {
+  |> map_fields(fn(field) {
     case dict.get(data, field.name) {
-      Ok(value) -> field.set_value(field, value)
+      Ok(value) -> field.set_string_value(field, value)
       Error(_) -> field
     }
   })
@@ -193,78 +175,86 @@ pub fn data(
 }
 
 pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output)) {
-  // we've tagged that we have a decoder with out has_decoder phantom type
-  // so we can get away with let assert here
-  let Form(fields, parse, placeholder) = form
-  case parse(fields) {
+  case form.parse(form.items) {
     Ok(output) -> Ok(output)
-    Error(fields) -> Error(Form(fields, parse, placeholder))
+    Error(items) -> Error(Form(..form, items:))
   }
 }
 
-pub fn try(
+pub fn parse_try(
   form: Form(format, output),
   apply fun: fn(output, Form(format, output)) -> Result(c, Form(format, output)),
 ) -> Result(c, Form(format, output)) {
   parse(form) |> result.try(fun(_, form))
 }
 
-pub fn get_items(form: Form(format, output)) -> List(FormItem(format)) {
+pub fn items(form: Form(format, output)) -> List(FormItem(format)) {
   form.items
 }
 
-pub fn get_item(
+pub fn get(
   form: Form(format, output),
-  prefix: String,
+  name: String,
 ) -> Result(FormItem(format), Nil) {
   form.items
   |> list.filter(fn(item) {
     case item {
-      Item(i) if i.name == prefix -> True
-      Set(s, _) if s.prefix == prefix -> True
+      Element(i, _) if i.name == name -> True
+      Set(s, _) if s.name == name -> True
       _ -> False
     }
   })
   |> list.first
 }
 
-pub fn map_item(
+pub fn update(
   form: Form(format, output),
   name: String,
-  fun: fn(FormItem(format)) -> a,
-) -> Result(a, Nil) {
-  form |> get_item(name) |> result.map(fun)
-}
-
-pub fn get_input(
-  form: Form(format, output),
-  name: String,
-) -> Result(Field(format), Nil) {
-  form
-  |> get_inputs
-  |> list.filter(fn(input) { input.name == name })
-  |> list.first
-}
-
-pub fn map_input(
-  form: Form(format, output),
-  name: String,
-  fun: fn(Field(format)) -> a,
-) -> Result(a, Nil) {
-  form |> get_input(name) |> result.map(fun)
-}
-
-pub fn update_input(
-  form: Form(format, output),
-  name: String,
-  fun: fn(Field(format)) -> Field(format),
-) -> Form(format, output) {
+  fun: fn(FormItem(format)) -> FormItem(format),
+) {
   form.items
-  |> map_inputs(fn(field) {
-    case field.name == name {
-      True -> fun(field)
-      False -> field
+  |> do_formitem_update(name, fun)
+  |> Form(form.parse, form.placeholder)
+}
+
+fn do_formitem_update(
+  items: List(FormItem(format)),
+  name: String,
+  fun: fn(FormItem(format)) -> FormItem(format),
+) -> List(FormItem(format)) {
+  items
+  |> list.map(fn(item) {
+    case item {
+      Element(i, _) if i.name == name -> fun(item)
+      Set(s, _) if s.name == name -> fun(item)
+      Set(s, items) -> Set(s, do_formitem_update(items, name, fun))
+      _ -> item
     }
   })
-  |> Form(form.parse, form.placeholder)
+}
+
+pub fn update_field(
+  form: Form(format, output),
+  name: String,
+  fun: fn(field.Field) -> field.Field,
+) -> Form(format, output) {
+  update(form, name, fn(item) {
+    case item {
+      Element(field, widget) -> Element(fun(field), widget)
+      _ -> item
+    }
+  })
+}
+
+pub fn update_fieldset(
+  form: Form(format, output),
+  name: String,
+  fun: fn(subform.SubForm) -> subform.SubForm,
+) -> Form(format, output) {
+  update(form, name, fn(item) {
+    case item {
+      Set(subform, items) -> Set(fun(subform), items)
+      _ -> item
+    }
+  })
 }

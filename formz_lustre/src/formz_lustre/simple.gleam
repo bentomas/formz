@@ -1,5 +1,6 @@
-import formz/field.{WidgetArgs}
+import formz/field
 import formz/formz_use as formz
+import formz/widget
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -8,7 +9,7 @@ import lustre/element/html.{html}
 
 pub fn generate_form(form) -> element.Element(msg) {
   form
-  |> formz.get_items
+  |> formz.items
   |> list.map(generate_item)
   |> element.fragment
 }
@@ -17,13 +18,13 @@ pub fn generate_item(
   item: formz.FormItem(element.Element(msg)),
 ) -> element.Element(msg) {
   case item {
-    formz.Item(f) if f.hidden == True ->
+    formz.Element(f, _) if f.hidden == True ->
       html.input([
         attribute.type_("hidden"),
         attribute.name(f.name),
         attribute.value(f.value),
       ])
-    formz.Item(f) -> {
+    formz.Element(f, make_widget) -> {
       let label_el = html.label([], [html.text(f.label), html.text(": ")])
 
       let description_el = case string.is_empty(f.help_text) {
@@ -33,9 +34,9 @@ pub fn generate_item(
       }
       let widget_el =
         html.span([attribute.class("widget")], [
-          field.run_widget(
+          make_widget(
             f,
-            WidgetArgs(id: f.name, labelled_by: field.Element),
+            widget.Args(id: f.name, labelled_by: widget.LabelledByLabelFor),
           ),
         ])
 

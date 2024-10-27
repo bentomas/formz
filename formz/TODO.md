@@ -1,0 +1,10 @@
+- form sets
+- decoders/toy.decoder?
+- csrf token?
+- emit warning on duplicate named fields?
+- clean names so snake_case?
+- disabled fields
+- optional fields? (can do optional validation, but that isn't reflected in the html)
+- errors on hidden fields?
+- custom types for input.hidden, input.disabled, input.required?
+- date fields? https://hexdocs.pm/birl/ https://hexdocs.pm/rada/

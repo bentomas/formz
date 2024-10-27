@@ -1,43 +1,30 @@
 import formz/field.{field}
 import formz/formz_use as formz
-import formz_lustre/fields
+import formz/subform.{subform}
+import formz_lustre/definitions
 import formz_lustre/simple
 import gleam/list
 import lustre/attribute
 import lustre/element/html
 
 pub fn make_form() {
-  use billing_address <- formz.sub_form(
-    "billing",
-    "Billing Address",
-    address_form(),
-  )
-  use shipping_address <- formz.sub_form(
-    "shipping",
-    "Shipping Address",
-    address_form(),
-  )
+  use billing_address <- formz.with_form(subform("billing"), address_form())
+  use shipping_address <- formz.with_form(subform("shipping"), address_form())
 
   formz.create_form(#(billing_address, shipping_address))
 }
 
 fn address_form() {
-  use street <- formz.with(field(named: "street"), fields.text_field())
-  use city <- formz.with(field(named: "city"), fields.text_field())
-  use state <- formz.with(
-    field(named: "state"),
-    fields.list_field(states_list()),
-  )
-  use postal_code <- formz.with(
-    field(named: "postal_code"),
-    fields.text_field(),
-  )
+  use street <- formz.with(field("street"), definitions.text_field())
+  use city <- formz.with(field("city"), definitions.text_field())
+  use state <- formz.with(field("state"), definitions.list_field(states_list()))
+  use postal_code <- formz.with(field("postal_code"), definitions.text_field())
 
   formz.create_form(Address(street:, city:, state:, postal_code:))
 }
 
 pub fn format_form(form) {
-  let assert Ok(formz.Set(_, billing_inputs)) = formz.get_item(form, "billing")
+  let assert Ok(formz.Set(_, billing_inputs)) = formz.get(form, "billing")
   html.div(
     [
       attribute.role("group"),

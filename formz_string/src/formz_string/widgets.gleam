@@ -1,4 +1,5 @@
-import formz/field.{type Field, type WidgetArgs}
+import formz/field.{type Field}
+import formz/widget
 import gleam/list
 import gleam/string
 
@@ -16,16 +17,16 @@ fn name_attr(name: String) -> String {
   }
 }
 
-fn aria_label_attr(labelled_by: field.InputLabelled, label: String) -> String {
+fn aria_label_attr(labelled_by: widget.LabelledBy, label: String) -> String {
   case labelled_by {
     // there should be a label with a for attribute pointing to this id
-    field.Element -> ""
+    widget.LabelledByLabelFor -> ""
 
     // we have the id of the element that labels this input
-    field.Id(id) -> " aria-labelledby=\"" <> id <> "\""
+    widget.LabelledByElementWithId(id) -> " aria-labelledby=\"" <> id <> "\""
 
     // we'll use the label value as the aria-label
-    field.Value -> {
+    widget.LabelledByFieldValue -> {
       let sanitized_label =
         label
         |> string.replace("\"", "&quot;")
@@ -54,7 +55,7 @@ fn value_attr(value: String) -> String {
 }
 
 pub fn checkbox_widget() {
-  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
+  fn(field: Field, args: widget.Args) -> String {
     let checked_attr = case field.value {
       "on" -> " checked"
       _ -> ""
@@ -67,11 +68,11 @@ pub fn checkbox_widget() {
     <> checked_attr
     <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  })
+  }
 }
 
 pub fn password_widget() {
-  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
+  fn(field: Field, args: widget.Args) -> String {
     "<input"
     <> type_attr("password")
     <> name_attr(field.name)
@@ -79,11 +80,11 @@ pub fn password_widget() {
     // <> value_attr(field.value)
     <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  })
+  }
 }
 
 pub fn text_like_widget(type_: String) {
-  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
+  fn(field: Field, args: widget.Args) -> String {
     "<input"
     <> type_attr(type_)
     <> name_attr(field.name)
@@ -91,11 +92,11 @@ pub fn text_like_widget(type_: String) {
     <> value_attr(field.value)
     <> aria_label_attr(args.labelled_by, field.label)
     <> ">"
-  })
+  }
 }
 
 pub fn textarea_widget() {
-  field.widget(fn(field: Field(String), args: WidgetArgs) -> String {
+  fn(field: Field, args: widget.Args) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
     "<textarea"
@@ -105,21 +106,21 @@ pub fn textarea_widget() {
     <> ">"
     <> field.value
     <> "</textarea>"
-  })
+  }
 }
 
 pub fn hidden_widget() {
-  field.widget(fn(field: Field(String), _args: WidgetArgs) -> String {
+  fn(field: Field, _args: widget.Args) -> String {
     "<input"
     <> type_attr("hidden")
     <> name_attr(field.name)
     <> value_attr(field.value)
     <> ">"
-  })
+  }
 }
 
 pub fn select_widget(variants: List(#(String, value))) {
-  field.widget(fn(field: Field(String), args: WidgetArgs) {
+  fn(field: Field, args: widget.Args) {
     let choices =
       list.map(variants, fn(variant) {
         let val = string.inspect(variant.1)
@@ -146,5 +147,5 @@ pub fn select_widget(variants: List(#(String, value))) {
     <> { "<hr>" }
     <> choices
     <> { "</select>" }
-  })
+  }
 }

@@ -1,25 +1,24 @@
 import formz/definition
 import formz/field.{field}
-import formz/formz_use.{Item, Set} as formz
+import formz/formz_use.{Element, Set} as formz
+import formz/subform.{subform}
 import formz/validation
-import gleam/io
-import gleam/option
 import gleeunit
 import gleeunit/should
 
 pub fn text_field() {
-  field.Definition(field.widget(fn(_, _) { "" }), validation.string, "")
+  definition.Definition(fn(_, _) { "" }, validation.string, "")
 }
 
-pub fn int_field() {
-  field.Definition(field.widget(fn(_, _) { "" }), validation.int, 0)
+pub fn integer_field() {
+  definition.Definition(fn(_, _) { "" }, validation.int, 0)
 }
 
 pub fn float_field() {
-  field.Definition(field.widget(fn(_, _) { "" }), validation.number, 0.0)
+  definition.Definition(fn(_, _) { "" }, validation.number, 0.0)
 }
 
-fn should_be_field_no_error(field: field.Field(String)) {
+fn should_be_field_no_error(field: field.Field) {
   should.equal(
     field,
     field.Valid(
@@ -27,7 +26,6 @@ fn should_be_field_no_error(field: field.Field(String)) {
       label: field.label,
       help_text: field.help_text,
       value: field.value,
-      widget: field.widget,
       hidden: field.hidden,
       disabled: field.disabled,
       required: field.required,
@@ -35,7 +33,7 @@ fn should_be_field_no_error(field: field.Field(String)) {
   )
 }
 
-fn should_be_field_with_error(field: field.Field(String), str: String) {
+fn should_be_field_with_error(field: field.Field, str: String) {
   should.equal(
     field,
     field.Invalid(
@@ -43,7 +41,6 @@ fn should_be_field_with_error(field: field.Field(String), str: String) {
       label: field.label,
       help_text: field.help_text,
       value: field.value,
-      widget: field.widget,
       hidden: field.hidden,
       error: str,
       disabled: field.disabled,
@@ -90,7 +87,7 @@ fn three_field_form() {
       |> definition.validates(validation.must_be_longer_than(3)),
   )
 
-  use b <- formz.with(field(named: "b"), int_field())
+  use b <- formz.with(field(named: "b"), integer_field())
   use c <- formz.with(
     field(named: "c")
       |> field.set_name("c")
@@ -103,7 +100,7 @@ fn three_field_form() {
 
 pub fn empty_form_test() {
   empty_form(1)
-  |> formz.get_items
+  |> formz.items
   |> should.equal([])
 }
 
@@ -190,64 +187,64 @@ pub fn parse_double_field_form_test() {
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     {
-      use a <- formz.with(field("a"), int_field())
+      use a <- formz.with(field("a"), integer_field())
       formz.create_form(a)
     }
     |> formz.data([#("first", "world")])
     |> formz.parse
 
-  let assert [formz.Item(field)] = formz.get_items(f)
+  let assert [Element(field, _)] = formz.items(f)
   field |> should_be_field_with_error("Must be a whole number")
 }
 
 pub fn parse_triple_field_form_with_error_test() {
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "xxxx"), #("b", "1"), #("c", "x")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
 
-  fielda |> io.debug |> should_be_field_no_error
-  fieldb |> io.debug |> should_be_field_no_error
-  fieldc |> io.debug |> should_be_field_with_error("Must be a number")
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_with_error("Must be a number")
 
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "string")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_with_error("Must be a number")
 
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_no_error
 
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "string"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
   fielda |> should_be_field_with_error("Must be longer than 3")
   fieldb |> should_be_field_with_error("Must be a whole number")
   fieldc |> should_be_field_no_error
 
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] =
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "1"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
   fielda |> should_be_field_with_error("Must be longer than 3")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
@@ -255,16 +252,16 @@ pub fn parse_triple_field_form_with_error_test() {
 
 pub fn sub_form_test() {
   let f1 = {
-    use a <- formz.with(field("a"), int_field())
-    use b <- formz.with(field("b"), int_field())
-    use c <- formz.with(field("c"), int_field())
+    use a <- formz.with(field("a"), integer_field())
+    use b <- formz.with(field("b"), integer_field())
+    use c <- formz.with(field("c"), integer_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
-    use a <- formz.sub_form("name", "Name", f1)
-    use b <- formz.with(field("d"), int_field())
+    use a <- formz.with_form(subform("name"), f1)
+    use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
   }
@@ -282,21 +279,24 @@ pub fn sub_form_test() {
 
 pub fn sub_form_error_test() {
   let f1 = {
-    use a <- formz.with(field("a"), int_field())
-    use b <- formz.with(field("b"), int_field())
-    use c <- formz.with(field("c"), int_field())
+    use a <- formz.with(field("a"), integer_field())
+    use b <- formz.with(field("b"), integer_field())
+    use c <- formz.with(field("c"), integer_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
-    use a <- formz.sub_form("name", "Name", f1)
-    use b <- formz.with(field("d"), int_field())
+    use a <- formz.with_form(subform("name"), f1)
+    use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
   }
 
-  let assert [Set(_, [Item(inputa), Item(inputb), Item(inputc)]), Item(inputd)] =
+  let assert [
+    Set(_, [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)]),
+    Element(fieldd, _),
+  ] =
     f2
     |> formz.data([
       #("name.a", "a"),
@@ -306,12 +306,12 @@ pub fn sub_form_error_test() {
     ])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.get_items
+    |> formz.items
 
-  inputa |> should_be_field_with_error("Must be a whole number")
-  inputb |> should_be_field_no_error
-  inputc |> should_be_field_no_error
-  inputd |> should_be_field_no_error
+  fielda |> should_be_field_with_error("Must be a whole number")
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_no_error
+  fieldd |> should_be_field_no_error
 }
 
 pub fn decoded_and_try_test() {
@@ -320,25 +320,26 @@ pub fn decoded_and_try_test() {
     |> formz.data([#("a", "string"), #("b", "2"), #("c", "3.0")])
 
   // can succeed
-  formz.try(f, fn(_, _) { Ok(3) })
+  formz.parse_try(f, fn(_, _) { Ok(3) })
   |> should.equal(Ok(3))
 
   // can change type
-  formz.try(f, fn(_, _) { Ok("it worked") })
+  formz.parse_try(f, fn(_, _) { Ok("it worked") })
   |> should.equal(Ok("it worked"))
 
   // can error
-  formz.try(f, fn(_, form) { Error(form) })
+  formz.parse_try(f, fn(_, form) { Error(form) })
   |> should.equal(Error(f))
 
   // can change field
   let assert Error(form) =
-    formz.try(f, fn(_, form) {
+    formz.parse_try(f, fn(_, form) {
       form
-      |> formz.update_input("a", field.set_error(_, "woops"))
+      |> formz.update_field("a", field.set_error(_, "woops"))
       |> Error
     })
-  let assert [Item(fielda), Item(fieldb), Item(fieldc)] = formz.get_items(form)
+  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+    formz.items(form)
   fielda |> should_be_field_with_error("woops")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error

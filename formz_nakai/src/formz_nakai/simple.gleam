@@ -1,5 +1,6 @@
-import formz/field.{WidgetArgs}
+import formz/field
 import formz/formz_use as formz
+import formz/widget
 import gleam/list
 import gleam/string
 import nakai/attr
@@ -7,16 +8,16 @@ import nakai/html
 
 pub fn generate_form(form) -> html.Node {
   form
-  |> formz.get_items
+  |> formz.items
   |> list.map(generate_visible_item)
   |> html.Fragment()
 }
 
 pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
   case item {
-    formz.Item(f) if f.hidden == True ->
+    formz.Element(f, _) if f.hidden == True ->
       html.input([attr.type_("hidden"), attr.name(f.name), attr.value(f.value)])
-    formz.Item(f) -> {
+    formz.Element(f, make_widget) -> {
       let label_el =
         html.label([attr.for(f.name)], [html.Text(f.label), html.Text(": ")])
 
@@ -26,9 +27,9 @@ pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
       }
       let widget_el =
         html.span([attr.class("widget")], [
-          field.run_widget(
+          make_widget(
             f,
-            WidgetArgs(id: f.name, labelled_by: field.Element),
+            widget.Args(id: f.name, labelled_by: widget.LabelledByLabelFor),
           ),
         ])
 

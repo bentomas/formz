@@ -1,6 +1,6 @@
-import formz/field.{Definition}
+import formz/definition.{Definition}
 import formz/validation
-import formz_string/widgets
+import formz_nakai/widgets
 import gleam/list
 
 pub fn text_field() {
