@@ -1,6 +1,6 @@
 import formz/definition.{type Definition}
 import formz/field
-import formz/subform
+import formz/form_details
 import formz/widget
 import gleam/dict
 import gleam/list
@@ -16,7 +16,7 @@ pub opaque type Form(format, output) {
 
 pub type FormItem(format) {
   Element(field.Field, widget: widget.Widget(format))
-  Set(subform.SubForm, items: List(FormItem(format)))
+  Set(form_details.FormDetails, items: List(FormItem(format)))
 }
 
 pub fn create_form(thing: thing) -> Form(format, thing) {
@@ -87,7 +87,7 @@ pub fn with(
 }
 
 pub fn with_form(
-  subform: subform.SubForm,
+  details: form_details.FormDetails,
   sub: Form(format, sub_output),
   fun: fn(sub_output) -> Form(format, form_output),
 ) -> Form(format, form_output) {
@@ -96,14 +96,14 @@ pub fn with_form(
   let sub_items =
     sub.items
     |> map_fields(fn(field) {
-      field |> field.set_name(subform.name <> "." <> field.name)
+      field |> field.set_name(details.name <> "." <> field.name)
     })
 
-  let updated_items = [Set(subform, sub_items), ..next_form.items]
+  let updated_items = [Set(details, sub_items), ..next_form.items]
 
   let parse = fn(items: List(FormItem(format))) {
     // pull out the latest version of this field to get latest input data
-    let assert [Set(subform, sub_items), ..next_items] = items
+    let assert [Set(details, sub_items), ..next_items] = items
 
     let sub_output = sub.parse(sub_items)
 
@@ -117,17 +117,17 @@ pub fn with_form(
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(items), Ok(_value) -> Error([Set(subform, items), ..items])
+      Error(items), Ok(_value) -> Error([Set(details, items), ..items])
 
       // form was good so far, but this sub form errored, so need to
       // hop on error track
       Ok(_), Error(error_fields) ->
-        Error([Set(subform, error_fields), ..next_items])
+        Error([Set(details, error_fields), ..next_items])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
       Error(fields), Error(error_fields) ->
-        Error(list.prepend(fields, Set(subform, error_fields)))
+        Error(list.prepend(fields, Set(details, error_fields)))
     }
   }
   Form(updated_items, parse: parse, placeholder: next_form.placeholder)
@@ -181,11 +181,11 @@ pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output))
   }
 }
 
-pub fn parse_try(
+pub fn parse_then_try(
   form: Form(format, output),
-  apply fun: fn(output, Form(format, output)) -> Result(c, Form(format, output)),
+  apply fun: fn(Form(format, output), output) -> Result(c, Form(format, output)),
 ) -> Result(c, Form(format, output)) {
-  parse(form) |> result.try(fun(_, form))
+  parse(form) |> result.try(fun(form, _))
 }
 
 pub fn items(form: Form(format, output)) -> List(FormItem(format)) {
@@ -246,14 +246,14 @@ pub fn update_field(
   })
 }
 
-pub fn update_fieldset(
+pub fn update_subform(
   form: Form(format, output),
   name: String,
-  fun: fn(subform.SubForm) -> subform.SubForm,
+  fun: fn(form_details.FormDetails) -> form_details.FormDetails,
 ) -> Form(format, output) {
   update(form, name, fn(item) {
     case item {
-      Set(subform, items) -> Set(fun(subform), items)
+      Set(details, items) -> Set(fun(details), items)
       _ -> item
     }
   })

@@ -29,7 +29,11 @@ pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
         html.span([attr.class("widget")], [
           make_widget(
             f,
-            widget.Args(id: f.name, labelled_by: widget.LabelledByLabelFor),
+            widget.Args(
+              id: f.name,
+              labelled_by: widget.LabelledByLabelFor,
+              described_by: widget.DescribedByNone,
+            ),
           ),
         ])
 

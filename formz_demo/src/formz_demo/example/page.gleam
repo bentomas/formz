@@ -47,13 +47,13 @@ pub fn build_page(
 }
 
 fn get_inputs(form: formz.Form(format, ouput)) {
-  form |> formz.formitems |> do_get_inputs([]) |> list.reverse
+  form |> formz.items |> do_get_inputs([]) |> list.reverse
 }
 
 fn do_get_inputs(items: List(formz.FormItem(format)), acc) {
   case items {
     [] -> acc
-    [formz.Item(input, _), ..rest] -> do_get_inputs(rest, [input, ..acc])
+    [formz.Element(input, _), ..rest] -> do_get_inputs(rest, [input, ..acc])
     [formz.Set(_, items), ..rest] ->
       do_get_inputs(list.flatten([items, rest]), acc)
   }

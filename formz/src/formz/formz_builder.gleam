@@ -1,6 +1,6 @@
 import formz/definition.{type Definition}
 import formz/field
-import formz/subform
+import formz/form_details
 import formz/widget
 
 import gleam/dict
@@ -23,7 +23,7 @@ pub opaque type Form(format, output, decoder, has_decoder) {
 
 pub type FormItem(format) {
   Element(field.Field, widget: widget.Widget(format))
-  Set(subform.SubForm, items: List(FormItem(format)))
+  Set(form_details.FormDetails, items: List(FormItem(format)))
 }
 
 pub fn new() -> Form(format, a, a, NoDecoder) {
@@ -90,21 +90,21 @@ pub fn add_form(
     form_output,
     has_decoder,
   ),
-  subform: subform.SubForm,
+  details: form_details.FormDetails,
   sub: Form(format, sub_output, sub_decoder, HasDecoder),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
   let sub_items =
     sub.items
     |> map_fields(fn(field) {
-      field |> field.set_name(subform.name <> "." <> field.name)
+      field |> field.set_name(details.name <> "." <> field.name)
     })
 
-  let updated_items = [Set(subform, sub_items), ..previous_form.items]
+  let updated_items = [Set(details, sub_items), ..previous_form.items]
 
   let parse_with = fn(items, decoder: form_output) {
     // can do let assert because we know there's at least one field since
     // we just added one
-    let assert Ok(#(Set(subform, sub_items), rest)) = pop_element(items)
+    let assert Ok(#(Set(details, sub_items), rest)) = pop_element(items)
 
     let assert Form(_, sub_parse_with, Some(sub_decoder)) = sub
     let form_output = sub_parse_with(sub_items, sub_decoder)
@@ -116,16 +116,16 @@ pub fn add_form(
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(items), Ok(_value) -> Error([Set(subform, items), ..items])
+      Error(items), Ok(_value) -> Error([Set(details, items), ..items])
 
       // form was good so far, but this sub form errored, so need to
       // hop on error track
-      Ok(_), Error(error_fields) -> Error([Set(subform, error_fields), ..rest])
+      Ok(_), Error(error_fields) -> Error([Set(details, error_fields), ..rest])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
       Error(fields), Error(error_fields) ->
-        Error(list.prepend(fields, Set(subform, error_fields)))
+        Error(list.prepend(fields, Set(details, error_fields)))
     }
   }
   Form(items: updated_items, parse_with:, decoder: previous_form.decoder)
@@ -202,12 +202,12 @@ pub fn parse(
   }
 }
 
-pub fn parse_try(
+pub fn parse_then_try(
   form: Form(format, output, decoder, HasDecoder),
-  apply fun: fn(output, Form(format, output, decoder, HasDecoder)) ->
+  apply fun: fn(Form(format, output, decoder, HasDecoder), output) ->
     Result(c, Form(format, output, decoder, HasDecoder)),
 ) -> Result(c, Form(format, output, decoder, HasDecoder)) {
-  parse(form) |> result.try(fun(_, form))
+  parse(form) |> result.try(fun(form, _))
 }
 
 pub fn items(form: Form(format, a, b, has_decoder)) -> List(FormItem(format)) {
@@ -268,14 +268,14 @@ pub fn update_field(
   })
 }
 
-pub fn update_fieldset(
+pub fn update_subform(
   form: Form(format, output, decoder, has_decoder),
   name: String,
-  fun: fn(subform.SubForm) -> subform.SubForm,
+  fun: fn(form_details.FormDetails) -> form_details.FormDetails,
 ) -> Form(format, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {
-      Set(subform, items) -> Set(fun(subform), items)
+      Set(details, items) -> Set(fun(details), items)
       _ -> item
     }
   })

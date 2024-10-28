@@ -1,7 +1,8 @@
 import formz/definition
 import formz/field.{field}
+import formz/form_details.{form_details}
 import formz/formz_use.{Element, Set} as formz
-import formz/subform.{subform}
+
 import formz/validation
 import gleeunit
 import gleeunit/should
@@ -260,7 +261,7 @@ pub fn sub_form_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(subform("name"), f1)
+    use a <- formz.with_form(form_details("name"), f1)
     use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
@@ -287,7 +288,7 @@ pub fn sub_form_error_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(subform("name"), f1)
+    use a <- formz.with_form(form_details("name"), f1)
     use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
@@ -320,20 +321,20 @@ pub fn decoded_and_try_test() {
     |> formz.data([#("a", "string"), #("b", "2"), #("c", "3.0")])
 
   // can succeed
-  formz.parse_try(f, fn(_, _) { Ok(3) })
+  formz.parse_then_try(f, fn(_, _) { Ok(3) })
   |> should.equal(Ok(3))
 
   // can change type
-  formz.parse_try(f, fn(_, _) { Ok("it worked") })
+  formz.parse_then_try(f, fn(_, _) { Ok("it worked") })
   |> should.equal(Ok("it worked"))
 
   // can error
-  formz.parse_try(f, fn(_, form) { Error(form) })
+  formz.parse_then_try(f, fn(form, _) { Error(form) })
   |> should.equal(Error(f))
 
   // can change field
   let assert Error(form) =
-    formz.parse_try(f, fn(_, form) {
+    formz.parse_then_try(f, fn(form, _) {
       form
       |> formz.update_field("a", field.set_error(_, "woops"))
       |> Error

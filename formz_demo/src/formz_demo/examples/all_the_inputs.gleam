@@ -12,10 +12,7 @@ pub fn make_form() {
   use e <- formz.with(field("e"), definitions.email_field())
   use f <- formz.with(field("g"), definitions.enum_field(letters()))
   use g <- formz.with(field("h"), definitions.indexed_enum_field(choices))
-  use h <- formz.with(
-    field("i"),
-    definitions.list_field(["Dog", "Cat", "Bird"]),
-  )
+  use h <- formz.with(field("i"), definitions.list_field(["Dog", "Cat", "Ant"]))
 
   formz.create_form(#(a, b, c, d, e, f, g, h))
 }

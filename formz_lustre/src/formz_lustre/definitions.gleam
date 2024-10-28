@@ -23,6 +23,10 @@ pub fn boolean_field() {
   Definition(widgets.checkbox_widget(), validation.boolean, False)
 }
 
+pub fn password_field() {
+  Definition(widgets.password_widget(), validation.string, "")
+}
+
 pub fn enum_field(variants: List(#(String, enum))) {
   let assert Ok(#(_, first)) = list.first(variants)
   Definition(

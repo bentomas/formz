@@ -24,6 +24,7 @@ pub fn generate_item(
         attribute.name(f.name),
         attribute.value(f.value),
       ])
+
     formz.Element(f, make_widget) -> {
       let label_el = html.label([], [html.text(f.label), html.text(": ")])
 
@@ -36,7 +37,11 @@ pub fn generate_item(
         html.span([attribute.class("widget")], [
           make_widget(
             f,
-            widget.Args(id: f.name, labelled_by: widget.LabelledByLabelFor),
+            widget.Args(
+              id: f.name,
+              labelled_by: widget.LabelledByLabelFor,
+              described_by: widget.DescribedByNone,
+            ),
           ),
         ])
 

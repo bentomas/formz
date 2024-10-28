@@ -1,11 +1,17 @@
 import formz/field.{field}
-import formz/fieldset.{fieldset}
+import formz/form_details.{form_details}
 import formz/formz_use as formz
 import formz_string/definitions
 
 pub fn make_form() {
-  use billing_address <- formz.with_form(fieldset("billing"), address_form())
-  use shipping_address <- formz.with_form(fieldset("shipping"), address_form())
+  use billing_address <- formz.with_form(
+    form_details("billing"),
+    address_form(),
+  )
+  use shipping_address <- formz.with_form(
+    form_details("shipping"),
+    address_form(),
+  )
 
   formz.create_form(#(billing_address, shipping_address))
 }

@@ -1,7 +1,7 @@
 import formz/definition
 import formz/field.{field}
+import formz/form_details.{form_details}
 import formz/formz_builder.{Element, Set} as formz
-import formz/subform.{subform}
 import formz/validation
 import gleam/list
 import gleeunit
@@ -108,6 +108,7 @@ pub fn can_decodes_in_any_order_test() {
   formz.new()
   |> formz.add(field("first"), text_field())
   |> formz.data([#("first", "world")])
+  |> formz.decodes(fn(str) { "one " <> str })
   |> formz.decodes(fn(str) { "hello " <> str })
   |> formz.parse
   |> should.equal(Ok("hello world"))
@@ -260,20 +261,20 @@ pub fn try_test() {
     |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
 
   // can succeed
-  formz.parse_try(f, fn(_, _) { Ok(3) })
+  formz.parse_then_try(f, fn(_, _) { Ok(3) })
   |> should.equal(Ok(3))
 
   // can change type
-  formz.parse_try(f, fn(_, _) { Ok("it worked") })
+  formz.parse_then_try(f, fn(_, _) { Ok("it worked") })
   |> should.equal(Ok("it worked"))
 
   // can error
-  formz.parse_try(f, fn(_, form) { Error(form) })
+  formz.parse_then_try(f, fn(form, _) { Error(form) })
   |> should.equal(Error(f))
 
   // can change field
   let assert Error(form) =
-    formz.parse_try(f, fn(_, form) {
+    formz.parse_then_try(f, fn(form, _) {
       Error(formz.update_field(form, "a", field.set_error(_, "woops")))
     })
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
@@ -293,7 +294,7 @@ pub fn sub_form_test() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(subform("name"), f1)
+    |> formz.add_form(form_details("name"), f1)
     |> formz.add(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
@@ -318,7 +319,7 @@ pub fn sub_form_error_tst() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(subform("name"), f1)
+    |> formz.add_form(form_details("name"), f1)
     |> formz.add(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 

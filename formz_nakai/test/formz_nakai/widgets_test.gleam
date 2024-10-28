@@ -81,7 +81,11 @@ pub fn text_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.text_like_widget("text"),
@@ -93,7 +97,11 @@ pub fn text_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -106,7 +114,11 @@ pub fn text_widget_test() {
     disabled: False,
     required: True,
     value: "val",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -119,7 +131,11 @@ pub fn text_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
 
@@ -134,7 +150,11 @@ pub fn checkbox_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByElementWithId("div")),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByElementWithId("div"),
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.checkbox_widget(),
@@ -146,7 +166,11 @@ pub fn checkbox_widget_test() {
     disabled: False,
     required: True,
     value: "on",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -159,7 +183,11 @@ pub fn checkbox_widget_test() {
     disabled: False,
     required: True,
     value: "on",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
 
@@ -174,7 +202,11 @@ pub fn password_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByElementWithId("div")),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByElementWithId("div"),
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.password_widget(),
@@ -186,7 +218,11 @@ pub fn password_widget_test() {
     disabled: False,
     required: True,
     value: "xxxx",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -199,7 +235,11 @@ pub fn password_widget_test() {
     disabled: False,
     required: True,
     value: "xxxx",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
 
@@ -214,7 +254,11 @@ pub fn textarea_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByElementWithId("div")),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByElementWithId("div"),
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.textarea_widget(),
@@ -226,7 +270,11 @@ pub fn textarea_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -239,7 +287,11 @@ pub fn textarea_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
 
@@ -254,7 +306,11 @@ pub fn hidden_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByElementWithId("div")),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByElementWithId("div"),
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.hidden_widget(),
@@ -266,7 +322,11 @@ pub fn hidden_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -279,7 +339,11 @@ pub fn hidden_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
 
@@ -295,7 +359,11 @@ pub fn select_widget_test() {
     disabled: False,
     required: True,
     value: "",
-    args: widget.Args("id", labelled_by: widget.LabelledByElementWithId("div")),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByElementWithId("div"),
+      described_by: widget.DescribedByNone,
+    ),
   )
   test_inputs(
     string_widgets.select_widget(list),
@@ -307,7 +375,11 @@ pub fn select_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByFieldValue),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
   )
 
   test_inputs(
@@ -320,6 +392,10 @@ pub fn select_widget_test() {
     disabled: False,
     required: True,
     value: "1",
-    args: widget.Args("id", labelled_by: widget.LabelledByLabelFor),
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByNone,
+    ),
   )
 }
