@@ -233,5 +233,5 @@ pub fn handle_form_submission(req: Request) -> Response {
 
 ## See it in action
 
-There is a demo wisp app showing a few interactive examples of how `formz` works
-[in the repo]().
+There is a [demo wisp app](https://github.com/bentomas/formz/tree/main/formz_demo)
+showing a few interactive examples of how `formz` works in the repo.
