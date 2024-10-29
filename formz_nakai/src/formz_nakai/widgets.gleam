@@ -2,7 +2,6 @@ import formz/field.{type Field}
 import formz/widget
 
 import gleam/list
-import gleam/string
 import nakai/attr
 import nakai/html
 
@@ -118,7 +117,7 @@ pub fn hidden_widget() {
   }
 }
 
-pub fn select_widget(variants: List(#(String, value))) {
+pub fn select_widget(variants: List(#(String, String))) {
   fn(field: Field, args: widget.Args) -> html.Node {
     html.select(
       list.flatten([
@@ -129,7 +128,7 @@ pub fn select_widget(variants: List(#(String, value))) {
       list.flatten([
         [html.option([attr.value("")], [html.Text("Select...")]), html.hr([])],
         list.map(variants, fn(variant) {
-          let val = string.inspect(variant.1)
+          let val = variant.1
           let selected_attr = case field.value == val {
             True -> [attr.selected()]
             _ -> []

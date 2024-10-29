@@ -37,91 +37,57 @@ pub type Alphabet {
 }
 
 pub fn string_test() {
-  "" |> validation.string |> should.equal(Error("Must not be empty"))
-  " " |> validation.string |> should.equal(Error("Must not be empty"))
+  "" |> validation.string |> should.equal(Ok(""))
+  " " |> validation.string |> should.equal(Ok(""))
   "a" |> validation.string |> should.equal(Ok("a"))
   "b " |> validation.string |> should.equal(Ok("b"))
   " c" |> validation.string |> should.equal(Ok("c"))
   " d " |> validation.string |> should.equal(Ok("d"))
 }
 
-pub fn must_be_longer_than_test() {
-  ""
-  |> validation.must_be_longer_than(2)
-  |> should.equal(Error("Must be longer than 2"))
-  "a"
-  |> validation.must_be_longer_than(2)
-  |> should.equal(Error("Must be longer than 2"))
-  "ab"
-  |> validation.must_be_longer_than(2)
-  |> should.equal(Error("Must be longer than 2"))
-  "abc" |> validation.must_be_longer_than(2) |> should.equal(Ok("abc"))
-  "abcd" |> validation.must_be_longer_than(2) |> should.equal(Ok("abcd"))
-}
-
 pub fn email_test() {
-  "xxxxx" |> validation.email |> should.equal(Error("Must be an email address"))
+  "xxxxx" |> validation.email |> should.equal(Error("must be an email address"))
   "a@" |> validation.email |> should.equal(Ok("a@"))
   "@a" |> validation.email |> should.equal(Ok("@a"))
   "a@a" |> validation.email |> should.equal(Ok("a@a"))
 }
 
-pub fn integer_test() {
-  "" |> validation.int |> should.equal(Error("Must be a whole number"))
-  "a" |> validation.int |> should.equal(Error("Must be a whole number"))
-  "1.0" |> validation.int |> should.equal(Error("Must be a whole number"))
+pub fn int_test() {
+  "" |> validation.int |> should.equal(Error("must be a whole number"))
+  "a" |> validation.int |> should.equal(Error("must be a whole number"))
+  "1.0" |> validation.int |> should.equal(Error("must be a whole number"))
   "1" |> validation.int |> should.equal(Ok(1))
 }
 
 pub fn number_test() {
-  "" |> validation.number |> should.equal(Error("Must be a number"))
-  "a" |> validation.number |> should.equal(Error("Must be a number"))
+  "" |> validation.number |> should.equal(Error("must be a number"))
+  "a" |> validation.number |> should.equal(Error("must be a number"))
   "1.0" |> validation.number |> should.equal(Ok(1.0))
   "1" |> validation.number |> should.equal(Ok(1.0))
 }
 
-pub fn enum_test() {
-  "x"
-  |> validation.enum(variants() |> list.take(1))
-  |> should.equal(Error("Must be A"))
-  "x"
-  |> validation.enum(variants() |> list.take(2))
-  |> should.equal(Error("Must be one of A, B"))
-  "x"
-  |> validation.enum(variants() |> list.take(3))
-  |> should.equal(Error("Must be one of A, B, C"))
-  "x"
-  |> validation.enum(variants() |> list.take(4))
-  |> should.equal(Error("Must be one of A, B, C, D"))
-  "x"
-  |> validation.enum(variants())
-  |> should.equal(Error("Must be one of A, B, C, D..."))
-  "A" |> validation.enum(variants()) |> should.equal(Ok(A))
-  "Y" |> validation.enum(variants()) |> should.equal(Ok(Y))
-}
-
 pub fn list_item_test() {
   "x"
-  |> validation.enum_by_index(variants() |> list.take(1))
-  |> should.equal(Error("Must be A"))
+  |> validation.list_item_by_index(alphabet() |> list.take(1))
+  |> should.equal(Error("must be an item in list"))
   "x"
-  |> validation.enum_by_index(variants() |> list.take(2))
-  |> should.equal(Error("Must be one of A, B"))
+  |> validation.list_item_by_index(alphabet() |> list.take(2))
+  |> should.equal(Error("must be an item in list"))
   "x"
-  |> validation.enum_by_index(variants() |> list.take(3))
-  |> should.equal(Error("Must be one of A, B, C"))
+  |> validation.list_item_by_index(alphabet() |> list.take(3))
+  |> should.equal(Error("must be an item in list"))
   "x"
-  |> validation.enum_by_index(variants() |> list.take(4))
-  |> should.equal(Error("Must be one of A, B, C, D"))
+  |> validation.list_item_by_index(alphabet() |> list.take(4))
+  |> should.equal(Error("must be an item in list"))
   "x"
-  |> validation.enum_by_index(variants())
-  |> should.equal(Error("Must be one of A, B, C, D..."))
-  "0" |> validation.enum_by_index(variants()) |> should.equal(Ok(A))
-  "24" |> validation.enum_by_index(variants()) |> should.equal(Ok(Y))
+  |> validation.list_item_by_index(alphabet())
+  |> should.equal(Error("must be an item in list"))
+  "0" |> validation.list_item_by_index(alphabet()) |> should.equal(Ok("A"))
+  "24" |> validation.list_item_by_index(alphabet()) |> should.equal(Ok("Y"))
 }
 
 pub fn boolean_test() {
-  "x" |> validation.boolean |> should.equal(Error("Must be true or false"))
+  "x" |> validation.boolean |> should.equal(Error("must be true or false"))
   "" |> validation.boolean |> should.equal(Ok(False))
   "true" |> validation.boolean |> should.equal(Ok(True))
   "false" |> validation.boolean |> should.equal(Ok(False))
@@ -131,39 +97,21 @@ pub fn boolean_test() {
   "off" |> validation.boolean |> should.equal(Ok(False))
 }
 
-pub fn true_test() {
-  "" |> validation.true |> should.equal(Error("Must be true"))
-  "false" |> validation.true |> should.equal(Error("Must be true"))
-  "False" |> validation.true |> should.equal(Error("Must be true"))
-  "off" |> validation.true |> should.equal(Error("Must be true"))
-  "true" |> validation.true |> should.equal(Ok(True))
-  "True" |> validation.true |> should.equal(Ok(True))
-  "on" |> validation.true |> should.equal(Ok(True))
-}
-
 pub fn and_test() {
+  let is_even = fn(num) {
+    case num % 2 == 0 {
+      True -> Ok(num)
+      False -> Error("must be even")
+    }
+  }
   let v =
-    validation.enum([#("off", "off"), #("yes", "yes")])
-    |> validation.and(validation.true)
+    validation.and(validation.list_item_by_index([1, 2, 3, 5, 7, 9]), is_even)
 
-  "" |> v |> should.equal(Error("Must be one of off, yes"))
-  "\"on\"" |> v |> should.equal(Error("Must be one of off, yes"))
-  "\"off\"" |> v |> should.equal(Error("Must be true"))
-  "\"yes\"" |> v |> should.equal(Ok(True))
-}
-
-pub fn or_test() {
-  let v =
-    validation.enum([#("off", "off"), #("yes", "yes")])
-    |> validation.or(validation.enum([#("on", "on"), #("true", "true")]))
-
-  ""
-  |> v
-  |> should.equal(Error("Must be one of off, yes or Must be one of on, true"))
-  "\"off\"" |> v |> should.equal(Ok("off"))
-  "\"yes\"" |> v |> should.equal(Ok("yes"))
-  "\"on\"" |> v |> should.equal(Ok("on"))
-  "\"true\"" |> v |> should.equal(Ok("true"))
+  "" |> v |> should.equal(Error("must be an item in list"))
+  "10" |> v |> should.equal(Error("must be an item in list"))
+  "x" |> v |> should.equal(Error("must be an item in list"))
+  "0" |> v |> should.equal(Error("must be even"))
+  "1" |> v |> should.equal(Ok(2))
 }
 
 pub fn replace_error_test() {
@@ -176,33 +124,9 @@ pub fn replace_error_test() {
   |> should.equal(Error("Uh oh!"))
 }
 
-fn variants() {
+fn alphabet() {
   [
-    #("A", A),
-    #("B", B),
-    #("C", C),
-    #("D", D),
-    #("E", E),
-    #("F", F),
-    #("G", G),
-    #("H", H),
-    #("I", I),
-    #("J", J),
-    #("K", K),
-    #("L", L),
-    #("M", M),
-    #("N", N),
-    #("O", O),
-    #("P", P),
-    #("Q", Q),
-    #("R", R),
-    #("S", S),
-    #("T", T),
-    #("U", U),
-    #("V", V),
-    #("W", W),
-    #("X", X),
-    #("Y", Y),
-    #("Z", Z),
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
+    "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
   ]
 }

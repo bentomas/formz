@@ -1,7 +1,8 @@
 import formz/definition
 import formz/field.{field}
-import formz/form_details.{form_details}
 import formz/formz_use.{Element, Set} as formz
+import formz/subform.{subform}
+import gleam/string
 
 import formz/validation
 import gleeunit
@@ -85,7 +86,12 @@ fn three_field_form() {
       |> field.set_name("a")
       |> field.set_label("A"),
     text_field()
-      |> definition.validates(validation.must_be_longer_than(3)),
+      |> definition.validates(fn(str) {
+        case string.length(str) > 3 {
+          True -> Ok(str)
+          False -> Error("must be longer than 3")
+        }
+      }),
   )
 
   use b <- formz.with(field(named: "b"), integer_field())
@@ -195,7 +201,7 @@ pub fn parse_single_field_form_with_error_test() {
     |> formz.parse
 
   let assert [Element(field, _)] = formz.items(f)
-  field |> should_be_field_with_error("Must be a whole number")
+  field |> should_be_field_with_error("must be a whole number")
 }
 
 pub fn parse_triple_field_form_with_error_test() {
@@ -208,7 +214,7 @@ pub fn parse_triple_field_form_with_error_test() {
 
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_with_error("Must be a number")
+  fieldc |> should_be_field_with_error("must be a number")
 
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
@@ -217,8 +223,8 @@ pub fn parse_triple_field_form_with_error_test() {
     |> get_form_from_error_result
     |> formz.items
   fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("Must be a whole number")
-  fieldc |> should_be_field_with_error("Must be a number")
+  fieldb |> should_be_field_with_error("must be a whole number")
+  fieldc |> should_be_field_with_error("must be a number")
 
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     three_field_form()
@@ -227,7 +233,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> get_form_from_error_result
     |> formz.items
   fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
@@ -236,8 +242,8 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
     |> get_form_from_error_result
     |> formz.items
-  fielda |> should_be_field_with_error("Must be longer than 3")
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be longer than 3")
+  fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
@@ -246,7 +252,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
     |> get_form_from_error_result
     |> formz.items
-  fielda |> should_be_field_with_error("Must be longer than 3")
+  fielda |> should_be_field_with_error("must be longer than 3")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
 }
@@ -261,7 +267,7 @@ pub fn sub_form_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(form_details("name"), f1)
+    use a <- formz.with_form(subform("name"), f1)
     use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
@@ -288,7 +294,7 @@ pub fn sub_form_error_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(form_details("name"), f1)
+    use a <- formz.with_form(subform("name"), f1)
     use b <- formz.with(field("d"), integer_field())
 
     formz.create_form(#(a, b))
@@ -309,7 +315,7 @@ pub fn sub_form_error_test() {
     |> get_form_from_error_result
     |> formz.items
 
-  fielda |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
   fieldd |> should_be_field_no_error

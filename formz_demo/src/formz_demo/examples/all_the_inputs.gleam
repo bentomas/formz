@@ -1,20 +1,28 @@
+import formz/definition
 import formz/field.{field}
 import formz/formz_use as formz
 import formz_string/definitions
+import formz_string/widgets
 
 pub fn make_form() {
-  let choices = [#("Yes", True), #("Maybe", True), #("No", False)]
-
   use a <- formz.with(field("a"), definitions.text_field())
   use b <- formz.with(field("b"), definitions.integer_field())
   use c <- formz.with(field("c"), definitions.number_field())
   use d <- formz.with(field("d"), definitions.boolean_field())
   use e <- formz.with(field("e"), definitions.email_field())
-  use f <- formz.with(field("g"), definitions.enum_field(letters()))
-  use g <- formz.with(field("h"), definitions.indexed_enum_field(choices))
-  use h <- formz.with(field("i"), definitions.list_field(["Dog", "Cat", "Ant"]))
+  use f <- formz.with(field("f"), definitions.password_field())
+  use g <- formz.with(
+    field("g"),
+    definitions.choices_field(letters(), placeholder: A),
+  )
+  use h <- formz.with(field("h"), definitions.list_field(["Dog", "Cat", "Ant"]))
+  use i <- formz.with(
+    field("i"),
+    definitions.text_field()
+      |> definition.set_widget(widgets.textarea_widget()),
+  )
 
-  formz.create_form(#(a, b, c, d, e, f, g, h))
+  formz.create_form(#(a, b, c, d, e, f, g, h, i))
 }
 
 pub type Alphabet {

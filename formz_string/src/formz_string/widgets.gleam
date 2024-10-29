@@ -119,11 +119,11 @@ pub fn hidden_widget() {
   }
 }
 
-pub fn select_widget(variants: List(#(String, value))) {
+pub fn select_widget(variants: List(#(String, String))) {
   fn(field: Field, args: widget.Args) {
     let choices =
       list.map(variants, fn(variant) {
-        let val = string.inspect(variant.1)
+        let val = variant.1
         let selected_attr = case field.value == val {
           True -> " selected"
           _ -> ""

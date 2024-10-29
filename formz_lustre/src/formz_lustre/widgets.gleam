@@ -1,7 +1,6 @@
 import formz/field.{type Field}
 import formz/widget
 import gleam/list
-import gleam/string
 import lustre/attribute
 import lustre/element
 import lustre/element/html
@@ -106,19 +105,8 @@ pub fn hidden_widget() {
   }
 }
 
-pub fn select_widget(variants: List(#(String, value))) {
+pub fn select_widget(variants: List(#(String, String))) {
   fn(input: Field, args: widget.Args) -> element.Element(msg) {
-    html.select(
-      [attribute.name(input.name)],
-      list.map(variants, fn(variant) {
-        let val = string.inspect(variant.1)
-        html.option(
-          [attribute.value(val), attribute.selected(input.value == val)],
-          variant.0,
-        )
-      }),
-    )
-
     html.select(
       [
         name_attr(input.name),
@@ -128,9 +116,9 @@ pub fn select_widget(variants: List(#(String, value))) {
       list.flatten([
         [html.option([attribute.value("")], "Select..."), html.hr([])],
         list.map(variants, fn(variant) {
-          let val = string.inspect(variant.1)
+          let val = variant.1
           html.option(
-            [value_attr(val), attribute.selected(input.value == val)],
+            [attribute.value(val), attribute.selected(input.value == val)],
             variant.0,
           )
         }),

@@ -32,8 +32,7 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
           " <span class=\"formz_help_text\">" <> f.help_text <> " </span>"
       }
       let widget_el =
-        " <span class=\"formz_widget\">"
-        <> widget(
+        widget(
           f,
           widget.Args(
             id: f.name,
@@ -41,7 +40,6 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
             described_by: widget.DescribedByNone,
           ),
         )
-        <> "</span>"
 
       let errors_el = case f {
         field.Valid(..) -> ""

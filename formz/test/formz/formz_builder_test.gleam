@@ -1,7 +1,7 @@
 import formz/definition
 import formz/field.{field}
-import formz/form_details.{form_details}
 import formz/formz_builder.{Element, Set} as formz
+import formz/subform.{subform}
 import formz/validation
 import gleam/list
 import gleeunit
@@ -123,7 +123,7 @@ pub fn parse_single_field_form_with_error_test() {
     |> formz.parse
 
   let assert [Element(field, _)] = formz.items(f)
-  field |> should_be_field_with_error("Must be a whole number")
+  field |> should_be_field_with_error("must be a whole number")
 }
 
 pub fn parse_double_field_form_with_error_test() {
@@ -139,7 +139,7 @@ pub fn parse_double_field_form_with_error_test() {
     |> formz.parse
 
   let assert [Element(fielda, _), Element(fieldb, _)] = formz.items(f)
-  fielda |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
   fieldb |> should_be_field_no_error
 
   let assert Error(f) =
@@ -149,7 +149,7 @@ pub fn parse_double_field_form_with_error_test() {
 
   let assert [Element(fielda, _), Element(fieldb, _)] = formz.items(f)
   fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
 
   let assert Error(f) =
     form
@@ -157,8 +157,8 @@ pub fn parse_double_field_form_with_error_test() {
     |> formz.parse
 
   let assert [Element(fielda, _), Element(fieldb, _)] = formz.items(f)
-  fielda |> should_be_field_with_error("Must be a whole number")
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
 }
 
 pub fn parse_triple_field_form_with_error_test() {
@@ -177,7 +177,7 @@ pub fn parse_triple_field_form_with_error_test() {
     formz.items(f)
   fielda |> should_be_field_no_error
   fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_with_error("Must be a whole number")
+  fieldc |> should_be_field_with_error("must be a whole number")
 
   let assert Error(f) =
     form
@@ -186,8 +186,8 @@ pub fn parse_triple_field_form_with_error_test() {
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     formz.items(f)
   fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("Must be a whole number")
-  fieldc |> should_be_field_with_error("Must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
+  fieldc |> should_be_field_with_error("must be a whole number")
 
   let assert Error(f) =
     form
@@ -196,7 +196,7 @@ pub fn parse_triple_field_form_with_error_test() {
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     formz.items(f)
   fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert Error(f) =
@@ -205,8 +205,8 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     formz.items(f)
-  fielda |> should_be_field_with_error("Must be a whole number")
-  fieldb |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
+  fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
   let assert Error(f) =
@@ -215,7 +215,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.parse
   let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
     formz.items(f)
-  fielda |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
 }
@@ -294,7 +294,7 @@ pub fn sub_form_test() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(form_details("name"), f1)
+    |> formz.add_form(subform("name"), f1)
     |> formz.add(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
@@ -319,7 +319,7 @@ pub fn sub_form_error_tst() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(form_details("name"), f1)
+    |> formz.add_form(subform("name"), f1)
     |> formz.add(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
@@ -338,7 +338,7 @@ pub fn sub_form_error_tst() {
     |> get_form_from_error_result
     |> formz.items
 
-  fielda |> should_be_field_with_error("Must be a whole number")
+  fielda |> should_be_field_with_error("must be a whole number")
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
   fieldd |> should_be_field_no_error

@@ -1,67 +1,59 @@
-import formz/definition
 import gleeunit
 import gleeunit/should
 
 import formz_lustre/definitions
-import formz_string/definitions as string_kinds
+import formz_string/definitions as string_definitions
 
 pub fn main() {
   gleeunit.main()
 }
 
-fn fields_should_be_equal_except_widget(
-  field1: definition.Definition(format1, output),
-  field2: definition.Definition(format2, output),
-) {
-  field1.placeholder |> should.equal(field2.placeholder)
-  field1.transform |> should.equal(field2.transform)
-}
-
 pub fn text_field_test() {
-  let string_field = string_kinds.text_field()
+  let string_field = string_definitions.text_field()
   let field = definitions.text_field()
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
 pub fn email_field_test() {
-  let string_field = string_kinds.email_field()
+  let string_field = string_definitions.email_field()
   let field = definitions.email_field()
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
 pub fn number_field_test() {
-  let string_field = string_kinds.number_field()
+  let string_field = string_definitions.number_field()
   let field = definitions.number_field()
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
 pub fn integer_field_test() {
-  let string_field = string_kinds.integer_field()
+  let string_field = string_definitions.integer_field()
   let field = definitions.integer_field()
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
 pub fn boolean_field_test() {
-  let string_field = string_kinds.boolean_field()
+  let string_field = string_definitions.boolean_field()
   let field = definitions.boolean_field()
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
-pub fn enum_field_test() {
-  let string_field = string_kinds.enum_field([#("a", "A"), #("b", "B")])
-  let field = definitions.enum_field([#("a", "A"), #("b", "B")])
+pub fn choices_field_test() {
+  let string_field =
+    string_definitions.choices_field([#("a", "A"), #("b", "B")], "")
+  let field = definitions.choices_field([#("a", "A"), #("b", "B")], "")
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
 
 pub fn indexed_enum_field_test() {
-  let string_field = string_kinds.indexed_enum_field([#("a", "A"), #("b", "B")])
-  let field = definitions.indexed_enum_field([#("a", "A"), #("b", "B")])
+  let string_field = string_definitions.list_field(["A", "B"])
+  let field = definitions.list_field(["A", "B"])
 
-  fields_should_be_equal_except_widget(field, string_field)
+  field.transform |> should.equal(string_field.transform)
 }
