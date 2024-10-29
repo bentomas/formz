@@ -1,5 +1,7 @@
 name = "formz"
 version = "0.1.0"
+description = "Accessible, type safe form parsing and generating for Gleam"
+licences = ["Unlicense"]
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
