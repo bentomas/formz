@@ -15,7 +15,7 @@ import gleam/option
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() {
   Definition(
-    widgets.text_like_widget("text"),
+    widgets.input_widget("text"),
     validation.non_empty_string,
     "",
     fn(fun, str) {
@@ -32,7 +32,7 @@ pub fn text_field() {
 /// look like an email address, i.e. the string has an `@`.
 pub fn email_field() {
   Definition(
-    widgets.text_like_widget("email"),
+    widgets.input_widget("email"),
     validation.email,
     "",
     definition.make_simple_optional_parse(),

@@ -74,8 +74,8 @@ fn test_inputs(
 
 pub fn text_widget_test() {
   test_inputs(
-    string_widgets.text_like_widget("text"),
-    widgets.text_like_widget("text"),
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -91,8 +91,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.text_like_widget("text"),
-    widgets.text_like_widget("text"),
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
     name: "",
     label: "A",
     help: "help",
@@ -108,8 +108,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.text_like_widget("text"),
-    widgets.text_like_widget("text"),
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -125,8 +125,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.text_like_widget("text"),
-    widgets.text_like_widget("text"),
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -142,8 +142,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.text_like_widget("text"),
-    widgets.text_like_widget("text"),
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",

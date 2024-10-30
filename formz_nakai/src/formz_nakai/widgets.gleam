@@ -85,8 +85,8 @@ fn step_size_attr(step_size: String) -> List(attr.Attr) {
   }
 }
 
-// Create a checkbox widget (`<input type="checkbox">`). The checkbox is checked
-// if the value is "on" (the browser default).
+/// Create an `<input type="checkbox">`. The checkbox is checked
+/// if the value is "on" (the browser default).
 pub fn checkbox_widget() {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field |> field.set_raw_value(""), args, "checkbox", [
@@ -95,19 +95,29 @@ pub fn checkbox_widget() {
   }
 }
 
+/// Create a `<input type="number">`.  Normally browsers only allow whole numbers,
+/// unless a decimal step size is provided.  The step size here is a string that
+/// will be put straight into the `step-size` attribute.  Doing non-whole numbers
+/// this way does mean that a user can only input numbers up to the precision of
+/// the step size.  If you truly need any float, then a `type="text"` input might be a
+/// better choice.
 pub fn number_widget(step_size: String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field, args, "number", [step_size_attr(step_size)])
   }
 }
 
+/// Create an `<input type="password">`. This will not output the value in the
+/// generated HTML for privacy/security concerns.
 pub fn password_widget() {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field |> field.set_raw_value(""), args, "password", [])
   }
 }
 
-pub fn text_like_widget(type_: String) {
+/// Generate any `<input>` like `type="text"`, `type="email"` or
+/// `type="url"`.
+pub fn input_widget(type_: String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field, args, type_, [])
   }
@@ -134,6 +144,7 @@ fn do_input_widget(
   )
 }
 
+/// Create a `<textarea></textarea>`.
 pub fn textarea_widget() {
   fn(field: Field, args: widget.Args) -> html.Node {
     html.textarea(
@@ -148,6 +159,9 @@ pub fn textarea_widget() {
   }
 }
 
+/// Create a `<input type="hidden">`. This is useful for if a field is just
+/// passing data around and you don't want it to be visible to the user. Like
+/// say, the ID of a record being edited.
 pub fn hidden_widget() {
   fn(field: Field, _) -> html.Node {
     html.input(
@@ -160,6 +174,9 @@ pub fn hidden_widget() {
   }
 }
 
+/// Create a `<select></select>` with `<option>`s for each variant.  The list
+/// of variants is a two-tuple, where the first item is the text to display and
+/// the second item is the value.
 pub fn select_widget(variants: List(#(String, String))) {
   fn(field: Field, args: widget.Args) -> html.Node {
     html.select(

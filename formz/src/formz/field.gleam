@@ -1,3 +1,7 @@
+//// A `Field` is the first argument needed to add a field to a form. It contains
+//// information about this specific field, like it's name, label, or (optional)
+//// help_text.
+
 import justin
 
 pub type Field {

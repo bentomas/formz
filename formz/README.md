@@ -105,7 +105,7 @@ different formats.
 The second role is to parse the data from the field. There are a two parts
 to this, as how you parse a field's value depends on if it is optional or
 required.  For example, an optional text field might be an empty string,
-an optional checkbox might be `false`, and an optional select might
+an optional checkbox might be `False`, and an optional select might
 be `option.None`.  So you need to provide two parse functions, one for when
 a field is required, and a second for when it's optional (and it uses the first
 one).

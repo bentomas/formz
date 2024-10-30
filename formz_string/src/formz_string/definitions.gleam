@@ -15,7 +15,7 @@ import gleam/option
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() {
   Definition(
-    widgets.text_like_widget("text"),
+    widgets.input_widget("text"),
     validation.non_empty_string,
     "",
     fn(fun, str) {
@@ -32,7 +32,7 @@ pub fn text_field() {
 /// look like an email address, i.e. the string has an `@`.
 pub fn email_field() {
   Definition(
-    widgets.text_like_widget("email"),
+    widgets.input_widget("email"),
     validation.email,
     "",
     definition.make_simple_optional_parse(),
@@ -62,7 +62,8 @@ pub fn number_field() {
   )
 }
 
-/// Create a checkbox form input. Parsed as a Boolean.
+/// Create a checkbox form input. Parsed as a `Bool`. If required, the parsed
+/// `Bool` must be `True`.
 pub fn boolean_field() {
   definition.Definition(
     widget: widgets.checkbox_widget(),
@@ -78,7 +79,7 @@ pub fn boolean_field() {
   )
 }
 
-/// Create a password form input, which hides the input value. Parsed as a String
+/// Create a password form input, which hides the input value. Parsed as a String.
 pub fn password_field() {
   Definition(
     widgets.password_widget(),
@@ -91,9 +92,11 @@ pub fn password_field() {
 
 /// Creates a `<select>` input.  Takes a tuple of #(String, String) where the first
 /// item in the tuple is the label, and the second item can be any Gleam type and
-/// is the value that would be parsed for a given selection.
+/// is the value that would be parsed for a given selection.  The actual values
+/// rendered in the `<option>` tags are the numeric indeces of the items in the
+/// list.
 ///
-/// Because of how you build `formz` forms, you need to provide a placeholder of
+/// Because of how you build `formz` forms, you need to provide a stub of
 /// the value type.  Is this annoying?  Would it be more or less annoying if I
 /// required a non-empty list for the variants instead? I'm not sure.  Let me know!
 pub fn choices_field(variants: List(#(String, enum)), stub stub: enum) {

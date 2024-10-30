@@ -9,7 +9,7 @@ pub fn main() {
 }
 
 pub fn text_like_labelled_by_field_value_test() {
-  widgets.text_like_widget("text")(
+  widgets.input_widget("text")(
     field.Valid(
       name: "name",
       label: "Label",
@@ -25,7 +25,7 @@ pub fn text_like_labelled_by_field_value_test() {
 }
 
 pub fn text_like_labelled_by_element_with_id_test() {
-  widgets.text_like_widget("text")(
+  widgets.input_widget("text")(
     field.Valid(
       name: "name",
       label: "Label",
@@ -45,7 +45,7 @@ pub fn text_like_labelled_by_element_with_id_test() {
 }
 
 pub fn text_like_labelled_by_label_for_test() {
-  widgets.text_like_widget("text")(
+  widgets.input_widget("text")(
     field.Valid(
       name: "name",
       label: "Label",
@@ -61,7 +61,7 @@ pub fn text_like_labelled_by_label_for_test() {
 }
 
 pub fn text_like_required_test() {
-  widgets.text_like_widget("text")(
+  widgets.input_widget("text")(
     field.Valid(
       name: "name",
       label: "Label",
@@ -77,7 +77,7 @@ pub fn text_like_required_test() {
 }
 
 pub fn text_like_disabled_test() {
-  widgets.text_like_widget("text")(
+  widgets.input_widget("text")(
     field.Valid(
       name: "name",
       label: "Label",
