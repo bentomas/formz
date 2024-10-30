@@ -1,5 +1,7 @@
 name = "formz_string"
-version = "1.0.0"
+version = "0.1.0"
+description = "String widgets and field definitions for the formz library."
+licences = ["Unlicense"]
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
