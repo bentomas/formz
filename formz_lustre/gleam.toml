@@ -7,10 +7,10 @@ licences = ["Unlicense"]
 repository = { type = "github", user = "bentomas", repo = "formz" }
 
 [dependencies]
-formz = ">= 0.1.1 and < 1.0.0"
+formz = { path = "../formz" }
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 lustre = ">= 4.5.1 and < 5.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
-formz_string = ">= 0.1.0 and < 1.0.0"
+formz_string = { path = "../formz_string" }

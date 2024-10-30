@@ -2,8 +2,8 @@
 # You typically do not need to edit this file
 
 packages = [
-  { name = "formz", version = "0.1.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], otp_app = "formz", source = "hex", outer_checksum = "A44D63EDEEB05775EE04817090C193B03DBF23BF9395F25595DE71A556FACB1D" },
-  { name = "formz_string", version = "0.1.0", build_tools = ["gleam"], requirements = ["formz", "gleam_stdlib"], otp_app = "formz_string", source = "hex", outer_checksum = "8260E5730329887E3A6E35B1B24EA1F71AE10054DAA7775281109DCA52778EA8" },
+  { name = "formz", version = "0.1.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], source = "local", path = "../formz" },
+  { name = "formz_string", version = "0.1.1", build_tools = ["gleam"], requirements = ["formz", "gleam_stdlib"], source = "local", path = "../formz_string" },
   { name = "gleam_stdlib", version = "0.40.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "86606B75A600BBD05E539EB59FABC6E307EEEA7B1E5865AFB6D980A93BCB2181" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "justin", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "justin", source = "hex", outer_checksum = "7FA0C6DB78640C6DC5FBFD59BF3456009F3F8B485BF6825E97E1EB44E9A1E2CD" },
@@ -11,8 +11,8 @@ packages = [
 ]
 
 [requirements]
-formz = { version = ">= 0.1.1 and < 1.0.0" }
-formz_string = { version = ">= 0.1.0 and < 1.0.0" }
+formz = { path = "../formz" }
+formz_string = { path = "../formz_string" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 nakai = { version = ">= 1.0.0 and < 2.0.0" }
