@@ -1,6 +1,6 @@
-import formz/definition.{type Definition}
+import formz/definition.{type Definition, Definition}
 import formz/field
-import formz/form_details
+import formz/subform
 import formz/widget
 
 import gleam/dict
@@ -23,14 +23,14 @@ pub opaque type Form(format, output, decoder, has_decoder) {
 
 pub type FormItem(format) {
   Element(field.Field, widget: widget.Widget(format))
-  Set(form_details.FormDetails, items: List(FormItem(format)))
+  Set(subform.SubForm, items: List(FormItem(format)))
 }
 
 pub fn new() -> Form(format, a, a, NoDecoder) {
   Form([], fn(_, output) { Ok(output) }, None)
 }
 
-pub fn add(
+fn add(
   previous_form: Form(
     format,
     fn(decoder_step_input) -> decoder_step_output,
@@ -38,22 +38,25 @@ pub fn add(
     has_decoder,
   ),
   field: field.Field,
-  definition: Definition(format, decoder_step_input),
+  widget: widget.Widget(format),
+  parse_field: fn(String) -> Result(decoder_step_input, String),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
-  let updated_items = [Element(field, definition.widget), ..previous_form.items]
+  let updated_items = [Element(field, widget), ..previous_form.items]
 
   let parse_with = fn(items, decoder: form_output) {
     // can do let assert because we know there's at least one field since
     // we just added one
     let assert Ok(#(Element(field, widget), rest)) = pop_element(items)
 
-    let input_output = definition.transform(field.value)
-
     let previous_form_output = previous_form.parse_with(rest, decoder)
+    let input_output = parse_field(field.value)
+
     case previous_form_output, input_output {
       // the form we've already parsed has no errors and the field
-      // we just parsed has no errors.  so we can move on to the next
-      Ok(next), Ok(value) -> Ok(next(value))
+      // we just parsed has no errors.  each intermediary step of a form
+      // is a part of a decoder, so since we successfully parsed this form,
+      // we can call the successful decoder that it returned.
+      Ok(previous_decoder), Ok(value) -> Ok(previous_decoder(value))
 
       // the form already has errors even though this one succeeded.
       // so add this to the list and stop anymore parsing
@@ -83,6 +86,40 @@ pub fn add(
   Form(items: updated_items, parse_with:, decoder: previous_form.decoder)
 }
 
+pub fn optional(
+  previous_form: Form(
+    format,
+    fn(decoder_step_input) -> decoder_step_output,
+    form_output,
+    has_decoder,
+  ),
+  field: field.Field,
+  definition: Definition(format, _, decoder_step_input),
+) -> Form(format, decoder_step_output, form_output, has_decoder) {
+  add(previous_form, field, definition.widget, definition.optional_parse(
+    definition.parse,
+    _,
+  ))
+}
+
+pub fn require(
+  previous_form: Form(
+    format,
+    fn(field_output) -> decoder_step_output,
+    form_output,
+    has_decoder,
+  ),
+  field: field.Field,
+  definition: Definition(format, field_output, _),
+) -> Form(format, decoder_step_output, form_output, has_decoder) {
+  add(
+    previous_form,
+    field |> field.set_required(True),
+    definition.widget,
+    definition.parse,
+  )
+}
+
 pub fn add_form(
   previous_form: Form(
     format,
@@ -90,7 +127,7 @@ pub fn add_form(
     form_output,
     has_decoder,
   ),
-  details: form_details.FormDetails,
+  details: subform.SubForm,
   sub: Form(format, sub_output, sub_decoder, HasDecoder),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
   let sub_items =
@@ -161,15 +198,15 @@ pub fn data(
   input_data: List(#(String, String)),
 ) -> Form(format, output, decoder, has_decoder) {
   let data = dict.from_list(input_data)
-  let Form(items, parse, placeholder) = form
+  let Form(items, parse, decoder) = form
   items
   |> map_fields(fn(field) {
     case dict.get(data, field.name) {
-      Ok(value) -> field.set_string_value(field, value)
+      Ok(value) -> field.set_raw_value(field, value)
       Error(_) -> field
     }
   })
-  |> Form(parse, placeholder)
+  |> Form(parse, decoder)
 }
 
 pub fn decodes(
@@ -271,7 +308,7 @@ pub fn update_field(
 pub fn update_subform(
   form: Form(format, output, decoder, has_decoder),
   name: String,
-  fun: fn(form_details.FormDetails) -> form_details.FormDetails,
+  fun: fn(subform.SubForm) -> subform.SubForm,
 ) -> Form(format, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {

@@ -1,53 +1,41 @@
 import formz/widget
+import gleam/option
+import gleam/result
 
-pub type Definition(format, output) {
+pub type Definition(format, required, optional) {
   Definition(
     widget: widget.Widget(format),
-    transform: fn(String) -> Result(output, String),
-    placeholder: output,
-  )
-}
-
-pub fn validates(
-  kind: Definition(format, output),
-  next: fn(output) -> Result(output, String),
-) -> Definition(format, output) {
-  let Definition(widget, previous_transform, placeholder) = kind
-
-  Definition(
-    widget,
-    fn(str) {
-      case previous_transform(str) {
-        Ok(value) -> next(value)
-        Error(error) -> Error(error)
-      }
-    },
-    placeholder,
-  )
-}
-
-pub fn transforms(
-  kind: Definition(format, a),
-  placeholder: b,
-  next: fn(a) -> Result(b, String),
-) -> Definition(format, b) {
-  let Definition(widget, previous_transform, _) = kind
-
-  Definition(
-    widget,
-    fn(str) {
-      case previous_transform(str) {
-        Ok(value) -> next(value)
-        Error(error) -> Error(error)
-      }
-    },
-    placeholder,
+    parse: fn(String) -> Result(required, String),
+    stub: required,
+    optional_parse: fn(fn(String) -> Result(required, String), String) ->
+      Result(optional, String),
+    optional_stub: optional,
   )
 }
 
 pub fn set_widget(
-  kind: Definition(format, a),
+  definition: Definition(format, a, b),
   widget: widget.Widget(format),
-) -> Definition(format, a) {
-  Definition(..kind, widget:)
+) -> Definition(format, a, b) {
+  Definition(..definition, widget:)
+}
+
+pub fn validate(
+  def: Definition(format, a, b),
+  fun: fn(a) -> Result(a, String),
+) -> Definition(format, a, b) {
+  Definition(..def, parse: fn(val) { val |> def.parse |> result.try(fun) })
+}
+
+pub fn make_simple_optional_parse() -> fn(
+  fn(String) -> Result(required, String),
+  String,
+) ->
+  Result(option.Option(required), String) {
+  fn(fun, str) {
+    case str {
+      "" -> Ok(option.None)
+      _ -> fun(str) |> result.map(option.Some)
+    }
+  }
 }

@@ -37,8 +37,8 @@ import formz_string/definitions
 
 pub fn make_form() {
   formz.new()
-  |> formz.add(field("username"), definitions.text_field())
-  |> formz.add(field("password"), definitions.password_field())
+  |> formz.require(field("username"), definitions.text_field())
+  |> formz.require(field("password"), definitions.password_field())
   |> formz.decodes(fn(username) { fn(password) { #(username, password) } })
 }
 ```
@@ -54,8 +54,8 @@ import formz/formz_use as formz
 import formz_string/definitions
 
 pub fn make_form() {
-  use username <- formz.with(field("username"), definitions.text_field())
-  use password <- formz.with(field("password"), definitions.password_field())
+  use username <- formz.require(field("username"), definitions.text_field())
+  use password <- formz.require(field("password"), definitions.password_field())
 
   formz.create_form(#(username, password))
 }
@@ -63,13 +63,14 @@ pub fn make_form() {
 
 ## Creating fields
 
-There are two parts to adding a field to a form (seen above):
+There are two arguments to adding a field to a form (seen above):
 
-1. Specific, unique details about the field, such as its name, label, help text,
-   disabled/enabled state, etc.
-2. A field "definition" which says (A) how to generate the HTML "widget"
-   for the field, and (B) how to parse, or "transform" the data from the field. These
-   definitions are reusable and can be shared between fields, forms and projects.
+1. Specific, unique [details](https://hexdocs.pm/formz/formz/field.html) about
+   the field, such as its name, label, help text, disabled state, etc.
+2. A field [definition](https://hexdocs.pm/formz/formz/definition.html) which
+   says (A) how to generate the HTML *widget* for the field, and (B) how to
+   parse the data from the field. These definitions are reusable and can be
+   shared across fields, forms and projects.
 
 ### Field details
 
@@ -81,13 +82,18 @@ field(named: "username")
 ```
 
 ```gleam
-field(named: "userid") |> field.make_hidden |> field.set_value("42")
+field(named: "userid") |> field.make_hidden |> field.set_raw_value("42")
 ```
 
 ### Field definition
 
+[Defintions](https://hexdocs.pm/formz/formz/definition.html) are the heavy
+compared to the lightness of fields; they take a bit more work to make as they
+are intended to be more reusable.
+
+The first role of a defintion is to generate the HTML widget for the field.
 This library is format-agnostic and you can generate HTML widgets as raw
-strings, Lustre elements, Nakai nodes, something else, etc. There are
+strings, Lustre elements, Nakai nodes, something else, etc, etc. There are
 currently three formz libraries that provide common field definitions in
 different formats.
 
@@ -96,9 +102,17 @@ different formats.
 - [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser,
   would it be useful there??)
 
+The second role is to parse the data from the field. There are a two parts
+to this, as how you parse a field's value depends on if it is optional or
+required.  For example, an optional text field might be an empty string,
+an optional checkbox might be `false`, and an optional select might
+be `option.None`.  So you need to provide two parse functions, one for when
+a field is required, and a second for when it's optional (and it uses the first
+one).
 
-There is also a *simple* validation module with some examples, and to cover
-some basics.
+There is also a basic validation module with the simple parsers required to make
+the basic form definitions provided above work. You can use this as a starting
+point for your own parse functions.
 
 ```gleam
 /// you won't often need to do this directly (I think??).  The idea is that
@@ -125,7 +139,21 @@ fn password_widget(
 }
 
 pub fn password_field() {
-  Definition(password_widget, validation.string, "")
+  Definition(
+    widget: password_widget,
+    parse: validation.string,
+    optional_parse: fn(parse, str) {
+      case str {
+        "" -> Ok(option.None)
+        _ -> parse(str)
+      }
+    },
+    // We need to have a stub value for each parser that's used
+    // when building the decoder and parse functions for the form as the fields
+    // are being added
+    stub: "",
+    optional_stub: option.None,
+  )
 }
 ```
 
@@ -141,7 +169,6 @@ markup for each one.
 The specifics of how you would do this are going
 to vary greatly for each project and its styling/markup needs.
 
-
 However, the three `formz_*` libraries mentioned above all provide a
 simple form generator function that you can use as is, or as a starting
 point for your own.  `formz` is BYOS, Bring Your Own Stylesheet, so the
@@ -149,13 +176,14 @@ built-in form generators come unstyled. If there is interest, I could add
 a super simple CSS file to get the ball rolling and make the default
 forms easier to use out of the box.
 
-That said, you can create the form HTML yourself, directly for each field.
-There's an example in the demo project showing how to do this.
+That said, you can also create the form HTML yourself, directly for each field.
+There's [an example](https://github.com/bentomas/formz/blob/main/formz_demo/src/formz_demo/examples/custom_output.gleam)
+in the demo project showing how to do this.
 
 ### Generating form HTML using the `formz_string` library
 
-The built-in form generators all leave it as homework to add the form tags
-and submit buttons.
+The built-in form generators leave it as homework to add the form tags and
+submit buttons.
 
 ```gleam
 import formz_string/simple
@@ -214,7 +242,7 @@ pub fn handle_form_submission(req: Request) -> Response {
         |> Error
       _ ->
         form
-        |> formz.update_field("username", field.set_error(_, "Wrong username"))
+        |> formz.update_field("username", field.set_error(_, "Unknown username"))
         |> Error
     }
   })

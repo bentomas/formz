@@ -37,11 +37,7 @@ pub fn generate_item(
         html.span([attribute.class("widget")], [
           make_widget(
             f,
-            widget.Args(
-              id: f.name,
-              labelled_by: widget.LabelledByLabelFor,
-              described_by: widget.DescribedByNone,
-            ),
+            widget.args(widget.LabelledByLabelFor) |> widget.id(f.name),
           ),
         ])
 

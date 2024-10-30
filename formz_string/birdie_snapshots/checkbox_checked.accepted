@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: checkbox checked
+file: ./test/formz_string/widgets_test.gleam
+test_name: checkbox_checked_test
+---
+<input type="checkbox" name="name" checked>

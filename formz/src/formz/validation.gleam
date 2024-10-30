@@ -21,7 +21,7 @@ import gleam/string
 /// # -> Ok(2)
 ///
 /// check("hi")
-/// # -> Error("bust be a whole number")
+/// # -> Error("must be a whole number")
 ///
 /// check("1")
 /// # -> Error("must be even")
@@ -37,54 +37,12 @@ pub fn and(
   }
 }
 
-/// Parse the input as a boolean in a permissive way.
-///
-/// ## Examples
-///
-/// ```gleam
-/// number("1")
-/// number("true")
-/// number("yes")
-/// number("on")
-/// # -> Ok(True)
-/// ```
-///
-/// ```gleam
-/// number("0")
-/// number("")
-/// number("no")
-/// number("false")
-/// number("off")
-/// # -> Ok(False)
-/// ```
-///
-/// ```gleam
-/// number("hi")
-/// # -> Error("Must be true or false")
-/// ```
-pub fn boolean(str: String) -> Result(Bool, String) {
-  case string.trim(str) {
-    "True" -> Ok(True)
-    "true" -> Ok(True)
-    "Yes" -> Ok(True)
-    "yes" -> Ok(True)
-    "On" -> Ok(True)
-    "on" -> Ok(True)
-    "1" -> Ok(True)
-    "False" -> Ok(False)
-    "false" -> Ok(False)
-    "No" -> Ok(False)
-    "no" -> Ok(False)
-    "Off" -> Ok(False)
-    "off" -> Ok(False)
-    "0" -> Ok(False)
-    "" -> Ok(False)
-    _ -> Error("must be true or false")
-  }
-}
-
 /// Parse the input as a String that looks like an email address, i.e. it
-/// containts an `@` character.
+/// contains an `@` character, with at least one other character on either
+/// side
+///
+/// (this behavior more closely matches what the browser does than just
+/// checking for an `@`).
 ///
 /// ## Examples
 ///
@@ -92,26 +50,24 @@ pub fn boolean(str: String) -> Result(Bool, String) {
 /// email("hello@example.com")
 /// # -> Ok("hello@example.com")
 /// ```
-///
 /// ```gleam
 /// email("@")
-/// # -> Ok("@")
-/// ```
-///
-/// ```gleam
-/// number("hello")
 /// # -> Error("Must be an email address")
 /// ```
 /// ```gleam
-/// number("1")
-/// # -> Error("ust be an email address")
+/// email("hello")
+/// # -> Error("Must be an email address")
 /// ```
 pub fn email(input: String) -> Result(String, String) {
-  // TODO verify both parts have at least one character?
-  case input |> string.trim |> string.split("@") {
-    [_, _] -> Ok(input)
-    _ -> Error("must be an email address")
+  case input |> string.trim {
+    "" -> Error("is required")
+    trimmed ->
+      case trimmed |> string.split("@") |> list.map(string.length) {
+        [before, after] if before > 0 && after > 0 -> Ok(trimmed)
+        _ -> Error("must be an email address")
+      }
   }
+  // TODO verify both parts have at least one character?
 }
 
 /// Parse the input as a float.  this is forgiving and will also parse
@@ -146,16 +102,16 @@ pub fn number(str: String) -> Result(Float, String) {
 /// ## Examples
 ///
 /// ```gleam
-/// number("1")
+/// int("1")
 /// # -> Ok(1)
 /// ```
 ///
 /// ```gleam
-/// number("3.4")
+/// int("3.4")
 /// # -> Error("Must be a whole number")
 /// ```
 /// ```gleam
-/// number("hello")
+/// int("hello")
 /// # -> Error("Must be a whole number")
 /// ```
 pub fn int(str: String) -> Result(Int, String) {
@@ -198,6 +154,33 @@ pub fn list_item_by_index(
   }
 }
 
+/// Parse the input as a boolean, where only "on" is True and allowed.
+/// All other values are an error.  This is useful for HTML checkboxes, which
+/// the browser sends the empty string if unchecked, and `"on"` if  checked.
+///
+/// ## Examples
+///
+/// ```gleam
+/// on("on")
+/// # -> Ok(True)
+/// ```
+///
+/// ```gleam
+/// on("")
+/// # -> Error("is required")
+/// ```
+///
+/// ```gleam
+/// on("hi")
+/// # -> Error("is required")
+/// ```
+pub fn on(val: String) -> Result(Bool, String) {
+  case val {
+    "on" -> Ok(True)
+    _ -> Error("must be on")
+  }
+}
+
 /// Replace the error message of a validation with a new one.  Most of the built-in
 /// error messages are pretty rudimentary.
 pub fn replace_error(
@@ -207,7 +190,9 @@ pub fn replace_error(
   fn(data) { previous(data) |> result.replace_error(error) }
 }
 
-/// Default field parser.  Trims the input and returns it as is.
-pub fn string(str: String) -> Result(String, String) {
-  Ok(string.trim(str))
+pub fn non_empty_string(str: String) -> Result(String, String) {
+  case string.trim(str) {
+    "" -> Error("is required")
+    trimmed -> Ok(trimmed)
+  }
 }

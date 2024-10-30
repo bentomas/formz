@@ -1,5 +1,6 @@
 import formz/field.{type Field}
 import formz/widget
+import gleam/string
 
 import gleam/list
 import nakai/attr
@@ -25,12 +26,23 @@ fn aria_label_attr(
 ) -> List(attr.Attr) {
   case labelled_by {
     widget.LabelledByLabelFor -> []
-    widget.LabelledByElementWithId(id) -> [attr.aria_labelledby(id)]
+    widget.LabelledByElementsWithIds(ids) -> [
+      attr.aria_labelledby(string.join(ids, " ")),
+    ]
     widget.LabelledByFieldValue ->
       case label {
         "" -> []
         _ -> [attr.aria_label(label)]
       }
+  }
+}
+
+fn aria_describedby_attr(described_by: widget.DescribedBy) -> List(attr.Attr) {
+  case described_by {
+    widget.DescribedByElementsWithIds(ids) -> [
+      attr.Attr("aria-describedby", string.join(ids, " ")),
+    ]
+    widget.DescribedByNone -> []
   }
 }
 
@@ -45,51 +57,81 @@ fn value_attr(value: String) -> List(attr.Attr) {
   }
 }
 
-pub fn checkbox_widget() {
-  fn(field: Field, args: widget.Args) -> html.Node {
-    let checked_attr = case field.value {
-      "on" -> [attr.checked()]
-      _ -> []
-    }
+fn required_attr(required: Bool) -> List(attr.Attr) {
+  case required {
+    True -> [attr.required("")]
+    False -> []
+  }
+}
 
-    html.input(
-      list.flatten([
-        type_attr("checkbox"),
-        name_attr(field.name),
-        id_attr(args.id),
-        checked_attr,
-        aria_label_attr(args.labelled_by, field.label),
-      ]),
-    )
+fn checked_attr(value: String) -> List(attr.Attr) {
+  case value {
+    "on" -> [attr.checked()]
+    _ -> []
+  }
+}
+
+fn disabled_attr(disabled: Bool) -> List(attr.Attr) {
+  case disabled {
+    True -> [attr.disabled()]
+    False -> []
+  }
+}
+
+fn step_size_attr(step_size: String) -> List(attr.Attr) {
+  case step_size {
+    "" -> []
+    _ -> [attr.Attr("step", step_size)]
+  }
+}
+
+// Create a checkbox widget (`<input type="checkbox">`). The checkbox is checked
+// if the value is "on" (the browser default).
+pub fn checkbox_widget() {
+  fn(field: Field, args: widget.Args) {
+    do_input_widget(field |> field.set_raw_value(""), args, "checkbox", [
+      checked_attr(field.value),
+    ])
+  }
+}
+
+pub fn number_widget(step_size: String) {
+  fn(field: Field, args: widget.Args) {
+    do_input_widget(field, args, "number", [step_size_attr(step_size)])
   }
 }
 
 pub fn password_widget() {
-  fn(field: Field, args: widget.Args) -> html.Node {
-    html.input(
-      list.flatten([
-        type_attr("password"),
-        name_attr(field.name),
-        id_attr(args.id),
-        // value_attr(field.value),
-        aria_label_attr(args.labelled_by, field.label),
-      ]),
-    )
+  fn(field: Field, args: widget.Args) {
+    do_input_widget(field |> field.set_raw_value(""), args, "password", [])
   }
 }
 
 pub fn text_like_widget(type_: String) {
-  fn(field: Field, args: widget.Args) -> html.Node {
-    html.input(
-      list.flatten([
-        type_attr(type_),
-        name_attr(field.name),
-        id_attr(args.id),
-        value_attr(field.value),
-        aria_label_attr(args.labelled_by, field.label),
-      ]),
-    )
+  fn(field: Field, args: widget.Args) {
+    do_input_widget(field, args, type_, [])
   }
+}
+
+fn do_input_widget(
+  field: Field,
+  args: widget.Args,
+  type_: String,
+  extra_attrs: List(List(attr.Attr)),
+) {
+  html.input(
+    list.flatten([
+      type_attr(type_),
+      name_attr(field.name),
+      id_attr(args.id),
+      required_attr(field.required),
+      value_attr(field.value),
+      disabled_attr(field.disabled),
+      aria_describedby_attr(args.described_by),
+      aria_label_attr(args.labelled_by, field.label),
+      extra_attrs |> list.flatten,
+    ]),
+  )
 }
 
 pub fn textarea_widget() {
@@ -98,6 +140,7 @@ pub fn textarea_widget() {
       list.flatten([
         name_attr(field.name),
         id_attr(args.id),
+        required_attr(field.required),
         aria_label_attr(args.labelled_by, field.label),
       ]),
       [html.Text(field.value)],
@@ -123,6 +166,7 @@ pub fn select_widget(variants: List(#(String, String))) {
       list.flatten([
         name_attr(field.name),
         id_attr(args.id),
+        required_attr(field.required),
         aria_label_attr(args.labelled_by, field.label),
       ]),
       list.flatten([

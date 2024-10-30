@@ -46,16 +46,16 @@ pub fn build_page(
   wisp.ok() |> wisp.html_body(html)
 }
 
-fn get_inputs(form: formz.Form(format, ouput)) {
-  form |> formz.items |> do_get_inputs([]) |> list.reverse
+fn get_fields(form: formz.Form(format, ouput)) {
+  form |> formz.items |> do_get_fields([]) |> list.reverse
 }
 
-fn do_get_inputs(items: List(formz.FormItem(format)), acc) {
+fn do_get_fields(items: List(formz.FormItem(format)), acc) {
   case items {
     [] -> acc
-    [formz.Element(input, _), ..rest] -> do_get_inputs(rest, [input, ..acc])
+    [formz.Element(field, _), ..rest] -> do_get_fields(rest, [field, ..acc])
     [formz.Set(_, items), ..rest] ->
-      do_get_inputs(list.flatten([items, rest]), acc)
+      do_get_fields(list.flatten([items, rest]), acc)
   }
 }
 
@@ -67,9 +67,9 @@ pub fn show_post(
   case input_data {
     option.None -> element.none()
     option.Some(input_data) -> {
+      let fields = get_fields(form)
       let fields_no_post =
-        form
-        |> get_inputs
+        fields
         |> list.map(fn(i) {
           html.tr([], [
             html.td([], [html.text(i.name)]),
@@ -87,6 +87,23 @@ pub fn show_post(
               }),
             ]),
           ])
+        })
+        |> element.fragment
+
+      let unknown_input =
+        list.filter_map(input_data, fn(t) {
+          let #(k, v) = t
+          case list.find(fields, fn(f) { f.name == k }) {
+            Ok(_) -> Error(Nil)
+            Error(_) ->
+              Ok(
+                html.tr([], [
+                  html.td([], [html.text(k)]),
+                  html.td([], [html.text(string.inspect(v))]),
+                  html.td([], [html.text("Unknown")]),
+                ]),
+              )
+          }
         })
         |> element.fragment
 
@@ -111,7 +128,7 @@ pub fn show_post(
               html.th([], [html.text("Error")]),
             ]),
             // input_rows,
-            fields_no_post,
+            element.fragment([fields_no_post, unknown_input]),
           ]),
           html.h2([], [html.text("Output")]),
           html.div(

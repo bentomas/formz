@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: select selected
+file: ./test/formz_string/widgets_test.gleam
+test_name: select_selected_test
+---
+<select name="name"><option value>Select...</option><hr><option value="0">One</option><option value="1" selected>Two</option><option value="2">Three</option></select>

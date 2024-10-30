@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: number input with step
+file: ./test/formz_string/widgets_test.gleam
+test_name: numeric_step_test
+---
+<input type="number" name="name" value="1.0" step="0.1">

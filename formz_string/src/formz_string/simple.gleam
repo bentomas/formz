@@ -23,7 +23,7 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
       <> { " name=\"" <> f.name <> "\"" }
       <> { " value\"" <> f.value <> "\"" }
       <> ">"
-    formz.Element(f, widget) -> {
+    formz.Element(f, make_widget) -> {
       let label_el =
         "<label for=\"" <> f.name <> "\">" <> f.label <> ": </label>"
       let description_el = case string.is_empty(f.help_text) {
@@ -32,13 +32,9 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
           " <span class=\"formz_help_text\">" <> f.help_text <> " </span>"
       }
       let widget_el =
-        widget(
+        make_widget(
           f,
-          widget.Args(
-            id: f.name,
-            labelled_by: widget.LabelledByLabelFor,
-            described_by: widget.DescribedByNone,
-          ),
+          widget.args(widget.LabelledByLabelFor) |> widget.id(f.name),
         )
 
       let errors_el = case f {

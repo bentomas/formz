@@ -137,7 +137,7 @@ pub fn checkbox_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -189,7 +189,7 @@ pub fn password_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -241,7 +241,7 @@ pub fn textarea_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -293,7 +293,7 @@ pub fn hidden_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -346,7 +346,7 @@ pub fn select_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )

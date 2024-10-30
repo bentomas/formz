@@ -16,8 +16,10 @@ fn remove_self_closing_slash(str: String) -> String {
   string.replace(str, " />", ">")
 }
 
-fn remove_checked_true(str: String) -> String {
-  string.replace(str, "checked=\"true\"", "checked")
+fn remove_trues(str: String) -> String {
+  str
+  |> string.replace("checked=\"true\"", "checked")
+  |> string.replace("disabled=\"true\"", "disabled")
 }
 
 fn remove_empty_attributes(str: String) -> String {
@@ -28,7 +30,7 @@ fn convert_to_string(input) {
   input
   |> nakai.to_inline_string
   |> remove_self_closing_slash
-  |> remove_checked_true
+  |> remove_trues
   |> remove_empty_attributes
 }
 
@@ -79,7 +81,7 @@ pub fn text_widget_test() {
     help: "help",
     hidden: False,
     disabled: False,
-    required: True,
+    required: False,
     value: "",
     args: widget.Args(
       "id",
@@ -87,6 +89,7 @@ pub fn text_widget_test() {
       described_by: widget.DescribedByNone,
     ),
   )
+
   test_inputs(
     string_widgets.text_like_widget("text"),
     widgets.text_like_widget("text"),
@@ -137,6 +140,23 @@ pub fn text_widget_test() {
       described_by: widget.DescribedByNone,
     ),
   )
+
+  test_inputs(
+    string_widgets.text_like_widget("text"),
+    widgets.text_like_widget("text"),
+    name: "a",
+    label: "A",
+    help: "help",
+    hidden: False,
+    disabled: True,
+    required: False,
+    value: "",
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByFieldValue,
+      described_by: widget.DescribedByNone,
+    ),
+  )
 }
 
 pub fn checkbox_widget_test() {
@@ -152,7 +172,7 @@ pub fn checkbox_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -204,7 +224,7 @@ pub fn password_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -256,7 +276,7 @@ pub fn textarea_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -308,7 +328,7 @@ pub fn hidden_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )
@@ -361,7 +381,7 @@ pub fn select_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByElementWithId("div"),
+      labelled_by: widget.LabelledByElementsWithIds(["div"]),
       described_by: widget.DescribedByNone,
     ),
   )

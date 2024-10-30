@@ -10,10 +10,22 @@ pub type Args {
 pub type LabelledBy {
   LabelledByLabelFor
   LabelledByFieldValue
-  LabelledByElementWithId(id: String)
+  LabelledByElementsWithIds(ids: List(String))
 }
 
 pub type DescribedBy {
-  DescribedByElementWithId(id: String)
+  DescribedByElementsWithIds(ids: List(String))
   DescribedByNone
+}
+
+pub fn args(labelled_by labelled_by: LabelledBy) {
+  Args(id: "", labelled_by: labelled_by, described_by: DescribedByNone)
+}
+
+pub fn id(args: Args, str: String) {
+  Args(..args, id: str)
+}
+
+pub fn described_by(args: Args, db: DescribedBy) {
+  Args(..args, described_by: db)
 }

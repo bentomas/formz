@@ -6,8 +6,8 @@ import lustre/attribute
 import lustre/element/html
 
 pub fn make_form() {
-  use username <- formz.with(field("username"), definitions.text_field())
-  use password <- formz.with(field("password"), definitions.password_field())
+  use username <- formz.require(field("username"), definitions.text_field())
+  use password <- formz.require(field("password"), definitions.password_field())
 
   formz.create_form(#(username, password))
 }
@@ -32,22 +32,14 @@ pub fn format_form(form) {
           html.label([attribute.for("username")], [html.text("Username")]),
           username_widget(
             username_field,
-            widget.Args(
-              "username",
-              widget.LabelledByLabelFor,
-              widget.DescribedByNone,
-            ),
+            widget.args(widget.LabelledByLabelFor) |> widget.id("username"),
           ),
         ]),
         html.li([], [
           html.label([attribute.for("password")], [html.text("Password")]),
           password_widget(
             password_field,
-            widget.Args(
-              "password",
-              widget.LabelledByLabelFor,
-              widget.DescribedByNone,
-            ),
+            widget.args(widget.LabelledByLabelFor) |> widget.id("password"),
           ),
         ]),
       ]),

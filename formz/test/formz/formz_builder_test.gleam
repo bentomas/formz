@@ -4,6 +4,8 @@ import formz/formz_builder.{Element, Set} as formz
 import formz/subform.{subform}
 import formz/validation
 import gleam/list
+import gleam/option
+import gleam/result
 import gleeunit
 import gleeunit/should
 
@@ -11,16 +13,64 @@ pub fn main() {
   gleeunit.main()
 }
 
-pub fn text_field() {
-  definition.Definition(fn(_, _) { "" }, validation.string, "")
-}
-
-pub fn integer_field() {
-  definition.Definition(fn(_, _) { "" }, validation.int, 0)
+fn text_field() {
+  definition.Definition(
+    widget: fn(_, _) { Nil },
+    parse: validation.non_empty_string,
+    stub: "",
+    optional_parse: fn(fun, str) {
+      case str {
+        "" -> Ok("")
+        _ -> fun(str)
+      }
+    },
+    optional_stub: "",
+  )
 }
 
 pub fn float_field() {
-  definition.Definition(fn(_, _) { "" }, validation.number, 0.0)
+  definition.Definition(
+    widget: fn(_, _) { Nil },
+    parse: validation.number,
+    stub: 0.0,
+    optional_parse: fn(fun, str) {
+      case str {
+        "" -> Ok(option.None)
+        _ -> fun(str) |> result.map(option.Some)
+      }
+    },
+    optional_stub: option.Some(0.0),
+  )
+}
+
+fn integer_field() {
+  definition.Definition(
+    widget: fn(_, _) { Nil },
+    parse: validation.int,
+    stub: 0,
+    optional_parse: fn(fun, str) {
+      case str {
+        "" -> Ok(option.None)
+        _ -> fun(str) |> result.map(option.Some)
+      }
+    },
+    optional_stub: option.Some(0),
+  )
+}
+
+fn boolean_field() {
+  definition.Definition(
+    widget: fn(_, _) { Nil },
+    parse: validation.on,
+    stub: False,
+    optional_parse: fn(fun, str) {
+      case str {
+        "" -> Ok(False)
+        _ -> fun(str)
+      }
+    },
+    optional_stub: False,
+  )
 }
 
 fn get_form_from_error_result(
@@ -53,7 +103,7 @@ pub fn parse_empty_form_test() {
 
 pub fn parse_single_field_form_test() {
   formz.new()
-  |> formz.add(field("first"), text_field())
+  |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
   |> formz.decodes(fn(str) { "hello " <> str })
   |> formz.parse
@@ -62,8 +112,8 @@ pub fn parse_single_field_form_test() {
 
 pub fn parse_double_field_form_test() {
   formz.new()
-  |> formz.add(field("first"), text_field())
-  |> formz.add(field("second"), text_field())
+  |> formz.optional(field("first"), text_field())
+  |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "hello"), #("second", "world")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
@@ -72,16 +122,16 @@ pub fn parse_double_field_form_test() {
 
 pub fn parse_double_field_form_extra_data_test() {
   formz.new()
-  |> formz.add(field("first"), text_field())
-  |> formz.add(field("second"), text_field())
+  |> formz.optional(field("first"), text_field())
+  |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "1"), #("second", "2")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
   |> should.equal(Ok("1 2"))
 
   formz.new()
-  |> formz.add(field("first"), text_field())
-  |> formz.add(field("second"), text_field())
+  |> formz.optional(field("first"), text_field())
+  |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "1"), #("second", "2"), #("second", "3")])
   |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
@@ -90,23 +140,56 @@ pub fn parse_double_field_form_extra_data_test() {
 
 pub fn integer_field_test() {
   formz.new()
-  |> formz.add(field("first"), integer_field())
+  |> formz.optional(field("first"), integer_field())
+  |> formz.data([#("first", " 1 ")])
+  |> formz.decodes(fn(i) { i })
+  |> formz.parse
+  |> should.equal(Ok(option.Some(1)))
+
+  formz.new()
+  |> formz.require(field("first"), integer_field())
   |> formz.data([#("first", " 1 ")])
   |> formz.decodes(fn(i) { i })
   |> formz.parse
   |> should.equal(Ok(1))
 }
 
+pub fn boolean_field_test() {
+  formz.new()
+  |> formz.optional(field("first"), boolean_field())
+  |> formz.data([#("first", "")])
+  |> formz.decodes(fn(i) { i })
+  |> formz.parse
+  |> should.equal(Ok(False))
+
+  formz.new()
+  |> formz.require(field("first"), boolean_field())
+  |> formz.data([#("first", "on")])
+  |> formz.decodes(fn(i) { i })
+  |> formz.parse
+  |> should.equal(Ok(True))
+
+  let assert Error(f) =
+    formz.new()
+    |> formz.require(field("first"), boolean_field())
+    |> formz.data([#("first", "")])
+    |> formz.decodes(fn(i) { i })
+    |> formz.parse
+
+  let assert [Element(fielda, _)] = formz.items(f)
+  fielda |> should_be_field_with_error("must be on")
+}
+
 pub fn can_decodes_in_any_order_test() {
   formz.new()
   |> formz.decodes(fn(str) { "hello " <> str })
-  |> formz.add(field("first"), text_field())
+  |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
   |> formz.parse
   |> should.equal(Ok("hello world"))
 
   formz.new()
-  |> formz.add(field("first"), text_field())
+  |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
   |> formz.decodes(fn(str) { "one " <> str })
   |> formz.decodes(fn(str) { "hello " <> str })
@@ -117,7 +200,7 @@ pub fn can_decodes_in_any_order_test() {
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     formz.new()
-    |> formz.add(field("first"), integer_field())
+    |> formz.optional(field("first"), integer_field())
     |> formz.data([#("first", "world")])
     |> formz.decodes(fn(_) { 1 })
     |> formz.parse
@@ -129,8 +212,8 @@ pub fn parse_single_field_form_with_error_test() {
 pub fn parse_double_field_form_with_error_test() {
   let form =
     formz.new()
-    |> formz.add(field("a"), integer_field())
-    |> formz.add(field("b"), integer_field())
+    |> formz.optional(field("a"), integer_field())
+    |> formz.optional(field("b"), integer_field())
     |> formz.decodes(fn(_) { fn(_) { 1 } })
 
   let assert Error(f) =
@@ -164,9 +247,9 @@ pub fn parse_double_field_form_with_error_test() {
 pub fn parse_triple_field_form_with_error_test() {
   let form =
     formz.new()
-    |> formz.add(field("a"), integer_field())
-    |> formz.add(field("b"), integer_field())
-    |> formz.add(field("c"), integer_field())
+    |> formz.optional(field("a"), integer_field())
+    |> formz.optional(field("b"), integer_field())
+    |> formz.optional(field("c"), integer_field())
     |> formz.decodes(fn(_) { fn(_) { fn(_) { 1 } } })
 
   let assert Error(f) =
@@ -254,9 +337,9 @@ fn should_be_field_with_error(field: field.Field, str: String) {
 pub fn try_test() {
   let f =
     formz.new()
-    |> formz.add(field("a"), integer_field())
-    |> formz.add(field("b"), integer_field())
-    |> formz.add(field("c"), integer_field())
+    |> formz.optional(field("a"), integer_field())
+    |> formz.optional(field("b"), integer_field())
+    |> formz.optional(field("c"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { fn(c) { [a, b, c] } } })
     |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
 
@@ -287,15 +370,15 @@ pub fn try_test() {
 pub fn sub_form_test() {
   let f1 =
     formz.new()
-    |> formz.add(field("a"), integer_field())
-    |> formz.add(field("b"), integer_field())
-    |> formz.add(field("c"), integer_field())
+    |> formz.require(field("a"), integer_field())
+    |> formz.require(field("b"), integer_field())
+    |> formz.require(field("c"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 
   let f2 =
     formz.new()
     |> formz.add_form(subform("name"), f1)
-    |> formz.add(field("d"), integer_field())
+    |> formz.require(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
   f2
@@ -312,15 +395,15 @@ pub fn sub_form_test() {
 pub fn sub_form_error_tst() {
   let f1 =
     formz.new()
-    |> formz.add(field("a"), integer_field())
-    |> formz.add(field("b"), integer_field())
-    |> formz.add(field("c"), integer_field())
+    |> formz.require(field("a"), integer_field())
+    |> formz.require(field("b"), integer_field())
+    |> formz.require(field("c"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 
   let f2 =
     formz.new()
     |> formz.add_form(subform("name"), f1)
-    |> formz.add(field("d"), integer_field())
+    |> formz.optional(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
   let assert [

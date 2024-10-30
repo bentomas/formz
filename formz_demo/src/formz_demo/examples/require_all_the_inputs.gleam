@@ -5,21 +5,21 @@ import formz_string/definitions
 import formz_string/widgets
 
 pub fn make_form() {
-  use a <- formz.optional(field("text"), definitions.text_field())
-  use b <- formz.optional(field("int"), definitions.integer_field())
-  use c <- formz.optional(field("number"), definitions.number_field())
-  use d <- formz.optional(field("bool"), definitions.boolean_field())
-  use e <- formz.optional(field("email"), definitions.email_field())
-  use f <- formz.optional(field("password"), definitions.password_field())
-  use g <- formz.optional(
+  use a <- formz.require(field("text"), definitions.text_field())
+  use b <- formz.require(field("int"), definitions.integer_field())
+  use c <- formz.require(field("number"), definitions.number_field())
+  use d <- formz.require(field("bool"), definitions.boolean_field())
+  use e <- formz.require(field("email"), definitions.email_field())
+  use f <- formz.require(field("password"), definitions.password_field())
+  use g <- formz.require(
     field("choices"),
-    definitions.choices_field(letters(), A),
+    definitions.choices_field(letters(), stub: A),
   )
-  use h <- formz.optional(
+  use h <- formz.require(
     field("list"),
     definitions.list_field(["Dog", "Cat", "Ant"]),
   )
-  use i <- formz.optional(
+  use i <- formz.require(
     field("textarea_widget"),
     definitions.text_field()
       |> definition.set_widget(widgets.textarea_widget()),

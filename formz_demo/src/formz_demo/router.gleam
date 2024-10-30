@@ -13,6 +13,7 @@ import formz_demo/examples/custom_output
 import formz_demo/examples/hello_world
 import formz_demo/examples/labels
 import formz_demo/examples/login
+import formz_demo/examples/require_all_the_inputs
 import formz_demo/examples/sub_form
 
 import formz_demo/web.{type Context}
@@ -38,6 +39,19 @@ fn get_examples() {
         run.ExampleRun(
           dir,
           all_the_inputs.make_form,
+          defaults.handle_get,
+          defaults.handle_post,
+          defaults.format_string_form,
+          defaults.formatted_string_form_to_string,
+        ),
+      )
+    }),
+    #("require_all_the_inputs", fn(req, dir) {
+      run.handle(
+        req,
+        run.ExampleRun(
+          dir,
+          require_all_the_inputs.make_form,
           defaults.handle_get,
           defaults.handle_post,
           defaults.format_string_form,

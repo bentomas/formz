@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: number input with no step
+file: ./test/formz_string/widgets_test.gleam
+test_name: numeric_no_step_test
+---
+<input type="number" name="name" value="1">

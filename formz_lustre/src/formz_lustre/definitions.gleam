@@ -4,41 +4,89 @@
 //// examples of these in action, please see the [formz_demo](https://github.com/bentomas/formz/tree/main/formz_demo)
 //// example project.
 
+import formz_lustre/widgets
+
 import formz/definition.{Definition}
 import formz/validation
-import formz_lustre/widgets
 import gleam/int
 import gleam/list
+import gleam/option
 
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() {
-  Definition(widgets.text_like_widget("text"), validation.string, "")
+  Definition(
+    widgets.text_like_widget("text"),
+    validation.non_empty_string,
+    "",
+    fn(fun, str) {
+      case str {
+        "" -> Ok("")
+        _ -> fun(str)
+      }
+    },
+    "",
+  )
 }
 
 /// Create an email form input. Parsed as a String but must
 /// look like an email address, i.e. the string has an `@`.
 pub fn email_field() {
-  Definition(widgets.text_like_widget("email"), validation.email, "")
+  Definition(
+    widgets.text_like_widget("email"),
+    validation.email,
+    "",
+    definition.make_simple_optional_parse(),
+    option.None,
+  )
 }
 
 /// Create a whole number form input. Parsed as an Int.
 pub fn integer_field() {
-  Definition(widgets.text_like_widget("number"), validation.int, 0)
+  Definition(
+    widgets.number_widget(""),
+    validation.int,
+    0,
+    definition.make_simple_optional_parse(),
+    option.None,
+  )
 }
 
 /// Create a number form input. Parsed as a Float.
 pub fn number_field() {
-  Definition(widgets.text_like_widget("number"), validation.number, 0.0)
+  Definition(
+    widgets.number_widget("0.01"),
+    validation.number,
+    0.0,
+    definition.make_simple_optional_parse(),
+    option.None,
+  )
 }
 
 /// Create a checkbox form input. Parsed as a Boolean.
 pub fn boolean_field() {
-  Definition(widgets.checkbox_widget(), validation.boolean, False)
+  definition.Definition(
+    widget: widgets.checkbox_widget(),
+    parse: validation.on,
+    stub: False,
+    optional_parse: fn(fun, str) {
+      case str {
+        "" -> Ok(False)
+        _ -> fun(str)
+      }
+    },
+    optional_stub: False,
+  )
 }
 
 /// Create a password form input, which hides the input value. Parsed as a String
 pub fn password_field() {
-  Definition(widgets.password_widget(), validation.string, "")
+  Definition(
+    widgets.password_widget(),
+    validation.non_empty_string,
+    "",
+    definition.make_simple_optional_parse(),
+    option.None,
+  )
 }
 
 /// Creates a `<select>` input.  Takes a tuple of #(String, String) where the first
@@ -48,21 +96,19 @@ pub fn password_field() {
 /// Because of how you build `formz` forms, you need to provide a placeholder of
 /// the value type.  Is this annoying?  Would it be more or less annoying if I
 /// required a non-empty list for the variants instead? I'm not sure.  Let me know!
-pub fn choices_field(
-  variants: List(#(String, enum)),
-  placeholder placeholder: enum,
-) {
+pub fn choices_field(variants: List(#(String, enum)), stub stub: enum) {
   let keys_indexed =
     variants
     |> list.index_map(fn(t, i) { #(t.0, int.to_string(i)) })
-
   let values = variants |> list.map(fn(t) { t.1 })
 
   Definition(
     widgets.select_widget(keys_indexed),
     validation.list_item_by_index(values)
-      |> validation.replace_error("Please select an option"),
-    placeholder,
+      |> validation.replace_error("is required"),
+    stub,
+    definition.make_simple_optional_parse(),
+    option.None,
   )
 }
 
