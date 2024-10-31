@@ -10,7 +10,7 @@ pub fn generate_form(form) -> html.Node {
   form
   |> formz.items
   |> list.map(generate_visible_item)
-  |> html.Fragment()
+  |> html.div([attr.class("formz_items")], _)
 }
 
 pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
@@ -22,42 +22,55 @@ pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
         attr.value(field.value),
       ])
     formz.Field(field, make_widget) -> {
+      let id = field.name
+
       let label_el =
-        html.label([attr.for(field.name)], [
-          html.Text(field.label),
-          html.Text(": "),
-        ])
+        html.label([attr.for(id)], [html.Text(field.label), html.Text(": ")])
 
-      let description_el = case string.is_empty(field.help_text) {
-        True -> html.Nothing
-        False ->
-          html.span([attr.class("help_text")], [html.Text(field.help_text)])
-      }
-      let widget_el =
-        html.span([attr.class("widget")], [
-          make_widget(
-            field,
-            widget.args(widget.LabelledByLabelFor) |> widget.id(field.name),
+      let help_text = case field.help_text {
+        "" -> #(html.Nothing, "")
+        _ -> #(
+          html.span(
+            [attr.id(id <> "_help_text"), attr.class("formz_help_text")],
+            [html.Text(field.help_text)],
           ),
-        ])
-
-      let errors_el = case field {
-        field.Valid(..) -> html.Nothing
-        field.Invalid(error:, ..) ->
-          html.span([attr.class("errors")], [html.Text(error)])
+          id <> "_help_text",
+        )
+      }
+      let error = case field {
+        field.Valid(..) -> #(html.Nothing, "")
+        field.Invalid(error:, ..) -> #(
+          html.span([attr.id(id <> "_error"), attr.class("formz_error")], [
+            html.Text(error),
+          ]),
+          id <> "_error",
+        )
       }
 
-      html.p([attr.class("simple_field")], [
+      let widget_el =
+        make_widget(
+          field,
+          widget.Args(
+            id: id,
+            labelled_by: widget.LabelledByLabelFor,
+            described_by: widget.DescribedByElementsWithIds([
+              help_text.1,
+              error.1,
+            ]),
+          ),
+        )
+
+      html.div([attr.class("formz_field")], [
         label_el,
-        description_el,
         widget_el,
-        errors_el,
+        help_text.0,
+        error.0,
       ])
     }
     formz.SubForm(s, items) -> {
       let legend = html.legend([], [html.Text(s.label)])
       let children = items |> list.map(generate_visible_item)
-      html.fieldset([], [legend, ..children])
+      html.fieldset([], [legend, html.div([], children)])
     }
   }
 }

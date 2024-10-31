@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: hidden field form
+file: ./test/formz_string/simple_test.gleam
+test_name: hidden_field_form_test
+---
+<div class="formz_items"><input type="hidden" name="a" value=""></div>

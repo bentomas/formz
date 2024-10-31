@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: three field form with data
+file: ./test/formz_string/simple_test.gleam
+test_name: three_field_form_with_data_test
+---
+<div class="formz_items"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required value="1"></div><div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required value="2"></div><div class="formz_field"><label for="c">C: </label><input type="number" name="c" id="c" value="3"></div></div>

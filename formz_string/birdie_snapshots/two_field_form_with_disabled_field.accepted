@@ -1,8 +1,0 @@
----
-version: 1.2.3
-title: two field form with disabled field
-file: ./test/formz_string/simple_test.gleam
-test_name: two_field_form_with_disabled_test
----
-<div class="formz_formitems"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required></div>
-<div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required disabled></div></div>

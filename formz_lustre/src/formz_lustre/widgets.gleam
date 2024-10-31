@@ -41,8 +41,16 @@ fn aria_describedby_attr(
 ) -> attribute.Attribute(msg) {
   case described_by {
     widget.DescribedByNone -> attribute.none()
-    widget.DescribedByElementsWithIds(ids) ->
-      attribute.attribute("aria-describedby", string.join(ids, " "))
+    widget.DescribedByElementsWithIds(ids) -> {
+      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
+        [] -> attribute.none()
+        non_empty_ids ->
+          attribute.attribute(
+            "aria-describedby",
+            string.join(non_empty_ids, " "),
+          )
+      }
+    }
   }
 }
 

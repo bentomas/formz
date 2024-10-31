@@ -39,10 +39,14 @@ fn aria_label_attr(
 
 fn aria_describedby_attr(described_by: widget.DescribedBy) -> List(attr.Attr) {
   case described_by {
-    widget.DescribedByElementsWithIds(ids) -> [
-      attr.Attr("aria-describedby", string.join(ids, " ")),
-    ]
     widget.DescribedByNone -> []
+    widget.DescribedByElementsWithIds(ids) ->
+      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
+        [] -> []
+        non_empty_ids -> [
+          attr.Attr("aria-describedby", string.join(non_empty_ids, " ")),
+        ]
+      }
   }
 }
 

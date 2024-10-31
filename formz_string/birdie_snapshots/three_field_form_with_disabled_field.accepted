@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: three field form with disabled field
+file: ./test/formz_string/simple_test.gleam
+test_name: three_field_form_with_disabled_test
+---
+<div class="formz_items"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required></div><div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required disabled></div><div class="formz_field"><label for="c">C: </label><input type="number" name="c" id="c"></div></div>

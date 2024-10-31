@@ -5,12 +5,12 @@ import gleam/list
 import gleam/string
 
 pub fn generate_form(form) -> String {
-  "<div class=\"formz_formitems\">"
+  "<div class=\"formz_items\">"
   <> {
     form
     |> formz.items
     |> list.map(generate_item)
-    |> string.join("\n")
+    |> string.join("")
   }
   <> "</div>"
 }
@@ -21,7 +21,7 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
       "<input"
       <> { " type=\"hidden\"" }
       <> { " name=\"" <> field.name <> "\"" }
-      <> { " value\"" <> field.value <> "\"" }
+      <> { " value=\"" <> field.value <> "\"" }
       <> ">"
     formz.Field(field, make_widget) -> {
       let id = field.name
@@ -33,12 +33,12 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
         "" -> #("", "")
         _ -> {
           #(
-            " <span"
-              <> { " class=\"formz_help_text\"" }
+            "<span"
               <> { " id=\"" <> id <> "_help_text" <> "\"" }
+              <> { " class=\"formz_help_text\"" }
               <> ">"
               <> field.help_text
-              <> " </span>",
+              <> "</span>",
             id <> "_help_text",
           )
         }
@@ -48,9 +48,9 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
         field.Valid(..) -> #("", "")
         field.Invalid(error:, ..) -> {
           #(
-            " <span"
-              <> { " class=\"formz_error\"" }
+            "<span"
               <> { " id=\"" <> id <> "_error" <> "\"" }
+              <> { " class=\"formz_error\"" }
               <> ">"
               <> error
               <> "</span>",
@@ -81,7 +81,7 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
       <> { "<div>" }
       <> {
         list.map(items, generate_item)
-        |> string.join("\n")
+        |> string.join("")
       }
       <> "</div>"
       <> "</fieldset>"

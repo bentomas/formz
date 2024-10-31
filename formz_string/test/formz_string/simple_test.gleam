@@ -10,13 +10,6 @@ pub fn main() {
   gleeunit.main()
 }
 
-pub fn two_field_form() {
-  use a <- formz.require(field("a"), definitions.integer_field())
-  use b <- formz.require(field("b"), definitions.integer_field())
-
-  formz.create_form(#(a, b))
-}
-
 pub fn three_field_form() {
   use a <- formz.require(field("a"), definitions.integer_field())
   use b <- formz.require(field("b"), definitions.integer_field())
@@ -27,22 +20,31 @@ pub fn three_field_form() {
 
 pub fn one_field_and_subform_form() {
   use a <- formz.require(field("a"), definitions.integer_field())
-  use b <- formz.with_form(subform.subform("b"), two_field_form())
+  use b <- formz.with_form(subform.subform("b"), three_field_form())
 
   formz.create_form(#(a, b))
 }
 
-pub fn two_field_form_test() {
-  two_field_form()
-  |> simple.generate_form
-  |> birdie.snap(title: "two field form")
+pub fn hidden_field_form() {
+  use a <- formz.require(
+    field("a") |> field.make_hidden,
+    definitions.integer_field(),
+  )
+
+  formz.create_form(#(a))
 }
 
-pub fn two_field_form_with_data_test() {
-  two_field_form()
-  |> formz.data([#("a", "1"), #("b", "2")])
+pub fn three_field_form_test() {
+  three_field_form()
   |> simple.generate_form
-  |> birdie.snap(title: "two field form with data")
+  |> birdie.snap(title: "three field form")
+}
+
+pub fn three_field_form_with_data_test() {
+  three_field_form()
+  |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
+  |> simple.generate_form
+  |> birdie.snap(title: "three field form with data")
 }
 
 pub fn three_field_form_with_help_test() {
@@ -69,15 +71,21 @@ pub fn three_field_form_with_error_and_help_test() {
   |> birdie.snap(title: "three field form with error and help text")
 }
 
-pub fn two_field_form_with_disabled_test() {
-  two_field_form()
+pub fn three_field_form_with_disabled_test() {
+  three_field_form()
   |> formz.update_field("b", field.set_disabled(_, True))
   |> simple.generate_form
-  |> birdie.snap(title: "two field form with disabled field")
+  |> birdie.snap(title: "three field form with disabled field")
 }
 
 pub fn subform_test() {
   one_field_and_subform_form()
   |> simple.generate_form
   |> birdie.snap(title: "subform")
+}
+
+pub fn hidden_field_form_test() {
+  hidden_field_form()
+  |> simple.generate_form
+  |> birdie.snap(title: "hidden field form")
 }

@@ -11,7 +11,7 @@ pub fn generate_form(form) -> element.Element(msg) {
   form
   |> formz.items
   |> list.map(generate_item)
-  |> element.fragment
+  |> html.div([attribute.class("formz_items")], _)
 }
 
 pub fn generate_item(
@@ -26,52 +26,63 @@ pub fn generate_item(
       ])
 
     formz.Field(field, make_widget) -> {
-      let label_el = html.label([], [html.text(field.label), html.text(": ")])
+      let id = field.name
 
-      let description_el = case string.is_empty(field.help_text) {
-        True -> element.none()
-        False ->
-          html.span([attribute.class("help_text")], [html.text(field.help_text)])
-      }
-      let described_by = case field, field.help_text {
-        field.Valid(..), "" -> widget.DescribedByNone
-        field.Valid(..), _ ->
-          widget.DescribedByElementsWithIds([field.name <> "_help_text"])
-        field.Invalid(..), "" ->
-          widget.DescribedByElementsWithIds([field.name <> "_error"])
-        field.Invalid(..), _ ->
-          widget.DescribedByElementsWithIds([
-            field.name <> "_help_text",
-            field.name <> "_error",
-          ])
-      }
-      let widget_el =
-        html.span([attribute.class("widget")], [
-          make_widget(
-            field,
-            widget.args(widget.LabelledByLabelFor)
-              |> widget.id(field.name)
-              |> widget.described_by(described_by),
-          ),
+      let label_el =
+        html.label([attribute.for(id)], [
+          html.text(field.label),
+          html.text(": "),
         ])
 
-      let errors_el = case field {
-        field.Valid(..) -> element.none()
-        field.Invalid(error:, ..) ->
-          html.span([attribute.class("errors")], [html.text(error)])
+      let help_text = case string.is_empty(field.help_text) {
+        True -> #(element.none(), "")
+        False -> #(
+          html.span(
+            [
+              attribute.id(id <> "_help_text"),
+              attribute.class("formz_help_text"),
+            ],
+            [html.text(field.help_text)],
+          ),
+          id <> "_help_text",
+        )
       }
 
-      html.p([attribute.class("simple_field")], [
+      let error = case field {
+        field.Valid(..) -> #(element.none(), "")
+        field.Invalid(error:, ..) -> #(
+          html.span(
+            [attribute.id(id <> "_error"), attribute.class("formz_error")],
+            [html.text(error)],
+          ),
+          id <> "_error",
+        )
+      }
+
+      let widget_el =
+        make_widget(
+          field,
+          widget.Args(
+            id: id,
+            labelled_by: widget.LabelledByLabelFor,
+            described_by: widget.DescribedByElementsWithIds([
+              help_text.1,
+              error.1,
+            ]),
+          ),
+        )
+
+      html.div([attribute.class("formz_field")], [
         label_el,
-        description_el,
         widget_el,
-        errors_el,
+        help_text.0,
+        error.0,
       ])
     }
     formz.SubForm(s, items) -> {
       let legend = html.legend([], [html.text(s.label)])
       let children = items |> list.map(generate_item)
-      html.fieldset([], [legend, ..children])
+      html.fieldset([], [legend, html.div([], children)])
     }
   }
 }

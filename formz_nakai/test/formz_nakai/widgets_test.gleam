@@ -159,6 +159,44 @@ pub fn text_widget_test() {
   )
 }
 
+pub fn described_by_ids_test() {
+  test_inputs(
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
+    name: "a",
+    label: "A",
+    help: "help",
+    hidden: False,
+    disabled: False,
+    required: False,
+    value: "",
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByElementsWithIds(["id1", "id2"]),
+    ),
+  )
+}
+
+pub fn described_by_ids_all_empty_test() {
+  test_inputs(
+    string_widgets.input_widget("text"),
+    widgets.input_widget("text"),
+    name: "a",
+    label: "A",
+    help: "help",
+    hidden: False,
+    disabled: False,
+    required: False,
+    value: "",
+    args: widget.Args(
+      "id",
+      labelled_by: widget.LabelledByLabelFor,
+      described_by: widget.DescribedByElementsWithIds(["", ""]),
+    ),
+  )
+}
+
 pub fn checkbox_widget_test() {
   test_inputs(
     string_widgets.checkbox_widget(),

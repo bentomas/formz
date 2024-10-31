@@ -4,6 +4,4 @@ title: three field form with error and help text
 file: ./test/formz_string/simple_test.gleam
 test_name: three_field_form_with_error_and_help_test
 ---
-<div class="formz_formitems"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required value="x"></div>
-<div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required value="x" aria-describedby="b_help_text b_error"> <span class="formz_help_text" id="b_help_text">this is field b </span> <span class="formz_error" id="b_error">must be a whole number</span></div>
-<div class="formz_field"><label for="c">C: </label><input type="number" name="c" id="c" value="x"></div></div>
+<div class="formz_items"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required value="x"></div><div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required value="x" aria-describedby="b_help_text b_error"><span id="b_help_text" class="formz_help_text">this is field b</span><span id="b_error" class="formz_error">must be a whole number</span></div><div class="formz_field"><label for="c">C: </label><input type="number" name="c" id="c" value="x"></div></div>
