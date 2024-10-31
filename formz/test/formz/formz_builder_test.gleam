@@ -6,6 +6,7 @@ import formz/validation
 import gleam/list
 import gleam/option
 import gleam/result
+import gleam/string
 import gleeunit
 import gleeunit/should
 
@@ -71,6 +72,35 @@ fn boolean_field() {
     },
     optional_stub: False,
   )
+}
+
+fn three_field_form() {
+  formz.new()
+  |> formz.optional(
+    field("x") |> field.set_name("a") |> field.set_label("A"),
+    text_field()
+      |> definition.validate(fn(str) {
+        case string.length(str) > 3 {
+          True -> Ok(str)
+          False -> Error("must be longer than 3")
+        }
+      }),
+  )
+  |> formz.optional(
+    field(named: "b"),
+    integer_field()
+      |> definition.validate(fn(i) {
+        case i > 0 {
+          True -> Ok(i)
+          False -> Error("must be positive")
+        }
+      }),
+  )
+  |> formz.optional(
+    field(named: "c") |> field.set_name("c") |> field.set_label("C"),
+    float_field(),
+  )
+  |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 }
 
 fn get_form_from_error_result(
@@ -332,6 +362,55 @@ fn should_be_field_with_error(field: field.Field, str: String) {
       required: field.required,
     ),
   )
+}
+
+pub fn get_fields_test() {
+  let assert [fielda, fieldb, fieldc] = three_field_form() |> formz.get_fields
+
+  fielda.name |> should.equal("a")
+  fieldb.name |> should.equal("b")
+  fieldc.name |> should.equal("c")
+}
+
+pub fn validate_test() {
+  let f =
+    three_field_form()
+    |> formz.data([#("a", "1"), #("b", "-1"), #("c", "x")])
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["a", "b"])
+    |> formz.items
+
+  fielda |> should_be_field_with_error("must be longer than 3")
+  fieldb |> should_be_field_with_error("must be positive")
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["b"])
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_with_error("must be positive")
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["c"])
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_with_error("must be a number")
 }
 
 pub fn try_test() {

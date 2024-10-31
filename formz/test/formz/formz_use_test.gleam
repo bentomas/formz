@@ -307,6 +307,69 @@ pub fn sub_form_test() {
   |> should.equal(Ok(#(#(1, 2, 3), 4)))
 }
 
+pub fn get_fields_test() {
+  let assert [fielda, fieldb, fieldc] = three_field_form() |> formz.get_fields
+
+  fielda.name |> should.equal("a")
+  fieldb.name |> should.equal("b")
+  fieldc.name |> should.equal("c")
+}
+
+pub fn validate_test() {
+  let f =
+    three_field_form()
+    |> formz.data([#("a", "1"), #("b", "-1"), #("c", "x")])
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["a", "b"])
+    |> formz.items
+
+  fielda |> should_be_field_with_error("must be longer than 3")
+  fieldb |> should_be_field_with_error("must be positive")
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["b"])
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_with_error("must be positive")
+  fieldc |> should_be_field_no_error
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.validate(["c"])
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_with_error("must be a number")
+}
+
+pub fn validate_all_test() {
+  let f =
+    three_field_form()
+    |> formz.data([#("a", "1"), #("b", "-1"), #("c", "x")])
+
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+    f
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_no_error
+}
+
 pub fn sub_form_error_test() {
   let f1 = {
     use a <- formz.optional(field("a"), integer_field())

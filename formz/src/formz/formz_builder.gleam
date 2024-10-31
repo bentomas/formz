@@ -132,7 +132,7 @@ pub fn add_form(
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
   let sub_items =
     sub.items
-    |> map_fields(fn(field) {
+    |> update_fields(fn(field) {
       field |> field.set_name(details.name <> "." <> field.name)
     })
 
@@ -182,14 +182,29 @@ fn pop_field(
   }
 }
 
-fn map_fields(
+pub fn get_fields(
+  form: Form(format, output, decoder, has_decoder),
+) -> List(field.Field) {
+  form.items |> do_get_fields
+}
+
+fn do_get_fields(items: List(FormItem(format))) -> List(field.Field) {
+  list.fold(items, [], fn(acc, item) {
+    case item {
+      Field(f, _) -> [f, ..acc]
+      SubForm(_, sub_items) -> list.flatten([do_get_fields(sub_items), acc])
+    }
+  })
+}
+
+fn update_fields(
   items: List(FormItem(format)),
   fun: fn(field.Field) -> field.Field,
 ) -> List(FormItem(format)) {
   list.map(items, fn(item) {
     case item {
       Field(field, widget) -> Field(fun(field), widget)
-      SubForm(s, items) -> SubForm(s, map_fields(items, fun))
+      SubForm(s, items) -> SubForm(s, update_fields(items, fun))
     }
   })
 }
@@ -201,7 +216,7 @@ pub fn data(
   let data = dict.from_list(input_data)
   let Form(items, parse, decoder) = form
   items
-  |> map_fields(fn(field) {
+  |> update_fields(fn(field) {
     case dict.get(data, field.name) {
       Ok(value) -> field.set_raw_value(field, value)
       Error(_) -> field
@@ -246,6 +261,40 @@ pub fn parse_then_try(
     Result(c, Form(format, output, decoder, HasDecoder)),
 ) -> Result(c, Form(format, output, decoder, HasDecoder)) {
   parse(form) |> result.try(fun(form, _))
+}
+
+pub fn validate(
+  form: Form(format, output, decoder, HasDecoder),
+  names: List(String),
+) -> Form(format, output, decoder, HasDecoder) {
+  case parse(form) {
+    Ok(_) -> form
+    Error(f) -> {
+      let items =
+        update_fields(f.items, fn(field) {
+          case list.find(names, fn(name) { field.name == name }) {
+            Ok(_) -> field
+            Error(_) ->
+              case get(form, field.name) {
+                Ok(Field(f, _)) -> f
+                _ -> field
+              }
+          }
+        })
+      Form(..form, items:)
+    }
+  }
+}
+
+pub fn validate_all(
+  form: Form(format, output, decoder, HasDecoder),
+) -> Form(format, output, decoder, HasDecoder) {
+  let names =
+    form
+    |> get_fields()
+    |> list.map(fn(f) { f.name })
+
+  validate(form, names)
 }
 
 pub fn items(form: Form(format, a, b, has_decoder)) -> List(FormItem(format)) {
