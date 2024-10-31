@@ -1,0 +1,8 @@
+---
+version: 1.2.3
+title: two field form with data
+file: ./test/formz_string/simple_test.gleam
+test_name: two_field_form_with_data_test
+---
+<div class="formz_formitems"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required value="1"></div>
+<div class="formz_field"><label for="b">B: </label><input type="number" name="b" id="b" required value="2"></div></div>

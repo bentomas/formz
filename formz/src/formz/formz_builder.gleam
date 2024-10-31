@@ -22,8 +22,8 @@ pub opaque type Form(format, output, decoder, has_decoder) {
 }
 
 pub type FormItem(format) {
-  Element(field.Field, widget: widget.Widget(format))
-  Set(subform.SubForm, items: List(FormItem(format)))
+  Field(field.Field, widget: widget.Widget(format))
+  SubForm(subform.SubForm, items: List(FormItem(format)))
 }
 
 pub fn new() -> Form(format, a, a, NoDecoder) {
@@ -41,12 +41,12 @@ fn add(
   widget: widget.Widget(format),
   parse_field: fn(String) -> Result(decoder_step_input, String),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
-  let updated_items = [Element(field, widget), ..previous_form.items]
+  let updated_items = [Field(field, widget), ..previous_form.items]
 
   let parse_with = fn(items, decoder: form_output) {
     // can do let assert because we know there's at least one field since
     // we just added one
-    let assert Ok(#(Element(field, widget), rest)) = pop_element(items)
+    let assert Ok(#(Field(field, widget), rest)) = pop_field(items)
 
     let previous_form_output = previous_form.parse_with(rest, decoder)
     let input_output = parse_field(field.value)
@@ -60,7 +60,7 @@ fn add(
 
       // the form already has errors even though this one succeeded.
       // so add this to the list and stop anymore parsing
-      Error(items), Ok(_value) -> Error([Element(field, widget), ..items])
+      Error(items), Ok(_value) -> Error([Field(field, widget), ..items])
 
       // form was good so far, but this field errored, so need to
       // mark this field as invalid and return all the fields we've got
@@ -68,7 +68,7 @@ fn add(
       Ok(_), Error(error) ->
         field
         |> field.set_error(error)
-        |> Element(widget)
+        |> Field(widget)
         |> list.prepend(rest, _)
         |> Error
 
@@ -77,7 +77,7 @@ fn add(
       Error(items), Error(error) ->
         field
         |> field.set_error(error)
-        |> Element(widget)
+        |> Field(widget)
         |> list.prepend(items, _)
         |> Error
     }
@@ -136,12 +136,12 @@ pub fn add_form(
       field |> field.set_name(details.name <> "." <> field.name)
     })
 
-  let updated_items = [Set(details, sub_items), ..previous_form.items]
+  let updated_items = [SubForm(details, sub_items), ..previous_form.items]
 
   let parse_with = fn(items, decoder: form_output) {
     // can do let assert because we know there's at least one field since
     // we just added one
-    let assert Ok(#(Set(details, sub_items), rest)) = pop_element(items)
+    let assert Ok(#(SubForm(details, sub_items), rest)) = pop_field(items)
 
     let assert Form(_, sub_parse_with, Some(sub_decoder)) = sub
     let form_output = sub_parse_with(sub_items, sub_decoder)
@@ -153,31 +153,32 @@ pub fn add_form(
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(items), Ok(_value) -> Error([Set(details, items), ..items])
+      Error(items), Ok(_value) -> Error([SubForm(details, items), ..items])
 
       // form was good so far, but this sub form errored, so need to
       // hop on error track
-      Ok(_), Error(error_fields) -> Error([Set(details, error_fields), ..rest])
+      Ok(_), Error(error_fields) ->
+        Error([SubForm(details, error_fields), ..rest])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
       Error(fields), Error(error_fields) ->
-        Error(list.prepend(fields, Set(details, error_fields)))
+        Error(list.prepend(fields, SubForm(details, error_fields)))
     }
   }
   Form(items: updated_items, parse_with:, decoder: previous_form.decoder)
 }
 
-fn pop_element(
+fn pop_field(
   items: List(FormItem(format)),
 ) -> Result(#(FormItem(format), List(FormItem(format))), Nil) {
   case items {
     [] -> Error(Nil)
     [only] -> Ok(#(only, []))
-    [Element(..) as item, ..rest] -> Ok(#(item, rest))
-    [Set(_, []), ..rest] -> pop_element(rest)
-    [Set(s, [first, ..rest_1]), ..rest_2] ->
-      pop_element(list.flatten([[first], [Set(s, rest_1)], rest_2]))
+    [Field(..) as item, ..rest] -> Ok(#(item, rest))
+    [SubForm(_, []), ..rest] -> pop_field(rest)
+    [SubForm(s, [first, ..rest_1]), ..rest_2] ->
+      pop_field(list.flatten([[first], [SubForm(s, rest_1)], rest_2]))
   }
 }
 
@@ -187,8 +188,8 @@ fn map_fields(
 ) -> List(FormItem(format)) {
   list.map(items, fn(item) {
     case item {
-      Element(field, widget) -> Element(fun(field), widget)
-      Set(s, items) -> Set(s, map_fields(items, fun))
+      Field(field, widget) -> Field(fun(field), widget)
+      SubForm(s, items) -> SubForm(s, map_fields(items, fun))
     }
   })
 }
@@ -258,8 +259,8 @@ pub fn get(
   form.items
   |> list.filter(fn(item) {
     case item {
-      Element(i, _) if i.name == name -> True
-      Set(s, _) if s.name == name -> True
+      Field(i, _) if i.name == name -> True
+      SubForm(s, _) if s.name == name -> True
       _ -> False
     }
   })
@@ -284,9 +285,9 @@ fn do_formitem_update(
   items
   |> list.map(fn(item) {
     case item {
-      Element(i, _) if i.name == name -> fun(item)
-      Set(s, _) if s.name == name -> fun(item)
-      Set(s, items) -> Set(s, do_formitem_update(items, name, fun))
+      Field(i, _) if i.name == name -> fun(item)
+      SubForm(s, _) if s.name == name -> fun(item)
+      SubForm(s, items) -> SubForm(s, do_formitem_update(items, name, fun))
       _ -> item
     }
   })
@@ -299,7 +300,7 @@ pub fn update_field(
 ) -> Form(format, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {
-      Element(field, widget) -> Element(fun(field), widget)
+      Field(field, widget) -> Field(fun(field), widget)
       _ -> item
     }
   })
@@ -312,7 +313,7 @@ pub fn update_subform(
 ) -> Form(format, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {
-      Set(details, items) -> Set(fun(details), items)
+      SubForm(details, items) -> SubForm(fun(details), items)
       _ -> item
     }
   })

@@ -8,3 +8,4 @@
 - date fields? https://hexdocs.pm/birl/ https://hexdocs.pm/rada/
 - provide password/email/number_field? or just make them change the widget?
 - provide a text_area field? or make them change the widget?
+- get rid of Valid/Invalid fields, and use permanent error field?

@@ -18,13 +18,19 @@ fn name_attr(name: String) -> String {
 }
 
 fn aria_label_attr(labelled_by: widget.LabelledBy, label: String) -> String {
+  // https://www.w3.org/WAI/tutorials/forms/labels/
+  // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-labelledby
   case labelled_by {
     // there should be a label with a for attribute pointing to this id
     widget.LabelledByLabelFor -> ""
 
     // we have the id of the element that labels this input
     widget.LabelledByElementsWithIds(ids) ->
-      " aria-labelledby=\"" <> string.join(ids, " ") <> "\""
+      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
+        [] -> ""
+        non_empty_ids ->
+          " aria-labelledby=\"" <> string.join(non_empty_ids, " ") <> "\""
+      }
 
     // we'll use the label value as the aria-label
     widget.LabelledByFieldValue -> {
@@ -41,13 +47,18 @@ fn aria_label_attr(labelled_by: widget.LabelledBy, label: String) -> String {
 }
 
 fn aria_describedby_attr(described_by: widget.DescribedBy) -> String {
+  // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-describedby
   case described_by {
     // there should be a label with a for attribute pointing to this id
     widget.DescribedByNone -> ""
 
     // we have the id of the element that labels this input
     widget.DescribedByElementsWithIds(ids) ->
-      " aria-describedby=\"" <> string.join(ids, " ") <> "\""
+      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
+        [] -> ""
+        non_empty_ids ->
+          " aria-describedby=\"" <> string.join(non_empty_ids, " ") <> "\""
+      }
   }
 }
 

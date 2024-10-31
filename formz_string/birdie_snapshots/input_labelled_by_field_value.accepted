@@ -1,7 +1,7 @@
 ---
 version: 1.2.3
-title: text like labelled by field value
+title: input labelled by field value
 file: ./test/formz_string/widgets_test.gleam
-test_name: hello_birdie_test
+test_name: input_labelled_by_field_value_test
 ---
 <input type="text" name="name" value="hello" aria-label="Label">

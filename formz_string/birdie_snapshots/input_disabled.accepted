@@ -1,7 +1,7 @@
 ---
 version: 1.2.3
-title: text like disabled
+title: input disabled
 file: ./test/formz_string/widgets_test.gleam
-test_name: text_like_disabled_test
+test_name: input_disabled_test
 ---
 <input type="text" name="name" disabled value="hello">

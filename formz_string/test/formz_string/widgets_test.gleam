@@ -8,7 +8,7 @@ pub fn main() {
   gleeunit.main()
 }
 
-pub fn text_like_labelled_by_field_value_test() {
+pub fn input_labelled_by_field_value_test() {
   widgets.input_widget("text")(
     field.Valid(
       name: "name",
@@ -21,10 +21,10 @@ pub fn text_like_labelled_by_field_value_test() {
     ),
     widget.Args("", widget.LabelledByFieldValue, widget.DescribedByNone),
   )
-  |> birdie.snap(title: "text like labelled by field value")
+  |> birdie.snap(title: "input labelled by field value")
 }
 
-pub fn text_like_labelled_by_element_with_id_test() {
+pub fn input_labelled_by_element_with_id_test() {
   widgets.input_widget("text")(
     field.Valid(
       name: "name",
@@ -41,10 +41,10 @@ pub fn text_like_labelled_by_element_with_id_test() {
       widget.DescribedByNone,
     ),
   )
-  |> birdie.snap(title: "text like labelled by element with id")
+  |> birdie.snap(title: "input labelled by element with id")
 }
 
-pub fn text_like_labelled_by_label_for_test() {
+pub fn input_labelled_by_label_for_test() {
   widgets.input_widget("text")(
     field.Valid(
       name: "name",
@@ -57,10 +57,50 @@ pub fn text_like_labelled_by_label_for_test() {
     ),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
-  |> birdie.snap(title: "text like labelled by label/for")
+  |> birdie.snap(title: "input labelled by label/for")
 }
 
-pub fn text_like_required_test() {
+pub fn input_described_by_elements_with_ids_test() {
+  widgets.input_widget("text")(
+    field.Valid(
+      name: "name",
+      label: "Label",
+      help_text: "",
+      value: "hello",
+      disabled: False,
+      required: False,
+      hidden: False,
+    ),
+    widget.Args(
+      "",
+      widget.LabelledByLabelFor,
+      widget.DescribedByElementsWithIds(["id1", "id2"]),
+    ),
+  )
+  |> birdie.snap(title: "input described by elements with ids")
+}
+
+pub fn input_described_by_elements_with_ids_all_empty_test() {
+  widgets.input_widget("text")(
+    field.Valid(
+      name: "name",
+      label: "Label",
+      help_text: "",
+      value: "hello",
+      disabled: False,
+      required: False,
+      hidden: False,
+    ),
+    widget.Args(
+      "",
+      widget.LabelledByLabelFor,
+      widget.DescribedByElementsWithIds(["", ""]),
+    ),
+  )
+  |> birdie.snap(title: "input described by elements with ids all empty")
+}
+
+pub fn input_required_test() {
   widgets.input_widget("text")(
     field.Valid(
       name: "name",
@@ -73,10 +113,10 @@ pub fn text_like_required_test() {
     ),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
-  |> birdie.snap(title: "text like required")
+  |> birdie.snap(title: "input required")
 }
 
-pub fn text_like_disabled_test() {
+pub fn input_disabled_test() {
   widgets.input_widget("text")(
     field.Valid(
       name: "name",
@@ -89,7 +129,7 @@ pub fn text_like_disabled_test() {
     ),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
-  |> birdie.snap(title: "text like disabled")
+  |> birdie.snap(title: "input disabled")
 }
 
 pub fn checkbox_checked_test() {

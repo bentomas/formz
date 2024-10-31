@@ -1,7 +1,7 @@
 ---
 version: 1.2.3
-title: text like labelled by element with id
+title: input labelled by element with id
 file: ./test/formz_string/widgets_test.gleam
-test_name: hello_birdie_test
+test_name: input_labelled_by_element_with_id_test
 ---
 <input type="text" name="name" value="hello" aria-labelledby="id">

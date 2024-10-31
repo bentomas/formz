@@ -15,25 +15,33 @@ pub fn generate_form(form) -> html.Node {
 
 pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
   case item {
-    formz.Element(f, _) if f.hidden == True ->
-      html.input([attr.type_("hidden"), attr.name(f.name), attr.value(f.value)])
-    formz.Element(f, make_widget) -> {
+    formz.Field(field, _) if field.hidden == True ->
+      html.input([
+        attr.type_("hidden"),
+        attr.name(field.name),
+        attr.value(field.value),
+      ])
+    formz.Field(field, make_widget) -> {
       let label_el =
-        html.label([attr.for(f.name)], [html.Text(f.label), html.Text(": ")])
+        html.label([attr.for(field.name)], [
+          html.Text(field.label),
+          html.Text(": "),
+        ])
 
-      let description_el = case string.is_empty(f.help_text) {
+      let description_el = case string.is_empty(field.help_text) {
         True -> html.Nothing
-        False -> html.span([attr.class("help_text")], [html.Text(f.help_text)])
+        False ->
+          html.span([attr.class("help_text")], [html.Text(field.help_text)])
       }
       let widget_el =
         html.span([attr.class("widget")], [
           make_widget(
-            f,
-            widget.args(widget.LabelledByLabelFor) |> widget.id(f.name),
+            field,
+            widget.args(widget.LabelledByLabelFor) |> widget.id(field.name),
           ),
         ])
 
-      let errors_el = case f {
+      let errors_el = case field {
         field.Valid(..) -> html.Nothing
         field.Invalid(error:, ..) ->
           html.span([attr.class("errors")], [html.Text(error)])
@@ -46,7 +54,7 @@ pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
         errors_el,
       ])
     }
-    formz.Set(s, items) -> {
+    formz.SubForm(s, items) -> {
       let legend = html.legend([], [html.Text(s.label)])
       let children = items |> list.map(generate_visible_item)
       html.fieldset([], [legend, ..children])

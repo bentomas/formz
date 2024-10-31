@@ -1,7 +1,7 @@
 ---
 version: 1.2.3
-title: text like labelled by label/for
+title: input labelled by label/for
 file: ./test/formz_string/widgets_test.gleam
-test_name: text_like_labelled_by_test
+test_name: input_labelled_by_label_for_test
 ---
 <input type="text" name="name" value="hello">

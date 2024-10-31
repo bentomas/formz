@@ -1,6 +1,6 @@
 import formz/definition
 import formz/field.{field}
-import formz/formz_use.{Element, Set} as formz
+import formz/formz_use.{Field, SubForm} as formz
 import formz/subform.{subform}
 import formz/validation
 import gleam/option
@@ -223,12 +223,12 @@ pub fn parse_single_field_form_with_error_test() {
     |> formz.data([#("a", "world")])
     |> formz.parse
 
-  let assert [Element(field, _)] = formz.items(f)
+  let assert [Field(field, _)] = formz.items(f)
   field |> should_be_field_with_error("must be on")
 }
 
 pub fn parse_triple_field_form_with_error_test() {
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "xxxx"), #("b", "1"), #("c", "x")])
     |> formz.parse
@@ -239,7 +239,7 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_with_error("must be a number")
 
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "string")])
     |> formz.parse
@@ -249,7 +249,7 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_with_error("must be a number")
 
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "3.4")])
     |> formz.parse
@@ -259,7 +259,7 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "string"), #("c", "3.4")])
     |> formz.parse
@@ -269,7 +269,7 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldb |> should_be_field_with_error("must be a whole number")
   fieldc |> should_be_field_no_error
 
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "1"), #("c", "3.4")])
     |> formz.parse
@@ -324,8 +324,8 @@ pub fn sub_form_error_test() {
   }
 
   let assert [
-    Set(_, [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)]),
-    Element(fieldd, _),
+    SubForm(_, [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)]),
+    Field(fieldd, _),
   ] =
     f2
     |> formz.data([
@@ -368,7 +368,7 @@ pub fn decoded_and_try_test() {
       |> formz.update_field("a", field.set_error(_, "woops"))
       |> Error
     })
-  let assert [Element(fielda, _), Element(fieldb, _), Element(fieldc, _)] =
+  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
     formz.items(form)
   fielda |> should_be_field_with_error("woops")
   fieldb |> should_be_field_no_error

@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: input described by elements with ids all empty
+file: ./test/formz_string/widgets_test.gleam
+test_name: input_described_by_elements_with_ids_all_empty_test
+---
+<input type="text" name="name" value="hello">

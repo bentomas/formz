@@ -17,40 +17,66 @@ pub fn generate_form(form) -> String {
 
 pub fn generate_item(item: formz.FormItem(String)) -> String {
   case item {
-    formz.Element(f, _) if f.hidden == True ->
+    formz.Field(field, _) if field.hidden == True ->
       "<input"
       <> { " type=\"hidden\"" }
-      <> { " name=\"" <> f.name <> "\"" }
-      <> { " value\"" <> f.value <> "\"" }
+      <> { " name=\"" <> field.name <> "\"" }
+      <> { " value\"" <> field.value <> "\"" }
       <> ">"
-    formz.Element(f, make_widget) -> {
+    formz.Field(field, make_widget) -> {
+      let id = field.name
+
       let label_el =
-        "<label for=\"" <> f.name <> "\">" <> f.label <> ": </label>"
-      let description_el = case string.is_empty(f.help_text) {
-        True -> ""
-        False ->
-          " <span class=\"formz_help_text\">" <> f.help_text <> " </span>"
+        "<label for=\"" <> id <> "\">" <> field.label <> ": </label>"
+
+      let #(help_text_el, help_text_id) = case field.help_text {
+        "" -> #("", "")
+        _ -> {
+          #(
+            " <span"
+              <> { " class=\"formz_help_text\"" }
+              <> { " id=\"" <> id <> "_help_text" <> "\"" }
+              <> ">"
+              <> field.help_text
+              <> " </span>",
+            id <> "_help_text",
+          )
+        }
       }
+
+      let #(errors_el, errors_id) = case field {
+        field.Valid(..) -> #("", "")
+        field.Invalid(error:, ..) -> {
+          #(
+            " <span"
+              <> { " class=\"formz_error\"" }
+              <> { " id=\"" <> id <> "_error" <> "\"" }
+              <> ">"
+              <> error
+              <> "</span>",
+            id <> "_error",
+          )
+        }
+      }
+
       let widget_el =
         make_widget(
-          f,
-          widget.args(widget.LabelledByLabelFor) |> widget.id(f.name),
+          field,
+          widget.Args(
+            id,
+            widget.LabelledByLabelFor,
+            widget.DescribedByElementsWithIds([help_text_id, errors_id]),
+          ),
         )
-
-      let errors_el = case f {
-        field.Valid(..) -> ""
-        field.Invalid(error:, ..) ->
-          " <span class=\"formz_error\">" <> error <> "</span>"
-      }
 
       "<div class=\"formz_field\">"
       <> label_el
       <> widget_el
-      <> description_el
+      <> help_text_el
       <> errors_el
       <> "</div>"
     }
-    formz.Set(s, items) -> {
+    formz.SubForm(s, items) -> {
       { "<fieldset><legend>" <> s.label <> "</legend>" }
       <> { "<div>" }
       <> {

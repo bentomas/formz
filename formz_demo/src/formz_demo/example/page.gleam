@@ -53,8 +53,8 @@ fn get_fields(form: formz.Form(format, ouput)) {
 fn do_get_fields(items: List(formz.FormItem(format)), acc) {
   case items {
     [] -> acc
-    [formz.Element(field, _), ..rest] -> do_get_fields(rest, [field, ..acc])
-    [formz.Set(_, items), ..rest] ->
+    [formz.Field(field, _), ..rest] -> do_get_fields(rest, [field, ..acc])
+    [formz.SubForm(_, items), ..rest] ->
       do_get_fields(list.flatten([items, rest]), acc)
   }
 }
@@ -147,13 +147,22 @@ pub fn show_post(
 }
 
 fn show_form(formatted_from: String) -> element.Element(msg) {
-  html.form([attribute.method("POST"), attribute.class("form")], [
-    html.div(
-      [attribute.attribute("dangerous-unescaped-html", formatted_from)],
-      [],
-    ),
-    html.p([], [html.button([attribute.type_("submit")], [html.text("Submit")])]),
-  ])
+  html.form(
+    [
+      attribute.method("POST"),
+      attribute.class("form"),
+      attribute.novalidate(True),
+    ],
+    [
+      html.div(
+        [attribute.attribute("dangerous-unescaped-html", formatted_from)],
+        [],
+      ),
+      html.p([], [
+        html.button([attribute.type_("submit")], [html.text("Submit")]),
+      ]),
+    ],
+  )
 }
 
 fn show_code(code: String) -> element.Element(msg) {

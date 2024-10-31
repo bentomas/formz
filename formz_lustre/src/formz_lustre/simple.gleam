@@ -18,30 +18,44 @@ pub fn generate_item(
   item: formz.FormItem(element.Element(msg)),
 ) -> element.Element(msg) {
   case item {
-    formz.Element(f, _) if f.hidden == True ->
+    formz.Field(field, _) if field.hidden == True ->
       html.input([
         attribute.type_("hidden"),
-        attribute.name(f.name),
-        attribute.value(f.value),
+        attribute.name(field.name),
+        attribute.value(field.value),
       ])
 
-    formz.Element(f, make_widget) -> {
-      let label_el = html.label([], [html.text(f.label), html.text(": ")])
+    formz.Field(field, make_widget) -> {
+      let label_el = html.label([], [html.text(field.label), html.text(": ")])
 
-      let description_el = case string.is_empty(f.help_text) {
+      let description_el = case string.is_empty(field.help_text) {
         True -> element.none()
         False ->
-          html.span([attribute.class("help_text")], [html.text(f.help_text)])
+          html.span([attribute.class("help_text")], [html.text(field.help_text)])
+      }
+      let described_by = case field, field.help_text {
+        field.Valid(..), "" -> widget.DescribedByNone
+        field.Valid(..), _ ->
+          widget.DescribedByElementsWithIds([field.name <> "_help_text"])
+        field.Invalid(..), "" ->
+          widget.DescribedByElementsWithIds([field.name <> "_error"])
+        field.Invalid(..), _ ->
+          widget.DescribedByElementsWithIds([
+            field.name <> "_help_text",
+            field.name <> "_error",
+          ])
       }
       let widget_el =
         html.span([attribute.class("widget")], [
           make_widget(
-            f,
-            widget.args(widget.LabelledByLabelFor) |> widget.id(f.name),
+            field,
+            widget.args(widget.LabelledByLabelFor)
+              |> widget.id(field.name)
+              |> widget.described_by(described_by),
           ),
         ])
 
-      let errors_el = case f {
+      let errors_el = case field {
         field.Valid(..) -> element.none()
         field.Invalid(error:, ..) ->
           html.span([attribute.class("errors")], [html.text(error)])
@@ -54,7 +68,7 @@ pub fn generate_item(
         errors_el,
       ])
     }
-    formz.Set(s, items) -> {
+    formz.SubForm(s, items) -> {
       let legend = html.legend([], [html.text(s.label)])
       let children = items |> list.map(generate_item)
       html.fieldset([], [legend, ..children])

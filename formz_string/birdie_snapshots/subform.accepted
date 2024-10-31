@@ -1,0 +1,9 @@
+---
+version: 1.2.3
+title: subform
+file: ./test/formz_string/simple_test.gleam
+test_name: subform_test
+---
+<div class="formz_formitems"><div class="formz_field"><label for="a">A: </label><input type="number" name="a" id="a" required></div>
+<fieldset><legend>B</legend><div><div class="formz_field"><label for="b.a">A: </label><input type="number" name="b.a" id="b.a" required></div>
+<div class="formz_field"><label for="b.b">B: </label><input type="number" name="b.b" id="b.b" required></div></div></fieldset></div>
