@@ -23,17 +23,17 @@ pub fn handle_post(
 }
 
 pub fn format_string_form(form: formz.Form(String, output)) -> String {
-  simple.generate_form(form)
+  simple.generate_form_use(form)
 }
 
 pub fn format_lustre_form(
   form: formz.Form(element.Element(msg), output),
 ) -> element.Element(msg) {
-  lustre_simple.generate_form(form)
+  lustre_simple.generate_form_use(form)
 }
 
 pub fn format_nakai_form(form: formz.Form(html.Node, output)) -> html.Node {
-  nakai_simple.generate_form(form)
+  nakai_simple.generate_form_use(form)
 }
 
 pub fn formatted_string_form_to_string(str) -> String {

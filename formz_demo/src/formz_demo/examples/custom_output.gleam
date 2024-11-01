@@ -1,3 +1,4 @@
+import formz.{Field} as _
 import formz/field.{field}
 import formz/formz_use as formz
 import formz/widget
@@ -13,10 +14,10 @@ pub fn make_form() {
 }
 
 pub fn format_form(form) {
-  let assert Ok(formz.Field(username_field, username_widget)) =
+  let assert Ok(Field(username_field, username_widget)) =
     formz.get(form, "username")
 
-  let assert Ok(formz.Field(password_field, password_widget)) =
+  let assert Ok(Field(password_field, password_widget)) =
     formz.get(form, "password")
 
   html.div(

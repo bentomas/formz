@@ -1,14 +1,27 @@
+import formz
 import formz/field
-import formz/formz_use as formz
+import formz/formz_builder
+import formz/formz_use
 import formz/widget
 import gleam/list
 import gleam/string
 
-pub fn generate_form(form) -> String {
+pub fn generate_form_builder(form) -> String {
   "<div class=\"formz_items\">"
   <> {
     form
-    |> formz.items
+    |> formz_builder.items
+    |> list.map(generate_item)
+    |> string.join("")
+  }
+  <> "</div>"
+}
+
+pub fn generate_form_use(form) -> String {
+  "<div class=\"formz_items\">"
+  <> {
+    form
+    |> formz_use.items
     |> list.map(generate_item)
     |> string.join("")
   }
@@ -76,8 +89,32 @@ pub fn generate_item(item: formz.FormItem(String)) -> String {
       <> errors_el
       <> "</div>"
     }
-    formz.SubForm(s, items) -> {
-      { "<fieldset><legend>" <> s.label <> "</legend>" }
+    formz.SubForm(subform, items) -> {
+      let #(help_text_el, help_text_id) = case subform.help_text {
+        "" -> #("", "")
+        _ -> {
+          #(
+            "<p"
+              <> { " id=\"" <> subform.name <> "_help_text" <> "\"" }
+              <> { " class=\"formz_help_text\"" }
+              <> ">"
+              <> subform.help_text
+              <> "</p>",
+            subform.name <> "_help_text",
+          )
+        }
+      }
+
+      let described_by_attr = case help_text_id {
+        "" -> ""
+        _ -> {
+          " aria-describedby=\"" <> help_text_id <> "\""
+        }
+      }
+
+      { "<fieldset" <> described_by_attr <> ">" }
+      <> { "<legend>" <> subform.label <> "</legend>" }
+      <> help_text_el
       <> { "<div>" }
       <> {
         list.map(items, generate_item)

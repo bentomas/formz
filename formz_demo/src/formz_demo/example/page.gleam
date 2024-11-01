@@ -1,5 +1,6 @@
+import formz
 import formz/field
-import formz/formz_use as formz
+import formz/formz_use
 import gleam/list
 import gleam/option
 import gleam/result
@@ -16,7 +17,7 @@ pub fn build_page(
   code: String,
   post_data: option.Option(List(#(String, String))),
   output: option.Option(a),
-  formyyyy: formz.Form(format, b),
+  formyyyy: formz_use.Form(format, b),
   formatted_form: String,
 ) -> Response {
   let html =
@@ -46,8 +47,8 @@ pub fn build_page(
   wisp.ok() |> wisp.html_body(html)
 }
 
-fn get_fields(form: formz.Form(format, ouput)) {
-  form |> formz.items |> do_get_fields([]) |> list.reverse
+fn get_fields(form: formz_use.Form(format, ouput)) {
+  form |> formz_use.items |> do_get_fields([]) |> list.reverse
 }
 
 fn do_get_fields(items: List(formz.FormItem(format)), acc) {
@@ -62,7 +63,7 @@ fn do_get_fields(items: List(formz.FormItem(format)), acc) {
 pub fn show_post(
   input_data: option.Option(List(#(String, String))),
   output: option.Option(a),
-  form: formz.Form(format, b),
+  form: formz_use.Form(format, b),
 ) {
   case input_data {
     option.None -> element.none()

@@ -3,11 +3,11 @@
 //// It is the heavy compared to the lightness of a [Field](https://hexdocs.pm/formz/formz/field.html);
 //// they take a bit more work to make as they are intended to be reusable.
 ////
-//// The first role of a `Definition` is to generate the HTML widget for the field.
+//// The first role of a `Defintion` is to generate the HTML widget for the field.
 //// This library is format-agnostic and you can generate HTML widgets as raw
-//// strings, Lustre elements, Nakai nodes, something else, etc, etc. There are
-//// currently three formz libraries that provide common field definitions in
-//// different formats.
+//// strings, Lustre elements, Nakai nodes, something else, etc. There are
+//// currently three `formz` libraries that provide common field definitions for the
+//// most common HTML formats.
 ////
 //// - [formz_string](https://hexdocs.pm/formz_string/)
 //// - [formz_nakai](https://hexdocs.pm/formz_nakai/)
@@ -57,9 +57,8 @@
 ////         _ -> parse(str)
 ////       }
 ////     },
-////     // We need to have a stub value for each parser that's used
-////     // when building the decoder and parse functions for the form as the fields
-////     // are being added
+////     // We need to have a stub value for each parser. The stubs are used when
+////     // building the decoder and parse functions for the form.
 ////     stub: "",
 ////     optional_stub: option.None,
 ////   )

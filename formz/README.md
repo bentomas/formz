@@ -5,12 +5,6 @@
 
 A Gleam library for parsing and generating accessible HTML forms.
 
-> **Note:** This library currently has two non-interoperable ways to define forms,
-one using the builder pattern, and one using a series of `use` calls like with
-the [toy](https://hexdocs.pm/toy/) or [decode/zero](https://hexdocs.pm/decode/)
-packages.  After gathering some feedback, only one of them will be kept.
-
-
 HTML forms rendered in the browser and the data they are parsed into are
 intrinsically linked. Treating the markup and the parsing as two separate
 problems to solve is inconvenient and leads to bugs. This library aims
@@ -24,6 +18,12 @@ gleam add formz@0.1
 ## Creating a form
 
 A `formz` form is a list of fields and a decoder function.
+
+> **Note:** This library currently has two non-interoperable ways to define forms,
+one using the builder pattern, and one using a series of `use` calls like with
+the [toy](https://hexdocs.pm/toy/) or [decode/zero](https://hexdocs.pm/decode/)
+packages.  After gathering some feedback, only one of them will be kept and this
+library will be moved do version 1.0.0.
 
 ### builder pattern
 
@@ -65,11 +65,12 @@ pub fn make_form() {
 
 There are two arguments to adding a field to a form (seen above):
 
-1. Specific, unique [details](https://hexdocs.pm/formz/formz/field.html) about
-   the field, such as its name, label, help text, disabled state, etc.
-2. A field [definition](https://hexdocs.pm/formz/formz/definition.html) which
-   says (A) how to generate the HTML *widget* for the field, and (B) how to
-   parse the data from the field. These definitions are reusable and can be
+1. A [Field](https://hexdocs.pm/formz/formz/field.html), which holds specific,
+   unique details about the field, such as its name, label, help text, disabled
+   state, etc.
+2. A [Definition](https://hexdocs.pm/formz/formz/definition.html), which
+   says (A) how to generate the HTML input element for the field, and (B) how
+   to parse the data from the field. These definitions are reusable and can be
    shared across fields, forms and projects.
 
 ### Field details
@@ -91,28 +92,22 @@ field(named: "userid") |> field.make_hidden |> field.set_raw_value("42")
 compared to the lightness of fields; they take a bit more work to make as they
 are intended to be more reusable.
 
-The first role of a defintion is to generate the HTML widget for the field.
+The first role of a `Defintion` is to generate the HTML widget for the field.
 This library is format-agnostic and you can generate HTML widgets as raw
-strings, Lustre elements, Nakai nodes, something else, etc, etc. There are
-currently three formz libraries that provide common field definitions in
-different formats.
+strings, Lustre elements, Nakai nodes, something else, etc. There are
+currently three `formz` libraries that provide common field definitions for the
+most common HTML formats.
 
 - [formz_string](https://hexdocs.pm/formz_string/)
 - [formz_nakai](https://hexdocs.pm/formz_nakai/)
 - [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser,
   would it be useful there??)
 
-The second role is to parse the data from the field. There are a two parts
-to this, as how you parse a field's value depends on if it is optional or
-required.  For example, an optional text field might be an empty string,
-an optional checkbox might be `False`, and an optional select might
-be `option.None`.  So you need to provide two parse functions, one for when
-a field is required, and a second for when it's optional (and it uses the first
-one).
-
-There is also a basic validation module with the simple parsers required to make
-the basic form definitions provided above work. You can use this as a starting
-point for your own parse functions.
+The second role  of a `Definition` is to parse the data from the field. There
+are a two parts to this, as how you parse a field's value depends on if it is
+optional or required.  Not all scenarios can be cookie-cutter placed into an
+`Option`. So you need to provide two parse functions, one for when a field is
+required, and a second for when it's optional.
 
 ```gleam
 /// you won't often need to do this directly (I think??).  The idea is that
@@ -148,9 +143,8 @@ pub fn password_field() {
         _ -> parse(str)
       }
     },
-    // We need to have a stub value for each parser that's used
-    // when building the decoder and parse functions for the form as the fields
-    // are being added
+    // We need to have a stub value for each parser. The stubs are used when
+    // building the decoder and parse functions for the form.
     stub: "",
     optional_stub: option.None,
   )

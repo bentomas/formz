@@ -1,6 +1,7 @@
+import formz.{Field, SubForm} as _
 import formz/definition
 import formz/field.{field}
-import formz/formz_builder.{Field, SubForm} as formz
+import formz/formz_builder as formz
 import formz/subform.{subform}
 import formz/validation
 import gleam/list

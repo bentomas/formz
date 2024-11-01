@@ -1,5 +1,7 @@
+import formz
 import formz/field
-import formz/formz_use as formz
+import formz/formz_builder
+import formz/formz_use
 import formz/widget
 import gleam/list
 import gleam/string
@@ -7,9 +9,16 @@ import lustre/attribute
 import lustre/element
 import lustre/element/html.{html}
 
-pub fn generate_form(form) -> element.Element(msg) {
+pub fn generate_form_builder(form) -> element.Element(msg) {
   form
-  |> formz.items
+  |> formz_builder.items
+  |> list.map(generate_item)
+  |> html.div([attribute.class("formz_items")], _)
+}
+
+pub fn generate_form_use(form) -> element.Element(msg) {
+  form
+  |> formz_use.items
   |> list.map(generate_item)
   |> html.div([attribute.class("formz_items")], _)
 }

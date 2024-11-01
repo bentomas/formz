@@ -1,14 +1,22 @@
+import formz
 import formz/field
-import formz/formz_use as formz
+import formz/formz_builder
+import formz/formz_use
 import formz/widget
 import gleam/list
-import gleam/string
 import nakai/attr
 import nakai/html
 
-pub fn generate_form(form) -> html.Node {
+pub fn generate_form_builder(form) -> html.Node {
   form
-  |> formz.items
+  |> formz_builder.items
+  |> list.map(generate_visible_item)
+  |> html.div([attr.class("formz_items")], _)
+}
+
+pub fn generate_form_use(form) -> html.Node {
+  form
+  |> formz_use.items
   |> list.map(generate_visible_item)
   |> html.div([attr.class("formz_items")], _)
 }

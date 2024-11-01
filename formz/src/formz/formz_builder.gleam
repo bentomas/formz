@@ -1,3 +1,4 @@
+import formz.{type FormItem, Field, SubForm}
 import formz/definition.{type Definition, Definition}
 import formz/field
 import formz/subform
@@ -19,11 +20,6 @@ pub opaque type Form(format, output, decoder, has_decoder) {
       Result(output, List(FormItem(format))),
     decoder: Option(decoder),
   )
-}
-
-pub type FormItem(format) {
-  Field(field.Field, widget: widget.Widget(format))
-  SubForm(subform.SubForm, items: List(FormItem(format)))
 }
 
 pub fn new() -> Form(format, a, a, NoDecoder) {

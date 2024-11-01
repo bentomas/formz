@@ -1,7 +1,10 @@
 //// This will eventually be the home of `formz_builder` or `formz_use`.
 
-import gleam/io
+import formz/field
+import formz/subform
+import formz/widget
 
-pub fn main() {
-  io.println("Hello from formz!")
+pub type FormItem(format) {
+  Field(field.Field, widget: widget.Widget(format))
+  SubForm(subform.SubForm, items: List(FormItem(format)))
 }
