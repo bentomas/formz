@@ -1,13 +1,14 @@
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 name = "formz_nakai"
-version = "0.1.1"
+version = "0.1.2"
 description = "Nakai widgets and field definitions for the formz library."
 licences = ["Unlicense"]
 repository = { type = "github", user = "bentomas", repo = "formz" }
 
 [dependencies]
-formz = { path = "../formz" }
+# formz = { path = "../formz" }
+formz = ">= 0.1.1 and < 1.0.0"
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 nakai = ">= 1.0.0 and < 2.0.0"
 
