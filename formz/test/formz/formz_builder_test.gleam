@@ -457,7 +457,7 @@ pub fn sub_form_test() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(subform("name"), f1)
+    |> formz.subform(subform("name"), f1)
     |> formz.require(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 
@@ -482,7 +482,7 @@ pub fn sub_form_error_tst() {
 
   let f2 =
     formz.new()
-    |> formz.add_form(subform("name"), f1)
+    |> formz.subform(subform("name"), f1)
     |> formz.optional(field("d"), integer_field())
     |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
 

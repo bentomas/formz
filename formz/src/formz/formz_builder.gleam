@@ -116,7 +116,7 @@ pub fn require(
   )
 }
 
-pub fn add_form(
+pub fn subform(
   previous_form: Form(
     format,
     fn(sub_output) -> decoder_step_output,

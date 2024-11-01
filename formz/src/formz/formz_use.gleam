@@ -112,7 +112,7 @@ pub fn require(
   )
 }
 
-pub fn with_form(
+pub fn subform(
   details: subform.SubForm,
   sub: Form(format, sub_output),
   fun: fn(sub_output) -> Form(format, form_output),

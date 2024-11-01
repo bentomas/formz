@@ -291,7 +291,7 @@ pub fn sub_form_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(subform("name"), f1)
+    use a <- formz.subform(subform("name"), f1)
     use b <- formz.require(field("d"), integer_field())
 
     formz.create_form(#(a, b))
@@ -381,7 +381,7 @@ pub fn sub_form_error_test() {
   }
 
   let f2 = {
-    use a <- formz.with_form(subform("name"), f1)
+    use a <- formz.subform(subform("name"), f1)
     use b <- formz.optional(field("d"), integer_field())
 
     formz.create_form(#(a, b))

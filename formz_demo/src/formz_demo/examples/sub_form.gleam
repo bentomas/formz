@@ -4,8 +4,8 @@ import formz/subform.{subform}
 import formz_string/definitions
 
 pub fn make_form() {
-  use billing_address <- formz.with_form(subform("billing"), address_form())
-  use shipping_address <- formz.with_form(subform("shipping"), address_form())
+  use billing_address <- formz.subform(subform("billing"), address_form())
+  use shipping_address <- formz.subform(subform("shipping"), address_form())
 
   formz.create_form(#(billing_address, shipping_address))
 }

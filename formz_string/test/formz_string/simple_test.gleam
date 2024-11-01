@@ -20,7 +20,7 @@ pub fn three_field_form() {
 
 pub fn one_field_and_subform_form() {
   use a <- formz.require(field("a"), definitions.integer_field())
-  use b <- formz.with_form(subform.subform("b"), three_field_form())
+  use b <- formz.subform(subform.subform("b"), three_field_form())
 
   formz.create_form(#(a, b))
 }
