@@ -89,7 +89,7 @@ pub fn password_field() {
   )
 }
 
-/// Creates a `<select>` input.  Takes a tuple of #(String, String) where the first
+/// Creates a `<select>` input.  Takes a tuple of `#(String, String)` where the first
 /// item in the tuple is the label, and the second item can be any Gleam type and
 /// is the value that would be parsed for a given selection.
 ///

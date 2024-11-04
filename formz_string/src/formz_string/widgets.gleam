@@ -3,17 +3,34 @@ import formz/widget
 import gleam/list
 import gleam/string
 
+fn sanitize_attr(str: String) -> String {
+  str
+  |> string.replace("\"", "&quot;")
+  |> string.replace(">", "&gt;")
+}
+
+fn with_non_empty_strs(
+  list: List(String),
+  empty: j,
+  fun: fn(List(String)) -> j,
+) -> j {
+  case list |> list.filter(fn(x) { !string.is_empty(x) }) {
+    [] -> empty
+    non_empty_ids -> fun(non_empty_ids)
+  }
+}
+
 fn id_attr(id: String) -> String {
   case id {
     "" -> ""
-    _ -> " id=\"" <> id <> "\""
+    _ -> " id=\"" <> sanitize_attr(id) <> "\""
   }
 }
 
 fn name_attr(name: String) -> String {
   case name {
     "" -> ""
-    _ -> " name=\"" <> name <> "\""
+    _ -> " name=\"" <> sanitize_attr(name) <> "\""
   }
 }
 
@@ -26,21 +43,15 @@ fn aria_label_attr(labelled_by: widget.LabelledBy, label: String) -> String {
 
     // we have the id of the element that labels this input
     widget.LabelledByElementsWithIds(ids) ->
-      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
-        [] -> ""
-        non_empty_ids ->
-          " aria-labelledby=\"" <> string.join(non_empty_ids, " ") <> "\""
-      }
+      with_non_empty_strs(ids, "", fn(ids) {
+        " aria-labelledby=\"" <> sanitize_attr(string.join(ids, " ")) <> "\""
+      })
 
     // we'll use the label value as the aria-label
     widget.LabelledByFieldValue -> {
-      let sanitized_label =
-        label
-        |> string.replace("\"", "&quot;")
-        |> string.replace(">", "&gt;")
       case label {
         "" -> ""
-        _ -> " aria-label=\"" <> sanitized_label <> "\""
+        _ -> " aria-label=\"" <> sanitize_attr(label) <> "\""
       }
     }
   }
@@ -54,11 +65,9 @@ fn aria_describedby_attr(described_by: widget.DescribedBy) -> String {
 
     // we have the id of the element that labels this input
     widget.DescribedByElementsWithIds(ids) ->
-      case ids |> list.filter(fn(x) { !string.is_empty(x) }) {
-        [] -> ""
-        non_empty_ids ->
-          " aria-describedby=\"" <> string.join(non_empty_ids, " ") <> "\""
-      }
+      with_non_empty_strs(ids, "", fn(ids) {
+        " aria-describedby=\"" <> sanitize_attr(string.join(ids, " ")) <> "\""
+      })
   }
 }
 
@@ -74,13 +83,9 @@ fn type_attr(type_: String) -> String {
 }
 
 fn value_attr(value: String) -> String {
-  let sanitized_value =
-    value
-    |> string.replace("\"", "&quot;")
-    |> string.replace(">", "&gt;")
   case value {
     "" -> ""
-    _ -> " value=\"" <> sanitized_value <> "\""
+    _ -> " value=\"" <> sanitize_attr(value) <> "\""
   }
 }
 

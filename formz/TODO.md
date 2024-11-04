@@ -1,11 +1,11 @@
 - form sets
-- decoders/toy.decoder?
 - csrf token?
+- multiple value fields?
 - emit warning on duplicate named fields?
 - clean names so snake_case?
 - errors on hidden fields?
-- custom types for input.hidden, input.disabled, input.required?
+- hash fields for hidden fields to check for form tampering?
+- hash fields for disabled fields to check for form tampering?
+- custom types for field.hidden, field.disabled, field.required?
 - date fields? https://hexdocs.pm/birl/ https://hexdocs.pm/rada/
-- provide password/email/number_field? or just make them change the widget?
 - provide a text_area field? or make them change the widget?
-- get rid of Valid/Invalid fields, and use permanent error field?

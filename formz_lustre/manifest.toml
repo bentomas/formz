@@ -2,16 +2,15 @@
 # You typically do not need to edit this file
 
 packages = [
-  { name = "formz", version = "0.1.2", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], otp_app = "formz", source = "hex", outer_checksum = "0ABD8FC47DA27A05B53930B6F9F1CD572EAD78E9276D24705E2BDD39F33F4C8C" },
-  { name = "formz_string", version = "0.1.2", build_tools = ["gleam"], requirements = ["formz", "gleam_stdlib"], source = "local", path = "../formz_string" },
+  { name = "formz", version = "0.1.3", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], otp_app = "formz", source = "hex", outer_checksum = "ACE626F2793D6B1D568ED5CBAFDB786F47E2BD92049ECBFC100AE6748D169590" },
+  { name = "formz_string", version = "0.1.3", build_tools = ["gleam"], requirements = ["formz", "gleam_stdlib"], source = "local", path = "../formz_string" },
   { name = "gleam_erlang", version = "0.28.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "BE551521F708DCE5CB954AFBBDF08519C1C44986521FD40753608825F48FFA9E" },
-  { name = "gleam_json", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "thoas"], otp_app = "gleam_json", source = "hex", outer_checksum = "9063D14D25406326C0255BDA0021541E797D8A7A12573D849462CAFED459F6EB" },
+  { name = "gleam_json", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "CB10B0E7BF44282FB25162F1A24C1A025F6B93E777CCF238C4017E4EEF2CDE97" },
   { name = "gleam_otp", version = "0.13.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "gleam_otp", source = "hex", outer_checksum = "F7EA44C81679B2A6032FF1B3851F0EFB43F4F1F1CAC616CB7F4A18497F39FAB9" },
   { name = "gleam_stdlib", version = "0.41.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "1B2F80CB1B66B027E3198A2FF71EF3F2F31DF89ED97AD606F25FD387A4C3C1EF" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "justin", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "justin", source = "hex", outer_checksum = "7FA0C6DB78640C6DC5FBFD59BF3456009F3F8B485BF6825E97E1EB44E9A1E2CD" },
-  { name = "lustre", version = "4.6.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib"], otp_app = "lustre", source = "hex", outer_checksum = "4ED2517401DD6665592ACD8C74FF6B0359BC68307393ACEB6CC6FA3A65FF6485" },
-  { name = "thoas", version = "1.2.1", build_tools = ["rebar3"], requirements = [], otp_app = "thoas", source = "hex", outer_checksum = "E38697EDFFD6E91BD12CEA41B155115282630075C2A727E7A6B2947F5408B86A" },
+  { name = "lustre", version = "4.6.1", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_json", "gleam_otp", "gleam_stdlib"], otp_app = "lustre", source = "hex", outer_checksum = "486C3CFBD126939CAD2CA8B92A979A2DAADA5BABAA62BF2B163CD21E257BD4A1" },
 ]
 
 [requirements]

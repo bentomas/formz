@@ -132,6 +132,22 @@ pub fn input_disabled_test() {
   |> birdie.snap(title: "input disabled")
 }
 
+pub fn input_sanitized_value_test() {
+  widgets.input_widget("text")(
+    field.Valid(
+      name: "name",
+      label: "Label",
+      help_text: "",
+      value: "hello\"<-_=>",
+      disabled: False,
+      required: False,
+      hidden: False,
+    ),
+    widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
+  )
+  |> birdie.snap(title: "input sanitized value")
+}
+
 pub fn checkbox_checked_test() {
   widgets.checkbox_widget()(
     field.Valid(

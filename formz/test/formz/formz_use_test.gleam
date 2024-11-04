@@ -281,6 +281,25 @@ pub fn parse_triple_field_form_with_error_test() {
   fieldc |> should_be_field_no_error
 }
 
+pub fn set_required_field_test() {
+  let f = {
+    use a <- formz.require(
+      field("a") |> field.set_required(False),
+      integer_field(),
+    )
+    use b <- formz.optional(
+      field("b") |> field.set_required(True),
+      integer_field(),
+    )
+    formz.create_form(#(a, b))
+  }
+
+  let assert [Field(fielda, _), Field(fieldb, _)] = formz.items(f)
+
+  fielda.required |> should.equal(True)
+  fieldb.required |> should.equal(False)
+}
+
 pub fn sub_form_test() {
   let f1 = {
     use a <- formz.require(field("a"), integer_field())

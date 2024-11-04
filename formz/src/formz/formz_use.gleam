@@ -1,3 +1,42 @@
+//// A form is a list of fields and a decoder function. This module uses a
+//// series of callbacks to construct a decoder function as the fields are
+//// being added to the form.  The idea is that you'd have a function that
+//// makes the form using the `use` syntax, and then be able to use the form
+//// later for parsing or rendering in different contexts.
+////
+//// ### Examples
+////
+//// ```gleam
+//// fn make_form() {
+////  use name <- formz.require(field("name"), defintions.text_field())
+////
+////  formz.create_form(name)
+//// }
+////
+//// fn process_form() {
+////   make_form()
+////   |> formz.data([#("name", "Louis"))])
+////   |> formz.parse
+////   # -> Ok("Louis")
+//// }
+//// ```
+////
+//// ```gleam
+//// fn make_form() {
+////  use greeting <- optional(field("greeting"), defintions.text_field())
+////  use name <- optional(field("name"), defintions.text_field())
+////
+////  formz.create_form(greeting <> " " <> name)
+//// }
+////
+//// fn process_form() {
+////   make_form()
+////   |> data([#("greeting", "Hello"), #("name", "World")])
+////   |> formz.parse
+////   # -> Ok("Hello World")
+//// }
+//// ```
+
 import formz.{type FormItem, Field, SubForm}
 import formz/definition.{type Definition, Definition}
 import formz/field
@@ -15,6 +54,24 @@ pub opaque type Form(format, output) {
   )
 }
 
+/// Create an empty form that only parses to `thing`. This is primarily
+/// intended to be the final return value of a chain of callbacks that adds
+/// the form's fields.
+///
+/// ```gleam
+/// create_form(1)
+/// |> parse
+/// # -> Ok(1)
+/// ```
+/// ```gleam
+/// fn make_form() {
+///   use field1 <- formz.require(field("field1"), definitions.text_field())
+///   use field2 <- formz.require(field("field2"), definitions.text_field())
+///   use field3 <- formz.require(field("field3"), definitions.text_field())
+///
+///   create_form(#(field1, field2, field3))
+/// }
+/// ```
 pub fn create_form(thing: thing) -> Form(format, thing) {
   Form([], fn(_) { Ok(thing) }, thing)
 }
@@ -84,13 +141,26 @@ fn add(
   Form(items: updated_items, parse:, placeholder: next_form.placeholder)
 }
 
+/// Add an optional field to a form.
+///
+/// This will use both the `parse` and `optional_parse` functions from the
+/// definition to parse the input data when parsing this field.  Ultimately
+/// whether a field is actually optional or not comes down to the details
+/// of the definition.
+///
+/// The final argument is a callback that will be called when the form
+/// is being constructed to look for more fields; validated to check for errors;
+/// and when the form is being parsed, to decode the input data.  **For this
+/// reason, the callback should be a function without side effects.** It can be
+/// called any number of times. Don't do anything but create the type with the
+/// data you need!
 pub fn optional(
   field: field.Field,
   is definition: Definition(format, _, input_output),
   rest fun: fn(input_output) -> Form(format, form_output),
 ) -> Form(format, form_output) {
   add(
-    field,
+    field |> field.set_required(False),
     definition.widget,
     definition.optional_parse(definition.parse, _),
     definition.optional_stub,
@@ -98,6 +168,22 @@ pub fn optional(
   )
 }
 
+/// Add a required field to a form.
+///
+/// This will use only the `parse` function from the definition to parse the
+/// input data when parsing this field. Ultimately whether a field is actually
+/// required or not comes down to the details of the definition.
+///
+/// This will also set the `required` value on the field to `True`.  Form
+/// generators can use this to mark the HTML input elements as required for
+/// accessibility.
+///
+/// The final argument is a callback that will be called when the form
+/// is being constructed to look for more fields; validated to check for errors;
+/// and when the form is being parsed, to decode the input data.  **For this
+/// reason, the callback should be a function without side effects.** It can be
+/// called any number of times. Don't do anything but create the type with the
+/// data you need!
 pub fn require(
   field: field.Field,
   is definition: Definition(format, required_output, _),
@@ -112,6 +198,17 @@ pub fn require(
   )
 }
 
+/// Add a form as a subform.  This will essentially append the fields from the
+/// subform to the current form, prefixing their names with the name of the
+/// subform.  Form generators will still see the fields as a set though, so they
+/// can be marked up as a group for accessibility reasons.
+///
+/// The final argument is a callback that will be called when the form
+/// is being constructed to look for more fields; validated to check for errors;
+/// and when the form is being parsed, to decode the input data.  **For this
+/// reason, the callback should be a function without side effects.** It can be
+/// called any number of times. Don't do anything but create the type with the
+/// data you need!
 pub fn subform(
   details: subform.SubForm,
   sub: Form(format, sub_output),
@@ -172,6 +269,7 @@ fn pop_field(
   }
 }
 
+@internal
 pub fn get_fields(form: Form(format, output)) -> List(field.Field) {
   form.items |> do_get_fields
 }
@@ -198,6 +296,15 @@ fn update_fields(
   })
 }
 
+/// Add input data to this form. This will set the raw string value of the fields.
+/// It does not trigger any parsing, so you can also use this to set default values
+/// (if you do it in your form generator function) or initial values (if you do it
+/// before rendering an empty form).
+///
+/// The input data is a list of tuples, where the first element is the name of the
+/// field and the second element is the value to set.  If the field does not exist
+/// the data is ignored, and if multiple values are given for the same field, the
+/// last one wins.
 pub fn data(
   form: Form(format, output),
   input_data: List(#(String, String)),
@@ -214,6 +321,15 @@ pub fn data(
   |> Form(parse, placeholder)
 }
 
+/// Parse the form.  This means step through the fields one by one, parsing
+/// them individually.  If any field fails to parse, the whole form is considered
+/// invalid, however it will still continue parsing the rest of the fields to
+/// collect all errors.  This is useful for showing all errors at once.  If no
+/// fields fail to parse, the decoded value is returned, which is the value given
+/// to `create_form`.
+///
+/// If you'd like to parse the form but not get the output, so you can give
+/// feedback to a user in response to input, you can use `validate` or `validate_all`.
 pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output)) {
   case form.parse(form.items) {
     Ok(output) -> Ok(output)
@@ -221,6 +337,25 @@ pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output))
   }
 }
 
+/// Parse the form, then apply a function to the output if it was successful.
+/// This is a very thin wrapper around `parse` and `result.try`, but the
+/// difference being it will pass the form along to the function as a second
+/// argument in addition to the successful result.  This allows you to easily
+/// update the form fields with errors or other information based on the output.
+///
+/// This is useful for situations where you can have errors in the form that
+/// aren't easily checked in simple parsing functions.  Like, say, hitting a
+/// db to check if a username is taken.
+///
+/// ```gleam
+/// make_form()
+/// |> data(form_data)
+/// |> parse_then_try(fn(username, form) {
+///   case is_username_taken(username) {
+///     Ok(false) -> Ok(form)
+///     Ok(true) -> update_field(form, "username", field.set_error(_, "Username is taken"))
+///   }
+/// }
 pub fn parse_then_try(
   form: Form(format, output),
   apply fun: fn(Form(format, output), output) -> Result(c, Form(format, output)),
@@ -228,6 +363,11 @@ pub fn parse_then_try(
   form |> parse |> result.try(fun(form, _))
 }
 
+/// Validate specific fields of the form.  This is similar to `parse`, but
+/// instead of returning the decoded output if there are no errors, it returns
+/// the valid form.  This is useful for if you want to be able to give feedback
+/// to the user about whether certain fields are valid or not. In this case you
+/// could just validate only fields that the user has interacted with.
 pub fn validate(
   form: Form(format, output),
   names: List(String),
@@ -251,6 +391,10 @@ pub fn validate(
   }
 }
 
+/// Validate all the fields in the form.  This is similar to `parse`, but
+/// instead of returning the decoded output if there are no errors, it returns
+/// the valid form.  This is useful for if you want to be able to give feedback
+/// to the user about whether certain fields are valid or not.
 pub fn validate_all(form: Form(format, output)) -> Form(format, output) {
   let names =
     form
@@ -260,10 +404,14 @@ pub fn validate_all(form: Form(format, output)) -> Form(format, output) {
   validate(form, names)
 }
 
+/// Get each [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) added
+/// to the form.  Any time a field or subform are added, a FormItem is created.
 pub fn items(form: Form(format, output)) -> List(FormItem(format)) {
   form.items
 }
 
+/// Get the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with the
+/// given name.  If multiple items have the same name, the first one is returned.
 pub fn get(
   form: Form(format, output),
   name: String,
@@ -277,6 +425,9 @@ pub fn get(
   })
 }
 
+/// Update the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with
+/// the given name using the provided function.  If multiple items have the same
+/// name, it will be called on all of them.
 pub fn update(
   form: Form(format, output),
   name: String,
@@ -301,6 +452,14 @@ fn do_formitems_update(
   })
 }
 
+/// Update the [`Field`](https://hexdocs.pm/formz/formz/field.html) with
+/// the given name using the provided function.  If multiple items have the same
+/// name, it will be called on all of them.
+///
+/// ```gleam
+/// let form = make_form()
+/// update(form, "name", field.set_label(_, "Full Name"))
+/// ```
 pub fn update_field(
   form: Form(format, output),
   name: String,
@@ -314,6 +473,14 @@ pub fn update_field(
   })
 }
 
+/// Update the [`SubForm`](https://hexdocs.pm/formz/formz/subform.html) with
+/// the given name using the provided function.  If multiple subforms have the same
+/// name, it will be called on all of them.
+///
+/// ```gleam
+/// let form = make_form()
+/// update(form, "name", subform.set_help_text(_, "..."))
+/// ```
 pub fn update_subform(
   form: Form(format, output),
   name: String,

@@ -1,7 +1,7 @@
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 name = "formz_lustre"
-version = "0.1.2"
+version = "0.1.3"
 description = "Lustre widgets and field definitions for the formz library."
 licences = ["Unlicense"]
 repository = { type = "github", user = "bentomas", repo = "formz" }

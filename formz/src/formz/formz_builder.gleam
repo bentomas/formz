@@ -1,3 +1,26 @@
+//// This module is used to construct a form using the builder pattern.
+//// A form is a list of fields and a decoder function.
+////
+//// ### Examples
+////
+//// ```gleam
+//// decodes(fn(field) { field })
+//// |> require(field("name"), defintions.text_field())
+//// |> data([#("name", "Louis"))])
+//// |> parse
+//// # -> Ok("Louis")
+//// ```
+////
+//// ```gleam
+//// new()
+//// |> optional(field("greeting"), defintions.text_field())
+//// |> optional(field("name"), defintions.text_field())
+//// |> data([#("greeting", "Hello"), #("name", "World")])
+//// |> set_decoder(fn(greeting) { fn(name) { greeting <> " " <> name } })
+//// |> parse
+//// # -> Ok("Hello World")
+//// ```
+
 import formz.{type FormItem, Field, SubForm}
 import formz/definition.{type Definition, Definition}
 import formz/field
@@ -9,8 +32,10 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 
+/// A phantom type used to tag a form as having a decoder.
 pub type HasDecoder
 
+/// A phantom type used to tag a form as not having a decoder.
 pub type NoDecoder
 
 pub opaque type Form(format, output, decoder, has_decoder) {
@@ -22,8 +47,58 @@ pub opaque type Form(format, output, decoder, has_decoder) {
   )
 }
 
-pub fn new() -> Form(format, a, a, NoDecoder) {
+/// Create a new empty form with no fields that a decoder will have to be added
+/// to in order to parse it.
+///
+/// ### Example
+///
+/// ```gleam
+/// new()
+/// |> set_decoder(1)
+/// |> parse
+/// # -> Ok(1)
+/// ```
+pub fn new() -> Form(format, thing, thing, NoDecoder) {
   Form([], fn(_, output) { Ok(output) }, None)
+}
+
+/// Create a new empty form with no fields that uses the provided decoder when
+/// parsing to provide the final value of a valid form.
+///
+/// A decoder is required in order to parse a form, though you can use `new()`
+/// to create a form without one, to be added later.
+///
+/// The type signature of the decoder must match the types of the
+/// definitions of the fields added to the form.  If one field has been added,
+/// then the decoder needs to be a function that returns a value.  If 15 fields
+/// have been added, then the decoder needs to be a function that returns a
+/// function that returns a function and so on, until 15 functions have been
+/// called to return the final value.
+///
+/// ### Example
+///
+/// ```gleam
+/// decodes(1)
+/// |> parse
+/// # -> Ok(1)
+/// ```
+/// ```gleam
+/// decodes(fn(field) { field })
+/// |> require(field("name"), defintions.text_field())
+/// |> data([#("name", "Louis"))])
+/// |> parse
+/// # -> Ok("Louis")
+/// ```
+/// ```gleam
+/// decodes(fn(greeting) { fn(name) { greeting <> " " <> name } })
+/// |> optional(field("greeting"), defintions.text_field())
+/// |> optional(field("name"), defintions.text_field())
+/// |> data([#("greeting", "Hello"), #("name", "World")])
+/// |> parse
+/// # -> Ok("Hello World")
+/// ```
+pub fn decodes(decoder: thing) -> Form(format, thing, thing, HasDecoder) {
+  new() |> set_decoder(decoder)
 }
 
 fn add(
@@ -82,6 +157,10 @@ fn add(
   Form(items: updated_items, parse_with:, decoder: previous_form.decoder)
 }
 
+/// Add an optional field to a form.
+///
+/// This will use both the `parse` and `optional_parse` functions from the
+/// definition to parse the input data when parsing this field.
 pub fn optional(
   previous_form: Form(
     format,
@@ -92,12 +171,23 @@ pub fn optional(
   field: field.Field,
   definition: Definition(format, _, decoder_step_input),
 ) -> Form(format, decoder_step_output, form_output, has_decoder) {
-  add(previous_form, field, definition.widget, definition.optional_parse(
-    definition.parse,
-    _,
-  ))
+  add(
+    previous_form,
+    field |> field.set_required(False),
+    definition.widget,
+    definition.optional_parse(definition.parse, _),
+  )
 }
 
+/// Add a required field to a form.
+///
+/// This will use only the `parse` function from the definition to parse the
+/// input data when parsing this field. Ultimately whether a field is actually
+/// required or not comes down to the details of the definition.
+///
+/// This will also set the `required` value on the field to `True`.  Form
+/// generators can use this to mark the HTML input elements as required for
+/// accessibility.
 pub fn require(
   previous_form: Form(
     format,
@@ -116,6 +206,10 @@ pub fn require(
   )
 }
 
+/// Add a form as a subform.  This will essentially append the fields from the
+/// subform to the current form, prefixing their names with the name of the
+/// subform.  Form generators will still see the fields as a set though, so they
+/// can be marked up as a group for accessibility reasons.
 pub fn subform(
   previous_form: Form(
     format,
@@ -178,6 +272,7 @@ fn pop_field(
   }
 }
 
+@internal
 pub fn get_fields(
   form: Form(format, output, decoder, has_decoder),
 ) -> List(field.Field) {
@@ -205,6 +300,10 @@ fn update_fields(
   })
 }
 
+/// Add input data to this form. This will set the raw string value of the fields.
+/// It does not trigger any parsing, so you can also use this to set default values
+/// (if you do it in your form generator function) or initial values (if you do it
+/// before rendering an empty form).
 pub fn data(
   form: Form(format, output, decoder, has_decoder),
   input_data: List(#(String, String)),
@@ -221,7 +320,14 @@ pub fn data(
   |> Form(parse, decoder)
 }
 
-pub fn decodes(
+/// Replace or set the decoder for the form.  A decoder is required in order to
+/// parse a form.  The type signature of the decoder must match the types of the
+/// definitions of the fields added to the form.  If one field has been added,
+/// then the decoder needs to be a function that returns a value.  If 15 fields
+/// have been added, then the decoder needs to be a function that returns a
+/// function that returns a function and so on, until 15 functions have been
+/// called to return the final value.
+pub fn set_decoder(
   form: Form(format, output, decoder, has_decoder),
   decoder: decoder,
 ) -> Form(format, output, decoder, HasDecoder) {
@@ -229,16 +335,15 @@ pub fn decodes(
   Form(fields, parse_with, Some(decoder))
 }
 
-// pub fn remove_decoder(
-//   form: Form(format, output1, decoder2, has_decoder),
-// ) -> Form(format, decoder2, decoder2, NoDecoder) {
-//   let Form(fields, parse_with, _) = form
-//   let parse_with = fn(items: List(FormItem(format)), decoder) {
-//     parse_with(items, decoder)
-//   }
-//   Form(fields, parse_with, None)
-// }
-
+/// Parse the form.  This means step through the fields one by one, parsing
+/// them individually.  If any field fails to parse, the whole form is considered
+/// invalid, however it will still continue parsing the rest of the fields to
+/// collect all errors.  This is useful for showing all errors at once.  If no
+/// fields fail to parse, the decoded value is returned, which is the value given
+/// to `create_form`.
+///
+/// If you'd like to parse the form but not get the output, so you can give
+/// feedback to a user in response to input, you can use `validate` or `validate_all`.
 pub fn parse(
   form: Form(format, output, decoder, HasDecoder),
 ) -> Result(output, Form(format, output, decoder, HasDecoder)) {
@@ -251,6 +356,25 @@ pub fn parse(
   }
 }
 
+/// Parse the form, then apply a function to the output if it was successful.
+/// This is a very thin wrapper around `parse` and `result.try`, but the
+/// difference being it will pass the form along to the function as the
+/// successful result.  This allows you to easily update the form fields with
+/// errors or other information based on the output.
+///
+/// This is useful for situations where you can have errors in the form that
+/// aren't easily checked in simple parsing functions.  Like, say, hitting a
+/// db to check if a username is taken.
+///
+/// ```gleam
+/// make_form()
+/// |> data(form_data)
+/// |> parse_then_try(fn(username, form) {
+///   case is_username_taken(username) {
+///     Ok(false) -> Ok(form)
+///     Ok(true) -> update_field(form, "username", field.set_error(_, "Username is taken"))
+///   }
+/// }
 pub fn parse_then_try(
   form: Form(format, output, decoder, HasDecoder),
   apply fun: fn(Form(format, output, decoder, HasDecoder), output) ->
@@ -259,6 +383,11 @@ pub fn parse_then_try(
   parse(form) |> result.try(fun(form, _))
 }
 
+/// Validate specific fields of the form.  This is similar to `parse`, but
+/// instead of returning the decoded output if there are no errors, it returns
+/// the valid form.  This is useful for if you want to be able to give feedback
+/// to the user about whether certain fields are valid or not. In this case you
+/// could just validate only fields that the user has interacted with.
 pub fn validate(
   form: Form(format, output, decoder, HasDecoder),
   names: List(String),
@@ -282,6 +411,10 @@ pub fn validate(
   }
 }
 
+/// Validate all the fields in the form.  This is similar to `parse`, but
+/// instead of returning the decoded output if there are no errors, it returns
+/// the valid form.  This is useful for if you want to be able to give feedback
+/// to the user about whether certain fields are valid or not.
 pub fn validate_all(
   form: Form(format, output, decoder, HasDecoder),
 ) -> Form(format, output, decoder, HasDecoder) {
@@ -293,10 +426,14 @@ pub fn validate_all(
   validate(form, names)
 }
 
+/// Get each [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) added
+/// to the form.  Any time a field or subform are added, a FormItem is created.
 pub fn items(form: Form(format, a, b, has_decoder)) -> List(FormItem(format)) {
   form.items |> list.reverse
 }
 
+/// Get the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with the
+/// given name.  If multiple items have the same name, the first one is returned.
 pub fn get(
   form: Form(format, output, decoder, has_decoder),
   name: String,
@@ -312,6 +449,9 @@ pub fn get(
   |> list.first
 }
 
+/// Update the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with
+/// the given name using the provided function.  If multiple items have the same
+/// name, it will be called on all of them.
 pub fn update(
   form: Form(format, output, decoder, has_decoder),
   name: String,
@@ -338,6 +478,14 @@ fn do_formitem_update(
   })
 }
 
+/// Update the [`Field`](https://hexdocs.pm/formz/formz/field.html) with
+/// the given name using the provided function.  If multiple fields have the same
+/// name, it will be called on all of them.
+///
+/// ```gleam
+/// let form = make_form()
+/// update(form, "name", field.set_label(_, "Full Name"))
+/// ```
 pub fn update_field(
   form: Form(format, output, decoder, has_decoder),
   name: String,
@@ -351,6 +499,14 @@ pub fn update_field(
   })
 }
 
+/// Update the [`SubForm`](https://hexdocs.pm/formz/formz/subform.html) with
+/// the given name using the provided function.  If multiple subforms have the same
+/// name, it will be called on all of them.
+///
+/// ```gleam
+/// let form = make_form()
+/// update(form, "name", subform.set_help_text(_, "..."))
+/// ```
 pub fn update_subform(
   form: Form(format, output, decoder, has_decoder),
   name: String,

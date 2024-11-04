@@ -76,7 +76,7 @@ fn boolean_field() {
 }
 
 fn three_field_form() {
-  formz.new()
+  formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
   |> formz.optional(
     field("x") |> field.set_name("a") |> field.set_label("A"),
     text_field()
@@ -101,7 +101,6 @@ fn three_field_form() {
     field(named: "c") |> field.set_name("c") |> field.set_label("C"),
     float_field(),
   )
-  |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 }
 
 fn get_form_from_error_result(
@@ -120,14 +119,13 @@ pub fn empty_form_test() {
 
 pub fn parse_empty_form_test() {
   formz.new()
-  |> formz.data([])
-  |> formz.decodes(1)
+  |> formz.set_decoder(1)
   |> formz.parse
   |> should.equal(Ok(1))
 
   formz.new()
   |> formz.data([])
-  |> formz.decodes("Hello")
+  |> formz.set_decoder("Hello")
   |> formz.parse
   |> should.equal(Ok("Hello"))
 }
@@ -136,7 +134,7 @@ pub fn parse_single_field_form_test() {
   formz.new()
   |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
-  |> formz.decodes(fn(str) { "hello " <> str })
+  |> formz.set_decoder(fn(str) { "hello " <> str })
   |> formz.parse
   |> should.equal(Ok("hello world"))
 }
@@ -146,7 +144,7 @@ pub fn parse_double_field_form_test() {
   |> formz.optional(field("first"), text_field())
   |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "hello"), #("second", "world")])
-  |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
+  |> formz.set_decoder(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
   |> should.equal(Ok("hello world"))
 }
@@ -156,7 +154,7 @@ pub fn parse_double_field_form_extra_data_test() {
   |> formz.optional(field("first"), text_field())
   |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "1"), #("second", "2")])
-  |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
+  |> formz.set_decoder(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
   |> should.equal(Ok("1 2"))
 
@@ -164,7 +162,7 @@ pub fn parse_double_field_form_extra_data_test() {
   |> formz.optional(field("first"), text_field())
   |> formz.optional(field("second"), text_field())
   |> formz.data([#("first", "1"), #("second", "2"), #("second", "3")])
-  |> formz.decodes(fn(a) { fn(b) { a <> " " <> b } })
+  |> formz.set_decoder(fn(a) { fn(b) { a <> " " <> b } })
   |> formz.parse
   |> should.equal(Ok("1 3"))
 }
@@ -173,14 +171,14 @@ pub fn integer_field_test() {
   formz.new()
   |> formz.optional(field("first"), integer_field())
   |> formz.data([#("first", " 1 ")])
-  |> formz.decodes(fn(i) { i })
+  |> formz.set_decoder(fn(i) { i })
   |> formz.parse
   |> should.equal(Ok(option.Some(1)))
 
   formz.new()
   |> formz.require(field("first"), integer_field())
   |> formz.data([#("first", " 1 ")])
-  |> formz.decodes(fn(i) { i })
+  |> formz.set_decoder(fn(i) { i })
   |> formz.parse
   |> should.equal(Ok(1))
 }
@@ -189,14 +187,14 @@ pub fn boolean_field_test() {
   formz.new()
   |> formz.optional(field("first"), boolean_field())
   |> formz.data([#("first", "")])
-  |> formz.decodes(fn(i) { i })
+  |> formz.set_decoder(fn(i) { i })
   |> formz.parse
   |> should.equal(Ok(False))
 
   formz.new()
   |> formz.require(field("first"), boolean_field())
   |> formz.data([#("first", "on")])
-  |> formz.decodes(fn(i) { i })
+  |> formz.set_decoder(fn(i) { i })
   |> formz.parse
   |> should.equal(Ok(True))
 
@@ -204,7 +202,7 @@ pub fn boolean_field_test() {
     formz.new()
     |> formz.require(field("first"), boolean_field())
     |> formz.data([#("first", "")])
-    |> formz.decodes(fn(i) { i })
+    |> formz.set_decoder(fn(i) { i })
     |> formz.parse
 
   let assert [Field(fielda, _)] = formz.items(f)
@@ -213,7 +211,7 @@ pub fn boolean_field_test() {
 
 pub fn can_decodes_in_any_order_test() {
   formz.new()
-  |> formz.decodes(fn(str) { "hello " <> str })
+  |> formz.set_decoder(fn(str) { "hello " <> str })
   |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
   |> formz.parse
@@ -222,8 +220,8 @@ pub fn can_decodes_in_any_order_test() {
   formz.new()
   |> formz.optional(field("first"), text_field())
   |> formz.data([#("first", "world")])
-  |> formz.decodes(fn(str) { "one " <> str })
-  |> formz.decodes(fn(str) { "hello " <> str })
+  |> formz.set_decoder(fn(str) { "one " <> str })
+  |> formz.set_decoder(fn(str) { "hello " <> str })
   |> formz.parse
   |> should.equal(Ok("hello world"))
 }
@@ -233,7 +231,7 @@ pub fn parse_single_field_form_with_error_test() {
     formz.new()
     |> formz.optional(field("first"), integer_field())
     |> formz.data([#("first", "world")])
-    |> formz.decodes(fn(_) { 1 })
+    |> formz.set_decoder(fn(_) { 1 })
     |> formz.parse
 
   let assert [Field(field, _)] = formz.items(f)
@@ -245,7 +243,7 @@ pub fn parse_double_field_form_with_error_test() {
     formz.new()
     |> formz.optional(field("a"), integer_field())
     |> formz.optional(field("b"), integer_field())
-    |> formz.decodes(fn(_) { fn(_) { 1 } })
+    |> formz.set_decoder(fn(_) { fn(_) { 1 } })
 
   let assert Error(f) =
     form
@@ -281,7 +279,7 @@ pub fn parse_triple_field_form_with_error_test() {
     |> formz.optional(field("a"), integer_field())
     |> formz.optional(field("b"), integer_field())
     |> formz.optional(field("c"), integer_field())
-    |> formz.decodes(fn(_) { fn(_) { fn(_) { 1 } } })
+    |> formz.set_decoder(fn(_) { fn(_) { fn(_) { 1 } } })
 
   let assert Error(f) =
     form
@@ -420,7 +418,7 @@ pub fn try_test() {
     |> formz.optional(field("a"), integer_field())
     |> formz.optional(field("b"), integer_field())
     |> formz.optional(field("c"), integer_field())
-    |> formz.decodes(fn(a) { fn(b) { fn(c) { [a, b, c] } } })
+    |> formz.set_decoder(fn(a) { fn(b) { fn(c) { [a, b, c] } } })
     |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
 
   // can succeed
@@ -453,13 +451,13 @@ pub fn sub_form_test() {
     |> formz.require(field("a"), integer_field())
     |> formz.require(field("b"), integer_field())
     |> formz.require(field("c"), integer_field())
-    |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
+    |> formz.set_decoder(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 
   let f2 =
     formz.new()
     |> formz.subform(subform("name"), f1)
     |> formz.require(field("d"), integer_field())
-    |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
+    |> formz.set_decoder(fn(a) { fn(b) { #(a, b) } })
 
   f2
   |> formz.data([
@@ -478,13 +476,13 @@ pub fn sub_form_error_tst() {
     |> formz.require(field("a"), integer_field())
     |> formz.require(field("b"), integer_field())
     |> formz.require(field("c"), integer_field())
-    |> formz.decodes(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
+    |> formz.set_decoder(fn(a) { fn(b) { fn(c) { #(a, b, c) } } })
 
   let f2 =
     formz.new()
     |> formz.subform(subform("name"), f1)
     |> formz.optional(field("d"), integer_field())
-    |> formz.decodes(fn(a) { fn(b) { #(a, b) } })
+    |> formz.set_decoder(fn(a) { fn(b) { #(a, b) } })
 
   let assert [
     SubForm(_, [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)]),

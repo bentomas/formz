@@ -154,6 +154,24 @@ pub fn list_item_by_index(
   }
 }
 
+/// Trim and leave the input as it is, but verify it is non-empty.
+///
+/// ```gleam
+/// non_empty_string("hello")
+/// # -> Ok("hello")
+/// ```
+///
+/// ```gleam
+/// non_empty_string("  ")
+/// # -> Error("is required")
+/// ```
+pub fn non_empty_string(str: String) -> Result(String, String) {
+  case string.trim(str) {
+    "" -> Error("is required")
+    trimmed -> Ok(trimmed)
+  }
+}
+
 /// Parse the input as a boolean, where only "on" is True and allowed.
 /// All other values are an error.  This is useful for HTML checkboxes, which
 /// the browser sends the empty string if unchecked, and `"on"` if  checked.
@@ -188,11 +206,4 @@ pub fn replace_error(
   error: String,
 ) -> fn(a) -> Result(b, String) {
   fn(data) { previous(data) |> result.replace_error(error) }
-}
-
-pub fn non_empty_string(str: String) -> Result(String, String) {
-  case string.trim(str) {
-    "" -> Error("is required")
-    trimmed -> Ok(trimmed)
-  }
 }

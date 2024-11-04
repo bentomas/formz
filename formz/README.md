@@ -36,10 +36,9 @@ import formz/formz_builder as formz
 import formz_string/definitions
 
 pub fn make_form() {
-  formz.new()
+  formz.decodes(fn(username) {fn(password) { #(username, password) } })
   |> formz.require(field("username"), definitions.text_field())
   |> formz.require(field("password"), definitions.password_field())
-  |> formz.decodes(fn(username) { fn(password) { #(username, password) } })
 }
 ```
 

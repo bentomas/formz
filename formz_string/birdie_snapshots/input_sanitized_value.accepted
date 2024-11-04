@@ -1,0 +1,7 @@
+---
+version: 1.2.3
+title: input sanitized value
+file: ./test/formz_string/widgets_test.gleam
+test_name: input_sanitized_value_test
+---
+<input type="text" name="name" value="hello&quot;<-_=&gt;">
