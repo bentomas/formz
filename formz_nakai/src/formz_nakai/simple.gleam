@@ -21,7 +21,9 @@ pub fn generate_form_use(form) -> html.Node {
   |> html.div([attr.class("formz_items")], _)
 }
 
-pub fn generate_visible_item(item: formz.FormItem(html.Node)) -> html.Node {
+pub fn generate_visible_item(
+  item: formz.FormItem(widget.Widget(html.Node)),
+) -> html.Node {
   case item {
     formz.Field(field, _) if field.hidden == True ->
       html.input([

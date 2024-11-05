@@ -1,13 +1,12 @@
-//// Input widgets, like `<input>` or `<select>` or `<textarea>` in HTML.
-//// A widget is essentially just a function that takes the details of a field,
-//// and any render time information that the form generator might need to pass
-//// to an input.  e.g. HTML forms elements often need an `id`.
+//// The goal of a "widget" in `formz` is to produce an HTML input like
+//// `<input>`, `<select>`, or `<textarea>`. In a [`Definition`](https://hexdocs.pm/formz/formz/definition.html),
+//// a widget can be any Gleam type, and it's up to the form generator being
+//// used to know the exact type you need.
 ////
-//// I've chosen to make the type of the Args here a specific type, rather than
-//// something more generic and that any form generator could make.  That's mostly
-//// to simplify this package a bit, but it would be easy to make it custom if
-//// people need something more versatile without changing the UX experience much.
-//// I just don't know if that's necessary. Let me know!
+//// That said, in the bundled form generators a widget is a function that
+//// takes the details of a field and some render time arguments that the form
+//// generator needs to construct an input.  This module is for those form
+//// generators, and it's use is optional if you have different needs.
 
 import formz/field
 
@@ -41,17 +40,4 @@ pub type DescribedBy {
   /// for additional instructions or error messages.
   DescribedByElementsWithIds(ids: List(String))
   DescribedByNone
-}
-
-/// helper function to create an Args with the minimum required fields
-pub fn args(labelled_by labelled_by: LabelledBy) {
-  Args(id: "", labelled_by: labelled_by, described_by: DescribedByNone)
-}
-
-pub fn id(args: Args, str: String) {
-  Args(..args, id: str)
-}
-
-pub fn described_by(args: Args, db: DescribedBy) {
-  Args(..args, described_by: db)
 }

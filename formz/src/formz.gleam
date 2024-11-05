@@ -2,9 +2,8 @@
 
 import formz/field
 import formz/subform
-import formz/widget
 
-pub type FormItem(format) {
-  Field(field.Field, widget: widget.Widget(format))
-  SubForm(subform.SubForm, items: List(FormItem(format)))
+pub type FormItem(widget) {
+  Field(field.Field, widget: widget)
+  SubForm(subform.SubForm, items: List(FormItem(widget)))
 }

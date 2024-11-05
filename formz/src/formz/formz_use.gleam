@@ -41,15 +41,14 @@ import formz.{type FormItem, Field, SubForm}
 import formz/definition.{type Definition, Definition}
 import formz/field
 import formz/subform
-import formz/widget
 import gleam/dict
 import gleam/list
 import gleam/result
 
-pub opaque type Form(format, output) {
+pub opaque type Form(widget, output) {
   Form(
-    items: List(FormItem(format)),
-    parse: fn(List(FormItem(format))) -> Result(output, List(FormItem(format))),
+    items: List(FormItem(widget)),
+    parse: fn(List(FormItem(widget))) -> Result(output, List(FormItem(widget))),
     placeholder: output,
   )
 }
@@ -72,17 +71,17 @@ pub opaque type Form(format, output) {
 ///   create_form(#(field1, field2, field3))
 /// }
 /// ```
-pub fn create_form(thing: thing) -> Form(format, thing) {
+pub fn create_form(thing: thing) -> Form(widget, thing) {
   Form([], fn(_) { Ok(thing) }, thing)
 }
 
 fn add(
   field: field.Field,
-  widget: widget.Widget(format),
+  widget: widget,
   parse_field: fn(String) -> Result(input_output, String),
   stub: input_output,
-  rest fun: fn(input_output) -> Form(format, form_output),
-) -> Form(format, form_output) {
+  rest fun: fn(input_output) -> Form(widget, form_output),
+) -> Form(widget, form_output) {
   // we pass in our stub value, and we're going to throw away the
   // decoded result here, we just care about pulling out the fields
   // from the form.
@@ -95,7 +94,7 @@ fn add(
   // now create the parse function. parse function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
-  let parse = fn(items: List(FormItem(format))) {
+  let parse = fn(items: List(FormItem(widget))) {
     // pull out the latest version of this field to get latest input data
     let assert Ok(#(Field(field, widget), pop_fields)) = pop_field(items)
 
@@ -156,9 +155,9 @@ fn add(
 /// data you need!
 pub fn optional(
   field: field.Field,
-  is definition: Definition(format, _, input_output),
-  rest fun: fn(input_output) -> Form(format, form_output),
-) -> Form(format, form_output) {
+  is definition: Definition(widget, _, input_output),
+  rest fun: fn(input_output) -> Form(widget, form_output),
+) -> Form(widget, form_output) {
   add(
     field |> field.set_required(False),
     definition.widget,
@@ -186,9 +185,9 @@ pub fn optional(
 /// data you need!
 pub fn require(
   field: field.Field,
-  is definition: Definition(format, required_output, _),
-  rest fun: fn(required_output) -> Form(format, form_output),
-) -> Form(format, form_output) {
+  is definition: Definition(widget, required_output, _),
+  rest fun: fn(required_output) -> Form(widget, form_output),
+) -> Form(widget, form_output) {
   add(
     field |> field.set_required(True),
     definition.widget,
@@ -211,9 +210,9 @@ pub fn require(
 /// data you need!
 pub fn subform(
   details: subform.SubForm,
-  sub: Form(format, sub_output),
-  fun: fn(sub_output) -> Form(format, form_output),
-) -> Form(format, form_output) {
+  sub: Form(widget, sub_output),
+  fun: fn(sub_output) -> Form(widget, form_output),
+) -> Form(widget, form_output) {
   let next_form = fun(sub.placeholder)
 
   let sub_items =
@@ -224,7 +223,7 @@ pub fn subform(
 
   let updated_items = [SubForm(details, sub_items), ..next_form.items]
 
-  let parse = fn(items: List(FormItem(format))) {
+  let parse = fn(items: List(FormItem(widget))) {
     // pull out the latest version of this field to get latest input data
     let assert [SubForm(details, sub_items), ..next_items] = items
 
@@ -257,8 +256,8 @@ pub fn subform(
 }
 
 fn pop_field(
-  items: List(FormItem(format)),
-) -> Result(#(FormItem(format), List(FormItem(format))), Nil) {
+  items: List(FormItem(widget)),
+) -> Result(#(FormItem(widget), List(FormItem(widget))), Nil) {
   case items {
     [] -> Error(Nil)
     [only] -> Ok(#(only, []))
@@ -270,11 +269,11 @@ fn pop_field(
 }
 
 @internal
-pub fn get_fields(form: Form(format, output)) -> List(field.Field) {
+pub fn get_fields(form: Form(widget, output)) -> List(field.Field) {
   form.items |> do_get_fields
 }
 
-fn do_get_fields(items: List(FormItem(format))) -> List(field.Field) {
+fn do_get_fields(items: List(FormItem(widget))) -> List(field.Field) {
   list.fold(items, [], fn(acc, item) {
     case item {
       Field(f, _) -> [f, ..acc]
@@ -285,9 +284,9 @@ fn do_get_fields(items: List(FormItem(format))) -> List(field.Field) {
 }
 
 fn update_fields(
-  items: List(FormItem(format)),
+  items: List(FormItem(widget)),
   fun: fn(field.Field) -> field.Field,
-) -> List(FormItem(format)) {
+) -> List(FormItem(widget)) {
   list.map(items, fn(item) {
     case item {
       Field(field, widget) -> Field(fun(field), widget)
@@ -306,9 +305,9 @@ fn update_fields(
 /// the data is ignored, and if multiple values are given for the same field, the
 /// last one wins.
 pub fn data(
-  form: Form(format, output),
+  form: Form(widget, output),
   input_data: List(#(String, String)),
-) -> Form(format, output) {
+) -> Form(widget, output) {
   let data = dict.from_list(input_data)
   let Form(items, parse, placeholder) = form
   items
@@ -330,7 +329,7 @@ pub fn data(
 ///
 /// If you'd like to parse the form but not get the output, so you can give
 /// feedback to a user in response to input, you can use `validate` or `validate_all`.
-pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output)) {
+pub fn parse(form: Form(widget, output)) -> Result(output, Form(widget, output)) {
   case form.parse(form.items) {
     Ok(output) -> Ok(output)
     Error(items) -> Error(Form(..form, items:))
@@ -357,9 +356,9 @@ pub fn parse(form: Form(format, output)) -> Result(output, Form(format, output))
 ///   }
 /// }
 pub fn parse_then_try(
-  form: Form(format, output),
-  apply fun: fn(Form(format, output), output) -> Result(c, Form(format, output)),
-) -> Result(c, Form(format, output)) {
+  form: Form(widget, output),
+  apply fun: fn(Form(widget, output), output) -> Result(c, Form(widget, output)),
+) -> Result(c, Form(widget, output)) {
   form |> parse |> result.try(fun(form, _))
 }
 
@@ -369,9 +368,9 @@ pub fn parse_then_try(
 /// to the user about whether certain fields are valid or not. In this case you
 /// could just validate only fields that the user has interacted with.
 pub fn validate(
-  form: Form(format, output),
+  form: Form(widget, output),
   names: List(String),
-) -> Form(format, output) {
+) -> Form(widget, output) {
   case form.parse(form.items) {
     Ok(_) -> form
     Error(items) -> {
@@ -395,7 +394,7 @@ pub fn validate(
 /// instead of returning the decoded output if there are no errors, it returns
 /// the valid form.  This is useful for if you want to be able to give feedback
 /// to the user about whether certain fields are valid or not.
-pub fn validate_all(form: Form(format, output)) -> Form(format, output) {
+pub fn validate_all(form: Form(widget, output)) -> Form(widget, output) {
   let names =
     form
     |> get_fields()
@@ -406,16 +405,16 @@ pub fn validate_all(form: Form(format, output)) -> Form(format, output) {
 
 /// Get each [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) added
 /// to the form.  Any time a field or subform are added, a FormItem is created.
-pub fn items(form: Form(format, output)) -> List(FormItem(format)) {
+pub fn items(form: Form(widget, output)) -> List(FormItem(widget)) {
   form.items
 }
 
 /// Get the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with the
 /// given name.  If multiple items have the same name, the first one is returned.
 pub fn get(
-  form: Form(format, output),
+  form: Form(widget, output),
   name: String,
-) -> Result(FormItem(format), Nil) {
+) -> Result(FormItem(widget), Nil) {
   list.find(form.items, fn(item) {
     case item {
       Field(i, _) if i.name == name -> True
@@ -429,19 +428,19 @@ pub fn get(
 /// the given name using the provided function.  If multiple items have the same
 /// name, it will be called on all of them.
 pub fn update(
-  form: Form(format, output),
+  form: Form(widget, output),
   name: String,
-  fun: fn(FormItem(format)) -> FormItem(format),
+  fun: fn(FormItem(widget)) -> FormItem(widget),
 ) {
   let items = do_formitems_update(form.items, name, fun)
   Form(..form, items:)
 }
 
 fn do_formitems_update(
-  items: List(FormItem(format)),
+  items: List(FormItem(widget)),
   name: String,
-  fun: fn(FormItem(format)) -> FormItem(format),
-) -> List(FormItem(format)) {
+  fun: fn(FormItem(widget)) -> FormItem(widget),
+) -> List(FormItem(widget)) {
   list.map(items, fn(item) {
     case item {
       Field(f, _) if f.name == name -> fun(item)
@@ -461,10 +460,10 @@ fn do_formitems_update(
 /// update(form, "name", field.set_label(_, "Full Name"))
 /// ```
 pub fn update_field(
-  form: Form(format, output),
+  form: Form(widget, output),
   name: String,
   fun: fn(field.Field) -> field.Field,
-) -> Form(format, output) {
+) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
       Field(field, widget) -> Field(fun(field), widget)
@@ -482,10 +481,10 @@ pub fn update_field(
 /// update(form, "name", subform.set_help_text(_, "..."))
 /// ```
 pub fn update_subform(
-  form: Form(format, output),
+  form: Form(widget, output),
   name: String,
   fun: fn(subform.SubForm) -> subform.SubForm,
-) -> Form(format, output) {
+) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
       SubForm(details, items) -> SubForm(fun(details), items)

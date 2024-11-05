@@ -24,7 +24,7 @@ pub fn generate_form_use(form) -> element.Element(msg) {
 }
 
 pub fn generate_item(
-  item: formz.FormItem(element.Element(msg)),
+  item: formz.FormItem(widget.Widget(element.Element(msg))),
 ) -> element.Element(msg) {
   case item {
     formz.Field(field, _) if field.hidden == True ->

@@ -112,7 +112,7 @@ fn checked_attr(value: String) -> String {
 
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
-pub fn checkbox_widget() {
+pub fn checkbox_widget() -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field |> field.set_raw_value(""), args, "checkbox", [
       checked_attr(field.value),
@@ -126,7 +126,7 @@ pub fn checkbox_widget() {
 /// this way does mean that a user can only input numbers up to the precision of
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
-pub fn number_widget(step_size: String) {
+pub fn number_widget(step_size: String) -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field, args, "number", [step_size_attr(step_size)])
   }
@@ -134,7 +134,7 @@ pub fn number_widget(step_size: String) {
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
-pub fn password_widget() {
+pub fn password_widget() -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field |> field.set_raw_value(""), args, "password", [])
   }
@@ -142,7 +142,7 @@ pub fn password_widget() {
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
-pub fn input_widget(type_: String) {
+pub fn input_widget(type_: String) -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) {
     do_input_widget(field, args, type_, [])
   }
@@ -153,7 +153,7 @@ fn do_input_widget(
   args: widget.Args,
   type_: String,
   extra_attrs: List(String),
-) {
+) -> String {
   "<input"
   <> type_attr(type_)
   <> name_attr(field.name)
@@ -168,7 +168,7 @@ fn do_input_widget(
 }
 
 /// Create a `<textarea></textarea>`.
-pub fn textarea_widget() {
+pub fn textarea_widget() -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
@@ -188,7 +188,7 @@ pub fn textarea_widget() {
 /// Create a `<input type="hidden">`. This is useful for if a field is just
 /// passing data around and you don't want it to be visible to the user. Like
 /// say, the ID of a record being edited.
-pub fn hidden_widget() {
+pub fn hidden_widget() -> widget.Widget(String) {
   fn(field: Field, _args: widget.Args) -> String {
     "<input"
     <> type_attr("hidden")
@@ -201,7 +201,7 @@ pub fn hidden_widget() {
 /// Create a `<select></select>` with `<option>`s for each variant.  The list
 /// of variants is a two-tuple, where the first item is the text to display and
 /// the second item is the value.
-pub fn select_widget(variants: List(#(String, String))) {
+pub fn select_widget(variants: List(#(String, String))) -> widget.Widget(String) {
   fn(field: Field, args: widget.Args) {
     let choices =
       list.map(variants, fn(variant) {

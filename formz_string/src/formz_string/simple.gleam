@@ -28,7 +28,7 @@ pub fn generate_form_use(form) -> String {
   <> "</div>"
 }
 
-pub fn generate_item(item: formz.FormItem(String)) -> String {
+pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
   case item {
     formz.Field(field, _) if field.hidden == True ->
       "<input"

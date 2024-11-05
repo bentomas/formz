@@ -33,14 +33,22 @@ pub fn format_form(form) {
           html.label([attribute.for("username")], [html.text("Username")]),
           username_widget(
             username_field,
-            widget.args(widget.LabelledByLabelFor) |> widget.id("username"),
+            widget.Args(
+              "username",
+              widget.LabelledByLabelFor,
+              widget.DescribedByNone,
+            ),
           ),
         ]),
         html.li([], [
           html.label([attribute.for("password")], [html.text("Password")]),
           password_widget(
             password_field,
-            widget.args(widget.LabelledByLabelFor) |> widget.id("password"),
+            widget.Args(
+              "username",
+              widget.LabelledByLabelFor,
+              widget.DescribedByNone,
+            ),
           ),
         ]),
       ]),

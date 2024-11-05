@@ -25,8 +25,6 @@ import formz.{type FormItem, Field, SubForm}
 import formz/definition.{type Definition, Definition}
 import formz/field
 import formz/subform
-import formz/widget
-
 import gleam/dict
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -38,11 +36,11 @@ pub type HasDecoder
 /// A phantom type used to tag a form as not having a decoder.
 pub type NoDecoder
 
-pub opaque type Form(format, output, decoder, has_decoder) {
+pub opaque type Form(widget, output, decoder, has_decoder) {
   Form(
-    items: List(FormItem(format)),
-    parse_with: fn(List(FormItem(format)), decoder) ->
-      Result(output, List(FormItem(format))),
+    items: List(FormItem(widget)),
+    parse_with: fn(List(FormItem(widget)), decoder) ->
+      Result(output, List(FormItem(widget))),
     decoder: Option(decoder),
   )
 }
@@ -58,7 +56,7 @@ pub opaque type Form(format, output, decoder, has_decoder) {
 /// |> parse
 /// # -> Ok(1)
 /// ```
-pub fn new() -> Form(format, thing, thing, NoDecoder) {
+pub fn new() -> Form(widget, thing, thing, NoDecoder) {
   Form([], fn(_, output) { Ok(output) }, None)
 }
 
@@ -97,21 +95,21 @@ pub fn new() -> Form(format, thing, thing, NoDecoder) {
 /// |> parse
 /// # -> Ok("Hello World")
 /// ```
-pub fn decodes(decoder: thing) -> Form(format, thing, thing, HasDecoder) {
+pub fn decodes(decoder: thing) -> Form(widget, thing, thing, HasDecoder) {
   new() |> set_decoder(decoder)
 }
 
 fn add(
   previous_form: Form(
-    format,
+    widget,
     fn(decoder_step_input) -> decoder_step_output,
     form_output,
     has_decoder,
   ),
   field: field.Field,
-  widget: widget.Widget(format),
+  widget: widget,
   parse_field: fn(String) -> Result(decoder_step_input, String),
-) -> Form(format, decoder_step_output, form_output, has_decoder) {
+) -> Form(widget, decoder_step_output, form_output, has_decoder) {
   let updated_items = [Field(field, widget), ..previous_form.items]
 
   let parse_with = fn(items, decoder: form_output) {
@@ -163,14 +161,14 @@ fn add(
 /// definition to parse the input data when parsing this field.
 pub fn optional(
   previous_form: Form(
-    format,
+    widget,
     fn(decoder_step_input) -> decoder_step_output,
     form_output,
     has_decoder,
   ),
   field: field.Field,
-  definition: Definition(format, _, decoder_step_input),
-) -> Form(format, decoder_step_output, form_output, has_decoder) {
+  definition: Definition(widget, _, decoder_step_input),
+) -> Form(widget, decoder_step_output, form_output, has_decoder) {
   add(
     previous_form,
     field |> field.set_required(False),
@@ -190,14 +188,14 @@ pub fn optional(
 /// accessibility.
 pub fn require(
   previous_form: Form(
-    format,
+    widget,
     fn(field_output) -> decoder_step_output,
     form_output,
     has_decoder,
   ),
   field: field.Field,
-  definition: Definition(format, field_output, _),
-) -> Form(format, decoder_step_output, form_output, has_decoder) {
+  definition: Definition(widget, field_output, _),
+) -> Form(widget, decoder_step_output, form_output, has_decoder) {
   add(
     previous_form,
     field |> field.set_required(True),
@@ -212,14 +210,14 @@ pub fn require(
 /// can be marked up as a group for accessibility reasons.
 pub fn subform(
   previous_form: Form(
-    format,
+    widget,
     fn(sub_output) -> decoder_step_output,
     form_output,
     has_decoder,
   ),
   details: subform.SubForm,
-  sub: Form(format, sub_output, sub_decoder, HasDecoder),
-) -> Form(format, decoder_step_output, form_output, has_decoder) {
+  sub: Form(widget, sub_output, sub_decoder, HasDecoder),
+) -> Form(widget, decoder_step_output, form_output, has_decoder) {
   let sub_items =
     sub.items
     |> update_fields(fn(field) {
@@ -260,8 +258,8 @@ pub fn subform(
 }
 
 fn pop_field(
-  items: List(FormItem(format)),
-) -> Result(#(FormItem(format), List(FormItem(format))), Nil) {
+  items: List(FormItem(widget)),
+) -> Result(#(FormItem(widget), List(FormItem(widget))), Nil) {
   case items {
     [] -> Error(Nil)
     [only] -> Ok(#(only, []))
@@ -274,12 +272,12 @@ fn pop_field(
 
 @internal
 pub fn get_fields(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
 ) -> List(field.Field) {
   form.items |> do_get_fields
 }
 
-fn do_get_fields(items: List(FormItem(format))) -> List(field.Field) {
+fn do_get_fields(items: List(FormItem(widget))) -> List(field.Field) {
   list.fold(items, [], fn(acc, item) {
     case item {
       Field(f, _) -> [f, ..acc]
@@ -289,9 +287,9 @@ fn do_get_fields(items: List(FormItem(format))) -> List(field.Field) {
 }
 
 fn update_fields(
-  items: List(FormItem(format)),
+  items: List(FormItem(widget)),
   fun: fn(field.Field) -> field.Field,
-) -> List(FormItem(format)) {
+) -> List(FormItem(widget)) {
   list.map(items, fn(item) {
     case item {
       Field(field, widget) -> Field(fun(field), widget)
@@ -305,9 +303,9 @@ fn update_fields(
 /// (if you do it in your form generator function) or initial values (if you do it
 /// before rendering an empty form).
 pub fn data(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   input_data: List(#(String, String)),
-) -> Form(format, output, decoder, has_decoder) {
+) -> Form(widget, output, decoder, has_decoder) {
   let data = dict.from_list(input_data)
   let Form(items, parse, decoder) = form
   items
@@ -328,9 +326,9 @@ pub fn data(
 /// function that returns a function and so on, until 15 functions have been
 /// called to return the final value.
 pub fn set_decoder(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   decoder: decoder,
-) -> Form(format, output, decoder, HasDecoder) {
+) -> Form(widget, output, decoder, HasDecoder) {
   let Form(fields, parse_with, _) = form
   Form(fields, parse_with, Some(decoder))
 }
@@ -345,8 +343,8 @@ pub fn set_decoder(
 /// If you'd like to parse the form but not get the output, so you can give
 /// feedback to a user in response to input, you can use `validate` or `validate_all`.
 pub fn parse(
-  form: Form(format, output, decoder, HasDecoder),
-) -> Result(output, Form(format, output, decoder, HasDecoder)) {
+  form: Form(widget, output, decoder, HasDecoder),
+) -> Result(output, Form(widget, output, decoder, HasDecoder)) {
   // we've tagged that we have a decoder with our has_decoder phantom type
   // so we can get away with let assert here
   let assert Form(items, parse_with, Some(decoder)) = form
@@ -376,10 +374,10 @@ pub fn parse(
 ///   }
 /// }
 pub fn parse_then_try(
-  form: Form(format, output, decoder, HasDecoder),
-  apply fun: fn(Form(format, output, decoder, HasDecoder), output) ->
-    Result(c, Form(format, output, decoder, HasDecoder)),
-) -> Result(c, Form(format, output, decoder, HasDecoder)) {
+  form: Form(widget, output, decoder, HasDecoder),
+  apply fun: fn(Form(widget, output, decoder, HasDecoder), output) ->
+    Result(c, Form(widget, output, decoder, HasDecoder)),
+) -> Result(c, Form(widget, output, decoder, HasDecoder)) {
   parse(form) |> result.try(fun(form, _))
 }
 
@@ -389,9 +387,9 @@ pub fn parse_then_try(
 /// to the user about whether certain fields are valid or not. In this case you
 /// could just validate only fields that the user has interacted with.
 pub fn validate(
-  form: Form(format, output, decoder, HasDecoder),
+  form: Form(widget, output, decoder, HasDecoder),
   names: List(String),
-) -> Form(format, output, decoder, HasDecoder) {
+) -> Form(widget, output, decoder, HasDecoder) {
   case parse(form) {
     Ok(_) -> form
     Error(f) -> {
@@ -416,8 +414,8 @@ pub fn validate(
 /// the valid form.  This is useful for if you want to be able to give feedback
 /// to the user about whether certain fields are valid or not.
 pub fn validate_all(
-  form: Form(format, output, decoder, HasDecoder),
-) -> Form(format, output, decoder, HasDecoder) {
+  form: Form(widget, output, decoder, HasDecoder),
+) -> Form(widget, output, decoder, HasDecoder) {
   let names =
     form
     |> get_fields()
@@ -428,16 +426,16 @@ pub fn validate_all(
 
 /// Get each [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) added
 /// to the form.  Any time a field or subform are added, a FormItem is created.
-pub fn items(form: Form(format, a, b, has_decoder)) -> List(FormItem(format)) {
+pub fn items(form: Form(widget, a, b, has_decoder)) -> List(FormItem(widget)) {
   form.items |> list.reverse
 }
 
 /// Get the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with the
 /// given name.  If multiple items have the same name, the first one is returned.
 pub fn get(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   name: String,
-) -> Result(FormItem(format), Nil) {
+) -> Result(FormItem(widget), Nil) {
   form.items
   |> list.filter(fn(item) {
     case item {
@@ -453,9 +451,9 @@ pub fn get(
 /// the given name using the provided function.  If multiple items have the same
 /// name, it will be called on all of them.
 pub fn update(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   name: String,
-  fun: fn(FormItem(format)) -> FormItem(format),
+  fun: fn(FormItem(widget)) -> FormItem(widget),
 ) {
   form.items
   |> do_formitem_update(name, fun)
@@ -463,10 +461,10 @@ pub fn update(
 }
 
 fn do_formitem_update(
-  items: List(FormItem(format)),
+  items: List(FormItem(widget)),
   name: String,
-  fun: fn(FormItem(format)) -> FormItem(format),
-) -> List(FormItem(format)) {
+  fun: fn(FormItem(widget)) -> FormItem(widget),
+) -> List(FormItem(widget)) {
   items
   |> list.map(fn(item) {
     case item {
@@ -487,10 +485,10 @@ fn do_formitem_update(
 /// update(form, "name", field.set_label(_, "Full Name"))
 /// ```
 pub fn update_field(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   name: String,
   fun: fn(field.Field) -> field.Field,
-) -> Form(format, output, decoder, has_decoder) {
+) -> Form(widget, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {
       Field(field, widget) -> Field(fun(field), widget)
@@ -508,10 +506,10 @@ pub fn update_field(
 /// update(form, "name", subform.set_help_text(_, "..."))
 /// ```
 pub fn update_subform(
-  form: Form(format, output, decoder, has_decoder),
+  form: Form(widget, output, decoder, has_decoder),
   name: String,
   fun: fn(subform.SubForm) -> subform.SubForm,
-) -> Form(format, output, decoder, has_decoder) {
+) -> Form(widget, output, decoder, has_decoder) {
   update(form, name, fn(item) {
     case item {
       SubForm(details, items) -> SubForm(fun(details), items)

@@ -6,8 +6,8 @@
 //// The first role of a `Defintion` is to generate the HTML widget for the field.
 //// This library is format-agnostic and you can generate HTML widgets as raw
 //// strings, Lustre elements, Nakai nodes, something else, etc. There are
-//// currently three `formz` libraries that provide common field definitions for the
-//// most common HTML formats.
+//// currently three `formz` libraries that provide common widgets (and field
+//// definitions) for the most common HTML formats.
 ////
 //// - [formz_string](https://hexdocs.pm/formz_string/)
 //// - [formz_nakai](https://hexdocs.pm/formz_nakai/)
@@ -15,11 +15,10 @@
 ////   would it be useful there??)
 ////
 //// The second role  of a `Definition` is to parse the data from the field.
-//// There are a two parts
-//// to this, as how you parse a field's value depends on if it is optional or
-//// required.  Not all scenarios can be cookie-cutter placed into an `Option`.
-//// So you need to provide two parse functions, one for when
-//// a field is required, and a second for when it's optional.
+//// There are a two parts to this, as how you parse a field's value depends on
+//// if it is optional or required.  Not all scenarios can be cookie-cutter
+//// placed into an `Option`. So you need to provide two parse functions, one
+//// for when a field is required, and a second for when it's optional.
 ////
 //// ### Example password field definition
 ////
@@ -65,19 +64,21 @@
 //// }
 //// ```
 
-import formz/widget
 import gleam/option
 import gleam/result
 
-pub type Definition(format, required, optional) {
+pub type Definition(widget, required, optional) {
   Definition(
-    /// The widget generates the HTML for the field.
-    widget: widget.Widget(format),
+    /// The widget is used by the form generator to construct the HTML for the
+    /// field. It's up to the form generator to decide on the widget's type and
+    /// how it's used.
+    widget: widget,
     /// This parse function takes the raw string from the parsed POST data
     /// and converts it to a Gleam type.  This `parse` is for when a value
-    /// is required, so it should return an error if the field is empty.
+    /// is required, so it should return an error if the field is
+    /// considered empty.
     parse: fn(String) -> Result(required, String),
-    /// The `use`/callbacks pattern for generating a form requires a stub
+    /// The callbacks pattern for generating a form requires a stub
     /// value for each field, because the actual decode function is called
     /// step by step as the fields are added to the form and `formz` learns
     /// the form's details as it goes.  This stub value is purely used
@@ -95,7 +96,7 @@ pub type Definition(format, required, optional) {
     /// be `option.None`.
     optional_parse: fn(fn(String) -> Result(required, String), String) ->
       Result(optional, String),
-    /// stub for the optional_parse return value
+    /// stub for the `optional_parse` return value
     optional_stub: optional,
   )
 }
@@ -119,11 +120,12 @@ pub fn make_simple_optional_parse() -> fn(
 /// Replace the widget that this `Definition` uses for rendering the field.  Most
 /// HTML inputs can be interchangeable, they all generate a `String` after all,
 /// but not all are the best UX.  This allows you to choose the one that is the
-/// most appropriate for your field.
+/// most appropriate for your field.  However, the details of how this works
+/// are up to the form generator.
 pub fn set_widget(
-  definition: Definition(format, a, b),
-  widget: widget.Widget(format),
-) -> Definition(format, a, b) {
+  definition: Definition(widget, a, b),
+  widget: widget,
+) -> Definition(widget, a, b) {
   Definition(..definition, widget:)
 }
 
@@ -143,8 +145,8 @@ pub fn set_widget(
 ///   }),
 /// ```
 pub fn validate(
-  def: Definition(format, a, b),
+  def: Definition(widget, a, b),
   fun: fn(a) -> Result(a, String),
-) -> Definition(format, a, b) {
+) -> Definition(widget, a, b) {
   Definition(..def, parse: fn(val) { val |> def.parse |> result.try(fun) })
 }
