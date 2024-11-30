@@ -87,173 +87,37 @@ pub fn field(named name: String) -> Field {
 
 pub fn set_name(field: Field, name: String) -> Field {
   case field {
-    Valid(_name, label:, help_text:, hidden:, value:, disabled:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _name,
-      label:,
-      help_text:,
-      hidden:,
-      disabled:,
-      required:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, name:)
+    Invalid(..) -> Invalid(..field, name:)
   }
 }
 
 pub fn set_label(field: Field, label: String) -> Field {
   case field {
-    Valid(_label, name:, help_text:, hidden:, value:, disabled:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _label,
-      name:,
-      help_text:,
-      hidden:,
-      disabled:,
-      required:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, label:)
+    Invalid(..) -> Invalid(..field, label:)
   }
 }
 
 pub fn set_help_text(field: Field, help_text: String) -> Field {
   case field {
-    Valid(_help_text, name:, label:, hidden:, value:, disabled:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _help_text,
-      name:,
-      label:,
-      hidden:,
-      disabled:,
-      required:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, help_text:)
+    Invalid(..) -> Invalid(..field, help_text:)
   }
 }
 
 pub fn set_hidden(field: Field, hidden: Bool) -> Field {
   case field {
-    Valid(_hidden, name:, label:, help_text:, value:, disabled:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _hidden,
-      name:,
-      label:,
-      help_text:,
-      disabled:,
-      required:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, hidden:)
+    Invalid(..) -> Invalid(..field, hidden:)
   }
 }
 
 @internal
 pub fn set_required(field: Field, required: Bool) -> Field {
   case field {
-    Valid(name:, label:, help_text:, value:, hidden:, disabled:, required: _) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      disabled:,
-      required: _,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
-  }
-}
-
-@internal
-pub fn make_required(field: Field) -> Field {
-  case field {
-    Valid(_required, name:, label:, help_text:, hidden:, value:, disabled:) ->
-      Valid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        disabled:,
-        required: False,
-      )
-    Invalid(
-      _required,
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      disabled:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required: False,
-      )
+    Valid(..) -> Valid(..field, required:)
+    Invalid(..) -> Invalid(..field, required:)
   }
 }
 
@@ -263,28 +127,8 @@ pub fn make_hidden(field: Field) -> Field {
 
 pub fn set_disabled(field: Field, disabled: Bool) -> Field {
   case field {
-    Valid(_disabled, name:, label:, help_text:, value:, hidden:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _disabled,
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      required:,
-      value:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, disabled:)
+    Invalid(..) -> Invalid(..field, disabled:)
   }
 }
 
@@ -294,28 +138,8 @@ pub fn make_disabled(field: Field) -> Field {
 
 pub fn set_raw_value(field: Field, value: String) -> Field {
   case field {
-    Valid(_value, name:, label:, help_text:, hidden:, disabled:, required:) ->
-      Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:)
-    Invalid(
-      _value,
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      disabled:,
-      required:,
-      error:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Valid(..) -> Valid(..field, value:)
+    Invalid(..) -> Invalid(..field, value:)
   }
 }
 
@@ -332,25 +156,6 @@ pub fn set_error(field: Field, error: String) -> Field {
         required:,
         error:,
       )
-    Invalid(
-      _error,
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      disabled:,
-      required:,
-      value:,
-    ) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        error:,
-        disabled:,
-        required:,
-      )
+    Invalid(..) -> Invalid(..field, error:)
   }
 }

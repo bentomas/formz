@@ -11,45 +11,25 @@ problems to solve is inconvenient and leads to bugs. This library aims
 to make that link explicit and easy to manage, while making it really easy
 to make accessible forms.
 
+Note: This library is not particularly well-suited for generating one-off
+forms, but is more intended for use in projects where you have a few forms to
+manage, and would like to keep the form markup and parsing logic in sync.  It
+takes some amount of effort to make an actual form generator with markup and
+styles, and that might not be worth it for a one-off form.  That said, a simple
+form generator is provided if you aren't opinionated about your markup.
+
 ```sh
 gleam add formz@0.1
 ```
 
 ## Creating a form
 
-A `formz` form is a list of fields and a decoder function.
-
-> **Note:** This library currently has two non-interoperable ways to define forms,
-one using the builder pattern, and one using a series of `use` calls like with
-the [toy](https://hexdocs.pm/toy/) or [decode/zero](https://hexdocs.pm/decode/)
-packages.  After gathering some feedback, only one of them will be kept and this
-library will be moved do version 1.0.0.
-
-### builder pattern
-
-With the builder pattern, you add the fields and then explicitly specify the
-decoder function...
+A `formz` form is a list of fields and a decoder function.  You construct the
+decoder function as fields are added:
 
 ```gleam
+import formz
 import formz/field.{field}
-import formz/formz_builder as formz
-import formz_string/definitions
-
-pub fn make_form() {
-  formz.decodes(fn(username) {fn(password) { #(username, password) } })
-  |> formz.require(field("username"), definitions.text_field())
-  |> formz.require(field("password"), definitions.password_field())
-}
-```
-
-### `use`/callbacks pattern
-
-With the `use`/callbakcks pattern, you create the decoder function as you add
-the fields...
-
-```gleam
-import formz/field.{field}
-import formz/formz_use as formz
 import formz_string/definitions
 
 pub fn make_form() {
@@ -99,8 +79,7 @@ most common HTML formats.
 
 - [formz_string](https://hexdocs.pm/formz_string/)
 - [formz_nakai](https://hexdocs.pm/formz_nakai/)
-- [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser,
-  would it be useful there??)
+- [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser, I've only done this server side)
 
 The second role  of a `Definition` is to parse the data from the field. There
 are a two parts to this, as how you parse a field's value depends on if it is
@@ -183,7 +162,7 @@ import formz_string/simple
 
 pub fn show_form(form) -> String {
   "<form method=\"post\">"
-  <> simple.generate_form(form)
+  <> simple.generate(form)
   <> "<p><button type\"submit\">Submit</button></p>"
   <> "</form>"
 }
