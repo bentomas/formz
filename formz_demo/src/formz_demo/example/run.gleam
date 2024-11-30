@@ -1,4 +1,5 @@
 import formz/formz_use as formz
+import formz/widget.{type Widget}
 import formz_demo/example/page
 import gleam/http.{Get, Post}
 import gleam/option
@@ -8,11 +9,12 @@ import wisp.{type Request, type Response}
 pub type ExampleRun(format, output, output2, msg) {
   ExampleRun(
     dir: String,
-    make_form: fn() -> formz.Form(format, output),
-    get_handler: fn(formz.Form(format, output)) -> formz.Form(format, output),
-    post_handler: fn(wisp.FormData, formz.Form(format, output)) ->
-      Result(output2, formz.Form(format, output)),
-    format_form: fn(formz.Form(format, output)) -> format,
+    make_form: fn() -> formz.Form(Widget(format), output),
+    get_handler: fn(formz.Form(Widget(format), output)) ->
+      formz.Form(Widget(format), output),
+    post_handler: fn(wisp.FormData, formz.Form(Widget(format), output)) ->
+      Result(output2, formz.Form(Widget(format), output)),
+    format_form: fn(formz.Form(Widget(format), output)) -> format,
     formatted_form_to_string: fn(format) -> String,
   )
 }
