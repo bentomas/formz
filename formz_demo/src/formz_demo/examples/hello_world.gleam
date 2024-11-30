@@ -1,5 +1,5 @@
+import formz
 import formz/field.{field}
-import formz/formz_use as formz
 import formz_string/definitions
 
 pub fn make_form() {

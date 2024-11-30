@@ -1,6 +1,5 @@
-import formz.{Field} as _
+import formz.{Field}
 import formz/field.{field}
-import formz/formz_use as formz
 import formz/widget
 import formz_lustre/definitions
 import lustre/attribute

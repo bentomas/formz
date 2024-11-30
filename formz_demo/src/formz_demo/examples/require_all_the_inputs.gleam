@@ -1,6 +1,6 @@
+import formz
 import formz/definition
 import formz/field.{field}
-import formz/formz_use as formz
 import formz_string/definitions
 import formz_string/widgets
 

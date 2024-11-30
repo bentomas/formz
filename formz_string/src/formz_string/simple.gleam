@@ -1,27 +1,14 @@
 import formz
 import formz/field
-import formz/formz_builder
-import formz/formz_use
 import formz/widget
 import gleam/list
 import gleam/string
 
-pub fn generate_form_builder(form) -> String {
+pub fn generate(form) -> String {
   "<div class=\"formz_items\">"
   <> {
     form
-    |> formz_builder.items
-    |> list.map(generate_item)
-    |> string.join("")
-  }
-  <> "</div>"
-}
-
-pub fn generate_form_use(form) -> String {
-  "<div class=\"formz_items\">"
-  <> {
-    form
-    |> formz_use.items
+    |> formz.items
     |> list.map(generate_item)
     |> string.join("")
   }

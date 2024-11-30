@@ -1,6 +1,5 @@
 import formz
 import formz/field
-import formz/formz_use
 import gleam/list
 import gleam/option
 import gleam/result
@@ -17,7 +16,7 @@ pub fn build_page(
   code: String,
   post_data: option.Option(List(#(String, String))),
   output: option.Option(a),
-  formyyyy: formz_use.Form(format, b),
+  form: formz.Form(format, b),
   formatted_form: String,
 ) -> Response {
   let html =
@@ -36,7 +35,7 @@ pub fn build_page(
           html.a([attribute.href("")], [html.text(justin.sentence_case(name))]),
         ]),
         html.div([attribute.class("container")], [
-          show_post(post_data, output, formyyyy),
+          show_post(post_data, output, form),
           show_form(formatted_form),
           show_code(code),
         ]),
@@ -47,8 +46,8 @@ pub fn build_page(
   wisp.ok() |> wisp.html_body(html)
 }
 
-fn get_fields(form: formz_use.Form(format, ouput)) {
-  form |> formz_use.items |> do_get_fields([]) |> list.reverse
+fn get_fields(form: formz.Form(format, ouput)) {
+  form |> formz.items |> do_get_fields([]) |> list.reverse
 }
 
 fn do_get_fields(items: List(formz.FormItem(format)), acc) {
@@ -63,7 +62,7 @@ fn do_get_fields(items: List(formz.FormItem(format)), acc) {
 pub fn show_post(
   input_data: option.Option(List(#(String, String))),
   output: option.Option(a),
-  form: formz_use.Form(format, b),
+  form: formz.Form(format, b),
 ) {
   case input_data {
     option.None -> element.none()

@@ -1,14 +1,14 @@
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 name = "formz_lustre"
-version = "0.1.4"
+version = "1.0.0"
 description = "Lustre widgets and field definitions for the formz library."
 licences = ["Unlicense"]
 repository = { type = "github", user = "bentomas", repo = "formz" }
 
 [dependencies]
 # formz = { path = "../formz" }
-formz = ">= 0.1.1 and < 1.0.0"
+formz = ">= 1.0.0 and < 2.0.0"
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
 lustre = ">= 4.5.1 and < 5.0.0"
 

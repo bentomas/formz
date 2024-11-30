@@ -1,4 +1,4 @@
-import formz/formz_use as formz
+import formz
 import formz/widget.{type Widget}
 import formz_demo/example/page
 import gleam/http.{Get, Post}
