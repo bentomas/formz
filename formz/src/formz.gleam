@@ -115,7 +115,7 @@ fn add(
   // above we just needed for the initial setup.
   let parse = fn(items: List(FormItem(widget))) {
     // pull out the latest version of this field to get latest input data
-    let assert Ok(#(Field(field, widget), pop_fields)) = pop_field(items)
+    let assert Ok(#(Field(field, widget), next_items)) = pop_field(items)
 
     // transform the input data using the transform/validate/decode/etc function
     let input_output = parse_field(field.value)
@@ -125,7 +125,7 @@ fn add(
     // processing all the fields in the form.  if we're on the error track
     // we'll throw away the "output" made with this and just keep the error
     let next_form = fun(input_output |> result.unwrap(stub))
-    let form_output = next_form.parse(pop_fields)
+    let form_output = next_form.parse(next_items)
 
     // ok, check which track we're on
     case form_output, input_output {
@@ -134,26 +134,25 @@ fn add(
 
       // form has errors, but this field was good, so add it to the list
       // of fields as is.
-      Error(items), Ok(_value) -> Error([Field(field, widget), ..items])
+      Error(error_items), Ok(_value) -> {
+        let f = Field(field, widget)
+        Error([f, ..error_items])
+      }
 
       // form was good so far, but this field errored, so need to
       // mark this field as invalid and return all the fields we've got
       // so far
-      Ok(_), Error(error) ->
-        field
-        |> field.set_error(error)
-        |> Field(widget)
-        |> list.prepend(pop_fields, _)
-        |> Error
+      Ok(_), Error(error) -> {
+        let f = Field(field.set_error(field, error), widget)
+        Error([f, ..next_items])
+      }
 
       // form already has errors and this field errored, so add this field
       // to the list of errors
-      Error(items), Error(error) ->
-        field
-        |> field.set_error(error)
-        |> Field(widget)
-        |> list.prepend(items, _)
-        |> Error
+      Error(error_items), Error(error) -> {
+        let f = Field(field.set_error(field, error), widget)
+        Error([f, ..error_items])
+      }
     }
   }
   Form(items: updated_items, parse:, placeholder: next_form.placeholder)
@@ -258,17 +257,18 @@ pub fn subform(
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(items), Ok(_value) -> Error([SubForm(details, items), ..items])
+      Error(next_error_items), Ok(_value) ->
+        Error([SubForm(details, sub_items), ..next_error_items])
 
       // form was good so far, but this sub form errored, so need to
       // hop on error track
-      Ok(_), Error(error_fields) ->
-        Error([SubForm(details, error_fields), ..next_items])
+      Ok(_), Error(error_items) ->
+        Error([SubForm(details, error_items), ..next_items])
 
       // form already has errors and this form errored, so add this field
       // to the list of errors
-      Error(fields), Error(error_fields) ->
-        Error(list.prepend(fields, SubForm(details, error_fields)))
+      Error(next_error_items), Error(error_items) ->
+        Error([SubForm(details, error_items), ..next_error_items])
     }
   }
   Form(updated_items, parse: parse, placeholder: next_form.placeholder)

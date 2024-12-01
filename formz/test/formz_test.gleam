@@ -425,6 +425,26 @@ pub fn sub_form_error_test() {
   fieldb |> should_be_field_no_error
   fieldc |> should_be_field_no_error
   fieldd |> should_be_field_no_error
+
+  let assert [
+    SubForm(_, [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)]),
+    Field(fieldd, _),
+  ] =
+    f2
+    |> formz.data([
+      #("name.a", "1"),
+      #("name.b", "2"),
+      #("name.c", "3"),
+      #("d", "a"),
+    ])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.items
+
+  fielda |> should_be_field_no_error
+  fieldb |> should_be_field_no_error
+  fieldc |> should_be_field_no_error
+  fieldd |> should_be_field_with_error("must be a whole number")
 }
 
 pub fn decoded_and_try_test() {
