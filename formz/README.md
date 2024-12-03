@@ -33,8 +33,14 @@ import formz/field.{field}
 import formz_string/definitions
 
 pub fn make_form() {
-  use username <- formz.require(field("username"), definitions.text_field())
-  use password <- formz.require(field("password"), definitions.password_field())
+  use username <- formz.field(
+    formz.named("username"),
+    formz.required(definitions.text_field()),
+  )
+  use password <- formz.field(
+    formz.named("password"),
+    formz.required(definitions.password_field()),
+  )
 
   formz.create_form(#(username, password))
 }
@@ -209,13 +215,9 @@ pub fn handle_form_submission(req: Request) -> Response {
     case credentials {
       #("admin" as username, "l33t") -> Ok(username)
       #("admin", _) ->
-        form
-        |> formz.update_field("password", field.set_error(_, "Wrong password"))
-        |> Error
+        Error(form |> formz.set_field_error("password", "Wrong password"))
       _ ->
-        form
-        |> formz.update_field("username", field.set_error(_, "Unknown username"))
-        |> Error
+        Error(form |> formz.set_field_error("username", "Unknown username"))
     }
   })
 

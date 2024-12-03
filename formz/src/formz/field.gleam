@@ -17,7 +17,7 @@
 import justin
 
 pub type Field {
-  Valid(
+  Field(
     /// The name of the field. The only truly required information for a field.
     /// This is used to identify the field in the form. It should be unique for
     /// each form, and is untested with any values other than strings solely
@@ -45,24 +45,6 @@ pub type Field {
     required: Bool,
     /// Whether the field is hidden. A hidden field is not displayed in the browser.
     hidden: Bool,
-    /// The value of the field. This is normally set from via the `data` function on
-    /// the form, but this can be set manually if you need default or initial values
-    /// for a particular field.
-    value: String,
-  )
-  Invalid(
-    name: String,
-    label: String,
-    help_text: String,
-    disabled: Bool,
-    required: Bool,
-    hidden: Bool,
-    value: String,
-    /// An error message for the field. This is set if a parser function from a
-    /// definition fails for a field.  You can also set it yourself if you have
-    /// an error that isn't related to parsing, but is with the actual data
-    /// itself.
-    error: String,
   )
 }
 
@@ -74,51 +56,35 @@ pub type Field {
 /// |> set_label("Full Name")
 /// ```
 pub fn field(named name: String) -> Field {
-  Valid(
+  Field(
     name: name,
     label: justin.sentence_case(name),
     help_text: "",
     disabled: False,
     required: False,
     hidden: False,
-    value: "",
   )
 }
 
 pub fn set_name(field: Field, name: String) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, name:)
-    Invalid(..) -> Invalid(..field, name:)
-  }
+  Field(..field, name:)
 }
 
 pub fn set_label(field: Field, label: String) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, label:)
-    Invalid(..) -> Invalid(..field, label:)
-  }
+  Field(..field, label:)
 }
 
 pub fn set_help_text(field: Field, help_text: String) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, help_text:)
-    Invalid(..) -> Invalid(..field, help_text:)
-  }
+  Field(..field, help_text:)
 }
 
 pub fn set_hidden(field: Field, hidden: Bool) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, hidden:)
-    Invalid(..) -> Invalid(..field, hidden:)
-  }
+  Field(..field, hidden:)
 }
 
 @internal
 pub fn set_required(field: Field, required: Bool) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, required:)
-    Invalid(..) -> Invalid(..field, required:)
-  }
+  Field(..field, required:)
 }
 
 pub fn make_hidden(field: Field) -> Field {
@@ -126,36 +92,9 @@ pub fn make_hidden(field: Field) -> Field {
 }
 
 pub fn set_disabled(field: Field, disabled: Bool) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, disabled:)
-    Invalid(..) -> Invalid(..field, disabled:)
-  }
+  Field(..field, disabled:)
 }
 
 pub fn make_disabled(field: Field) -> Field {
   set_disabled(field, True)
-}
-
-pub fn set_raw_value(field: Field, value: String) -> Field {
-  case field {
-    Valid(..) -> Valid(..field, value:)
-    Invalid(..) -> Invalid(..field, value:)
-  }
-}
-
-pub fn set_error(field: Field, error: String) -> Field {
-  case field {
-    Valid(name:, label:, help_text:, hidden:, value:, disabled:, required:) ->
-      Invalid(
-        name:,
-        label:,
-        help_text:,
-        hidden:,
-        value:,
-        disabled:,
-        required:,
-        error:,
-      )
-    Invalid(..) -> Invalid(..field, error:)
-  }
 }

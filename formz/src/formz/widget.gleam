@@ -8,10 +8,11 @@
 //// generator needs to construct an input.  This module is for those form
 //// generators, and it's use is optional if you have different needs.
 
+import formz
 import formz/field
 
 pub type Widget(format) =
-  fn(field.Field, Args) -> format
+  fn(field.Field, formz.State, Args) -> format
 
 pub type Args {
   Args(

@@ -40,8 +40,9 @@
 import formz/definition.{type Definition, Definition}
 import formz/field
 import formz/subform
-import gleam/dict
+import gleam/dict.{type Dict}
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/result
 
 /// The `widget` type is the set by the `Definition`s used to add fields for
@@ -53,7 +54,7 @@ pub opaque type Form(widget, output) {
   Form(
     items: List(FormItem(widget)),
     parse: fn(List(FormItem(widget))) -> Result(output, List(FormItem(widget))),
-    placeholder: output,
+    stub: output,
   )
 }
 
@@ -68,8 +69,14 @@ pub opaque type Form(widget, output) {
 /// form.update_field("name", field.set_label(_, "Full Name"))
 /// ```
 pub type FormItem(widget) {
-  Field(field.Field, widget: widget)
-  SubForm(subform.SubForm, items: List(FormItem(widget)))
+  Field(detail: field.Field, state: State, widget: widget)
+  MultiField(detail: field.Field, states: List(State), widget: widget)
+  SubForm(detail: subform.SubForm, items: List(FormItem(widget)))
+}
+
+pub type State {
+  Valid(value: String)
+  Invalid(value: String, error: String)
 }
 
 /// Create an empty form that only parses to `thing`. This is primarily
@@ -95,7 +102,7 @@ pub fn create_form(thing: thing) -> Form(widget, thing) {
 }
 
 fn add(
-  field: field.Field,
+  detail: field.Field,
   widget: widget,
   parse_field: fn(String) -> Result(input_output, String),
   stub: input_output,
@@ -106,36 +113,35 @@ fn add(
   // from the form.
   let next_form = fun(stub)
 
-  // prepend the new field to the items from the form we got in the
-  // previous step.
-  let updated_items = [Field(field, widget), ..next_form.items]
+  // prepend the new field to the items from the form we got in the previous step.
+  let updated_items = [Field(detail, Valid(""), widget), ..next_form.items]
 
   // now create the parse function. parse function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
   let parse = fn(items: List(FormItem(widget))) {
     // pull out the latest version of this field to get latest input data
-    let assert Ok(#(Field(field, widget), next_items)) = pop_field(items)
+    let assert [Field(field, state, widget), ..next_items] = items
 
     // transform the input data using the transform/validate/decode/etc function
-    let input_output = parse_field(field.value)
+    let item_output = parse_field(state.value)
 
     // pass our transformed input data to the next function/form. if
-    // we errored we still do this with our placeholder so we can continue
+    // we errored we still do this with our stub so we can continue
     // processing all the fields in the form.  if we're on the error track
     // we'll throw away the "output" made with this and just keep the error
-    let next_form = fun(input_output |> result.unwrap(stub))
+    let next_form = fun(item_output |> result.unwrap(stub))
     let form_output = next_form.parse(next_items)
 
     // ok, check which track we're on
-    case form_output, input_output {
+    case form_output, item_output {
       // everything is good!  pass along the output
       Ok(_), Ok(_) -> form_output
 
       // form has errors, but this field was good, so add it to the list
       // of fields as is.
-      Error(error_items), Ok(_value) -> {
-        let f = Field(field, widget)
+      Error(error_items), Ok(_) -> {
+        let f = Field(field, Valid(state.value), widget)
         Error([f, ..error_items])
       }
 
@@ -143,19 +149,19 @@ fn add(
       // mark this field as invalid and return all the fields we've got
       // so far
       Ok(_), Error(error) -> {
-        let f = Field(field.set_error(field, error), widget)
+        let f = Field(field, Invalid(state.value, error), widget)
         Error([f, ..next_items])
       }
 
       // form already has errors and this field errored, so add this field
       // to the list of errors
       Error(error_items), Error(error) -> {
-        let f = Field(field.set_error(field, error), widget)
+        let f = Field(field, Invalid(state.value, error), widget)
         Error([f, ..error_items])
       }
     }
   }
-  Form(items: updated_items, parse:, placeholder: next_form.placeholder)
+  Form(items: updated_items, parse:, stub: next_form.stub)
 }
 
 /// Add an optional field to a form.
@@ -172,12 +178,12 @@ fn add(
 /// called any number of times. Don't do anything but create the type with the
 /// data you need!
 pub fn optional(
-  field: field.Field,
+  detail: field.Field,
   is definition: Definition(widget, _, input_output),
   rest fun: fn(input_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
   add(
-    field |> field.set_required(False),
+    detail |> field.set_required(False),
     definition.widget,
     definition.optional_parse(definition.parse, _),
     definition.optional_stub,
@@ -202,17 +208,112 @@ pub fn optional(
 /// called any number of times. Don't do anything but create the type with the
 /// data you need!
 pub fn require(
-  field: field.Field,
+  detail: field.Field,
   is definition: Definition(widget, required_output, _),
   rest fun: fn(required_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
   add(
-    field |> field.set_required(True),
+    detail |> field.set_required(True),
     definition.widget,
     definition.parse,
     definition.stub,
     fun,
   )
+}
+
+pub fn list(
+  detail: field.Field,
+  is definition: Definition(widget, required_output, _),
+  rest fun: fn(List(required_output)) -> Form(widget, form_output),
+) -> Form(widget, form_output) {
+  // we pass in our stub value, and we're going to throw away the
+  // decoded result here, we just care about pulling out the fields
+  // from the form.
+  let next_form = fun([definition.stub])
+
+  // prepend the new field to the items from the form we got in the previous step.
+  let updated_items = [
+    MultiField(detail, [Valid("")], definition.widget),
+    ..next_form.items
+  ]
+
+  // now create the parse function. parse function accepts most recent
+  // version of input list, since data can be added to it.  the list
+  // above we just needed for the initial setup.
+  let parse = fn(items: List(FormItem(widget))) {
+    // pull out the latest version of this field to get latest input data
+    let assert [MultiField(field, states, widget), ..next_items] = items
+
+    // transform the input data using the transform/validate/decode/etc function
+    let item_results =
+      states
+      |> list.map(fn(state) { #(state.value, definition.parse(state.value)) })
+
+    let item_outputs = item_results |> list.map(fn(t) { t.1 }) |> result.all
+
+    // pass our transformed input data to the next function/form. if
+    // we errored we still do this with our stub so we can continue
+    // processing all the fields in the form.  if we're on the error track
+    // we'll throw away the "output" made with this and just keep the error
+    let next_form = fun(item_outputs |> result.unwrap([definition.stub]))
+    let form_output = next_form.parse(next_items)
+
+    // ok, check which track we're on
+    case form_output, item_outputs {
+      // everything is good!  pass along the output
+      Ok(_), Ok(_) -> form_output
+
+      // form has errors, but this field was good, so add it to the list
+      // of fields as is.
+      Error(error_items), Ok(_) -> {
+        let f =
+          MultiField(
+            field,
+            states |> list.map(fn(s) { Valid(s.value) }),
+            widget,
+          )
+        Error([f, ..error_items])
+      }
+
+      // form was good so far, but this field errored, so need to
+      // mark this field as invalid and return all the fields we've got
+      // so far
+      Ok(_), Error(_) -> {
+        let f =
+          MultiField(
+            field,
+            item_results
+              |> list.map(fn(t) {
+                case t.1 {
+                  Ok(_) -> Valid(t.0)
+                  Error(e) -> Invalid(t.0, e)
+                }
+              }),
+            widget,
+          )
+        Error([f, ..next_items])
+      }
+
+      // form already has errors and this field errored, so add this field
+      // to the list of errors
+      Error(error_items), Error(_) -> {
+        let f =
+          MultiField(
+            field,
+            item_results
+              |> list.map(fn(t) {
+                case t.1 {
+                  Ok(_) -> Valid(t.0)
+                  Error(e) -> Invalid(t.0, e)
+                }
+              }),
+            widget,
+          )
+        Error([f, ..error_items])
+      }
+    }
+  }
+  Form(items: updated_items, parse:, stub: next_form.stub)
 }
 
 /// Add a form as a subform.  This will essentially append the fields from the
@@ -231,12 +332,25 @@ pub fn subform(
   sub: Form(widget, sub_output),
   fun: fn(sub_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
-  let next_form = fun(sub.placeholder)
+  let next_form = fun(sub.stub)
 
   let sub_items =
     sub.items
-    |> update_fields(fn(field) {
-      field |> field.set_name(details.name <> "." <> field.name)
+    |> list.map(fn(item) {
+      case item {
+        Field(item_details, state, widget) -> {
+          let name = details.name <> "." <> item_details.name
+          Field(item_details |> field.set_name(name), state, widget)
+        }
+        MultiField(item_details, states, widget) -> {
+          let name = details.name <> "." <> item_details.name
+          MultiField(item_details |> field.set_name(name), states, widget)
+        }
+        SubForm(item_details, sub_items) -> {
+          let name = details.name <> "." <> item_details.name
+          SubForm(item_details |> subform.set_name(name), sub_items)
+        }
+      }
     })
 
   let updated_items = [SubForm(details, sub_items), ..next_form.items]
@@ -245,19 +359,19 @@ pub fn subform(
     // pull out the latest version of this field to get latest input data
     let assert [SubForm(details, sub_items), ..next_items] = items
 
-    let sub_output = sub.parse(sub_items)
+    let item_output = sub.parse(sub_items)
 
-    let next_form = fun(sub_output |> result.unwrap(sub.placeholder))
+    let next_form = fun(item_output |> result.unwrap(sub.stub))
     let form_output = next_form.parse(next_items)
 
     // ok, check which track we're on
-    case form_output, sub_output {
+    case form_output, item_output {
       // everything is good!  pass along the output
       Ok(_), Ok(_) -> form_output
 
       // form has errors, but this sub form was good, so add it to the list
       // of items as is.
-      Error(next_error_items), Ok(_value) ->
+      Error(next_error_items), Ok(_) ->
         Error([SubForm(details, sub_items), ..next_error_items])
 
       // form was good so far, but this sub form errored, so need to
@@ -271,45 +385,20 @@ pub fn subform(
         Error([SubForm(details, error_items), ..next_error_items])
     }
   }
-  Form(updated_items, parse: parse, placeholder: next_form.placeholder)
-}
-
-fn pop_field(
-  items: List(FormItem(widget)),
-) -> Result(#(FormItem(widget), List(FormItem(widget))), Nil) {
-  case items {
-    [] -> Error(Nil)
-    [only] -> Ok(#(only, []))
-    [Field(..) as item, ..rest] -> Ok(#(item, rest))
-    [SubForm(_, []), ..rest] -> pop_field(rest)
-    [SubForm(s, [first, ..rest_1]), ..rest_2] ->
-      pop_field(list.flatten([[first], [SubForm(s, rest_1)], rest_2]))
-  }
+  Form(updated_items, parse: parse, stub: next_form.stub)
 }
 
 @internal
-pub fn get_fields(form: Form(widget, output)) -> List(field.Field) {
-  form.items |> do_get_fields
+pub fn get_states(form: Form(widget, output)) -> List(State) {
+  form.items |> do_get_states |> list.reverse
 }
 
-fn do_get_fields(items: List(FormItem(widget))) -> List(field.Field) {
+fn do_get_states(items: List(FormItem(widget))) -> List(State) {
   list.fold(items, [], fn(acc, item) {
     case item {
-      Field(f, _) -> [f, ..acc]
-      SubForm(_, sub_items) -> list.flatten([do_get_fields(sub_items), acc])
-    }
-  })
-  |> list.reverse
-}
-
-fn update_fields(
-  items: List(FormItem(widget)),
-  fun: fn(field.Field) -> field.Field,
-) -> List(FormItem(widget)) {
-  list.map(items, fn(item) {
-    case item {
-      Field(field, widget) -> Field(fun(field), widget)
-      SubForm(s, items) -> SubForm(s, update_fields(items, fun))
+      Field(_, state, _) -> [state, ..acc]
+      MultiField(_, states, _) -> list.append(states |> list.reverse, acc)
+      SubForm(_, sub_items) -> list.flatten([do_get_states(sub_items), acc])
     }
   })
 }
@@ -323,20 +412,56 @@ fn update_fields(
 /// field and the second element is the value to set.  If the field does not exist
 /// the data is ignored, and if multiple values are given for the same field, the
 /// last one wins.
+///
+/// This resets the error state of the fields that have data, so you'll need to
+/// re-validate the form after setting data.
 pub fn data(
   form: Form(widget, output),
   input_data: List(#(String, String)),
 ) -> Form(widget, output) {
-  let data = dict.from_list(input_data)
-  let Form(items, parse, placeholder) = form
-  items
-  |> update_fields(fn(field) {
-    case dict.get(data, field.name) {
-      Ok(value) -> field.set_raw_value(field, value)
-      Error(_) -> field
+  let data = to_dict(input_data)
+  let Form(items, parse, stub) = form
+  Form(do_data(items, data), parse, stub)
+}
+
+pub fn do_data(
+  items: List(FormItem(widget)),
+  data: Dict(String, List(String)),
+) -> List(FormItem(widget)) {
+  list.map(items, fn(item) {
+    case item {
+      Field(detail, _, widget) ->
+        case dict.get(data, item.detail.name) {
+          Ok([first, ..]) -> {
+            Field(detail, Valid(first), widget)
+          }
+          _ -> item
+        }
+      MultiField(detail, _, widget) -> {
+        case dict.get(data, item.detail.name) {
+          Ok(values) -> {
+            let values = list.map(values, fn(v) { Valid(v) }) |> list.reverse
+            MultiField(detail, values, widget)
+          }
+
+          _ -> item
+        }
+      }
+      SubForm(detail, items) -> SubForm(detail, do_data(items, data))
     }
   })
-  |> Form(parse, placeholder)
+}
+
+fn to_dict(values: List(#(String, String))) -> Dict(String, List(String)) {
+  list.fold_right(values |> list.reverse, dict.new(), fn(acc, kv) {
+    let #(key, value) = kv
+    dict.upsert(acc, key, fn(opt) {
+      case opt {
+        None -> [value]
+        Some(values) -> [value, ..values]
+      }
+    })
+  })
 }
 
 /// Parse the form.  This means step through the fields one by one, parsing
@@ -394,14 +519,18 @@ pub fn validate(
     Ok(_) -> form
     Error(items) -> {
       let items =
-        update_fields(items, fn(field) {
-          case list.find(names, fn(name) { field.name == name }) {
-            Ok(_) -> field
-            Error(_) ->
-              case get(form, field.name) {
-                Ok(Field(f, _)) -> f
-                _ -> field
-              }
+        list.map(items, fn(parsed_item) {
+          let item_name = case parsed_item {
+            Field(field, _, _) -> field.name
+            MultiField(field, _, _) -> field.name
+            SubForm(subform, _) -> subform.name
+          }
+          case list.find(names, fn(name) { item_name == name }) {
+            Ok(_) -> parsed_item
+            Error(_) -> {
+              let assert Ok(original_item) = get(form, item_name)
+              original_item
+            }
           }
         })
       Form(..form, items:)
@@ -415,9 +544,14 @@ pub fn validate(
 /// to the user about whether certain fields are valid or not.
 pub fn validate_all(form: Form(widget, output)) -> Form(widget, output) {
   let names =
-    form
-    |> get_fields()
-    |> list.map(fn(f) { f.name })
+    form.items
+    |> list.map(fn(f) {
+      case f {
+        Field(field, _, _) -> field.name
+        MultiField(field, _, _) -> field.name
+        SubForm(subform, _) -> subform.name
+      }
+    })
 
   validate(form, names)
 }
@@ -435,11 +569,12 @@ pub fn get(
   name: String,
 ) -> Result(FormItem(widget), Nil) {
   list.find(form.items, fn(item) {
-    case item {
-      Field(i, _) if i.name == name -> True
-      SubForm(s, _) if s.name == name -> True
-      _ -> False
+    let item_name = case item {
+      Field(field, _, _) -> field.name
+      MultiField(field, _, _) -> field.name
+      SubForm(subform, _) -> subform.name
     }
+    item_name == name
   })
 }
 
@@ -462,9 +597,11 @@ fn do_formitems_update(
 ) -> List(FormItem(widget)) {
   list.map(items, fn(item) {
     case item {
-      Field(f, _) if f.name == name -> fun(item)
-      SubForm(s, _) if s.name == name -> fun(item)
-      SubForm(s, items) -> SubForm(s, do_formitems_update(items, name, fun))
+      Field(detail, _, _) if detail.name == name -> fun(item)
+      MultiField(detail, _, _) if detail.name == name -> fun(item)
+      SubForm(detail, _) if detail.name == name -> fun(item)
+      SubForm(detail, items) ->
+        SubForm(detail, do_formitems_update(items, name, fun))
       _ -> item
     }
   })
@@ -485,20 +622,14 @@ pub fn update_field(
 ) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
-      Field(field, widget) -> Field(fun(field), widget)
-      _ -> item
+      Field(field, state, widget) -> Field(fun(field), state, widget)
+      MultiField(field, states, widget) ->
+        MultiField(fun(field), states, widget)
+      SubForm(..) -> item
     }
   })
 }
 
-/// Update the [`SubForm`](https://hexdocs.pm/formz/formz/subform.html) with
-/// the given name using the provided function.  If multiple subforms have the same
-/// name, it will be called on all of them.
-///
-/// ```gleam
-/// let form = make_form()
-/// update(form, "name", subform.set_help_text(_, "..."))
-/// ```
 pub fn update_subform(
   form: Form(widget, output),
   name: String,
@@ -506,8 +637,23 @@ pub fn update_subform(
 ) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
-      SubForm(details, items) -> SubForm(fun(details), items)
+      SubForm(subform, items) -> SubForm(fun(subform), items)
       _ -> item
+    }
+  })
+}
+
+pub fn set_field_error(
+  form: Form(widget, output),
+  name: String,
+  str: String,
+) -> Form(widget, output) {
+  update(form, name, fn(item) {
+    case item {
+      Field(field, state, widget) ->
+        Field(field, Invalid(state.value, str), widget)
+      MultiField(..) -> item
+      SubForm(..) -> item
     }
   })
 }

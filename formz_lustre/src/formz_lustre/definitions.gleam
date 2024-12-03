@@ -93,7 +93,7 @@ pub fn password_field() {
 /// item in the tuple is the label, and the second item can be any Gleam type and
 /// is the value that would be parsed for a given selection.
 ///
-/// Because of how you build `formz` forms, you need to provide a placeholder of
+/// Because of how you build `formz` forms, you need to provide a stub of
 /// the value type.  Is this annoying?  Would it be more or less annoying if I
 /// required a non-empty list for the variants instead? I'm not sure.  Let me know!
 pub fn choices_field(variants: List(#(String, enum)), stub stub: enum) {

@@ -1,10 +1,9 @@
-import formz.{Field, SubForm} as _
-import formz
+import formz.{Field, Invalid, Valid}
 import formz/definition
 import formz/field.{field}
 import formz/subform.{subform}
 import formz/validation
-import gleam/option
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import gleeunit
@@ -36,11 +35,11 @@ pub fn float_field() {
     stub: 0.0,
     optional_parse: fn(fun, str) {
       case str {
-        "" -> Ok(option.None)
-        _ -> fun(str) |> result.map(option.Some)
+        "" -> Ok(None)
+        _ -> fun(str) |> result.map(Some)
       }
     },
-    optional_stub: option.Some(0.0),
+    optional_stub: Some(0.0),
   )
 }
 
@@ -51,11 +50,11 @@ fn integer_field() {
     stub: 0,
     optional_parse: fn(fun, str) {
       case str {
-        "" -> Ok(option.None)
-        _ -> fun(str) |> result.map(option.Some)
+        "" -> Ok(None)
+        _ -> fun(str) |> result.map(Some)
       }
     },
-    optional_stub: option.Some(0),
+    optional_stub: Some(0),
   )
 }
 
@@ -74,35 +73,8 @@ fn boolean_field() {
   )
 }
 
-fn should_be_field_no_error(field: field.Field) {
-  should.equal(
-    field,
-    field.Valid(
-      name: field.name,
-      label: field.label,
-      help_text: field.help_text,
-      value: field.value,
-      hidden: field.hidden,
-      disabled: field.disabled,
-      required: field.required,
-    ),
-  )
-}
-
-fn should_be_field_with_error(field: field.Field, str: String) {
-  should.equal(
-    field,
-    field.Invalid(
-      name: field.name,
-      label: field.label,
-      help_text: field.help_text,
-      value: field.value,
-      hidden: field.hidden,
-      error: str,
-      disabled: field.disabled,
-      required: field.required,
-    ),
-  )
+fn state_should_be(state: formz.State, expected: formz.State) {
+  should.equal(state, expected)
 }
 
 fn get_form_from_error_result(
@@ -122,12 +94,10 @@ fn one_field_form() {
 }
 
 fn two_field_form() {
-  {
-    use a <- formz.optional(field("a"), text_field())
-    use b <- formz.optional(field("b"), text_field())
+  use a <- formz.optional(field("a"), text_field())
+  use b <- formz.optional(field("b"), text_field())
 
-    formz.create_form(#(a, b))
-  }
+  formz.create_form(#(a, b))
 }
 
 fn three_field_form() {
@@ -224,61 +194,61 @@ pub fn parse_single_field_form_with_error_test() {
     |> formz.data([#("a", "world")])
     |> formz.parse
 
-  let assert [Field(field, _)] = formz.items(f)
-  field |> should_be_field_with_error("must be on")
+  let assert [state] = formz.get_states(f)
+  state |> state_should_be(Invalid("world", "must be on"))
 }
 
 pub fn parse_triple_field_form_with_error_test() {
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+  let assert [statea, stateb, statec] =
     three_field_form()
-    |> formz.data([#("a", "xxxx"), #("b", "1"), #("c", "x")])
+    |> formz.data([#("a", "string"), #("b", "1"), #("c", "string")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
+    |> formz.get_states
 
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_with_error("must be a number")
+  statea |> state_should_be(Valid("string"))
+  stateb |> state_should_be(Valid("1"))
+  statec |> state_should_be(Invalid("string", "must be a number"))
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+  let assert [statea, stateb, statec] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "string")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("must be a whole number")
-  fieldc |> should_be_field_with_error("must be a number")
+    |> formz.get_states
+  statea |> state_should_be(Valid("string"))
+  stateb |> state_should_be(Invalid("string", "must be a whole number"))
+  statec |> state_should_be(Invalid("string", "must be a number"))
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+  let assert [statea, stateb, statec] =
     three_field_form()
     |> formz.data([#("a", "string"), #("b", "string"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("must be a whole number")
-  fieldc |> should_be_field_no_error
+    |> formz.get_states
+  statea |> state_should_be(Valid("string"))
+  stateb |> state_should_be(Invalid("string", "must be a whole number"))
+  statec |> state_should_be(Valid("3.4"))
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+  let assert [statea, stateb, statec] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "string"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
-  fielda |> should_be_field_with_error("must be longer than 3")
-  fieldb |> should_be_field_with_error("must be a whole number")
-  fieldc |> should_be_field_no_error
+    |> formz.get_states
+  statea |> state_should_be(Invalid(".", "must be longer than 3"))
+  stateb |> state_should_be(Invalid("string", "must be a whole number"))
+  statec |> state_should_be(Valid("3.4"))
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
+  let assert [statea, stateb, statec] =
     three_field_form()
     |> formz.data([#("a", "."), #("b", "1"), #("c", "3.4")])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
-  fielda |> should_be_field_with_error("must be longer than 3")
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
+    |> formz.get_states
+  statea |> state_should_be(Invalid(".", "must be longer than 3"))
+  stateb |> state_should_be(Valid("1"))
+  statec |> state_should_be(Valid("3.4"))
 }
 
 pub fn set_required_field_test() {
@@ -294,7 +264,7 @@ pub fn set_required_field_test() {
     formz.create_form(#(a, b))
   }
 
-  let assert [Field(fielda, _), Field(fieldb, _)] = formz.items(f)
+  let assert [Field(fielda, _, _), Field(fieldb, _, _)] = formz.items(f)
 
   fielda.required |> should.equal(True)
   fieldb.required |> should.equal(False)
@@ -328,11 +298,14 @@ pub fn sub_form_test() {
 }
 
 pub fn get_fields_test() {
-  let assert [fielda, fieldb, fieldc] = three_field_form() |> formz.get_fields
+  let assert [statea, stateb, statec] =
+    three_field_form()
+    |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
+    |> formz.get_states
 
-  fielda.name |> should.equal("a")
-  fieldb.name |> should.equal("b")
-  fieldc.name |> should.equal("c")
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Valid("2"))
+  statec |> state_should_be(Valid("3"))
 }
 
 pub fn validate_test() {
@@ -340,60 +313,50 @@ pub fn validate_test() {
     three_field_form()
     |> formz.data([#("a", "1"), #("b", "-1"), #("c", "x")])
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    f
-    |> formz.items
+  // haven't validated yet
+  let assert [statea, stateb, statec] = f |> formz.get_states
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Valid("-1"))
+  statec |> state_should_be(Valid("x"))
 
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
+  // validate first 2
+  let assert [statea, stateb, statec] =
+    f |> formz.validate(["a", "b"]) |> formz.get_states
+  statea |> state_should_be(Invalid("1", "must be longer than 3"))
+  stateb |> state_should_be(Invalid("-1", "must be positive"))
+  statec |> state_should_be(Valid("x"))
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    f
-    |> formz.validate(["a", "b"])
-    |> formz.items
+  // validate middle
+  let assert [statea, stateb, statec] =
+    f |> formz.validate(["b"]) |> formz.get_states
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Invalid("-1", "must be positive"))
+  statec |> state_should_be(Valid("x"))
 
-  fielda |> should_be_field_with_error("must be longer than 3")
-  fieldb |> should_be_field_with_error("must be positive")
-  fieldc |> should_be_field_no_error
-
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    f
-    |> formz.validate(["b"])
-    |> formz.items
-
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_with_error("must be positive")
-  fieldc |> should_be_field_no_error
-
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    f
-    |> formz.validate(["c"])
-    |> formz.items
-
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_with_error("must be a number")
+  //validate last
+  let assert [statea, stateb, statec] =
+    f |> formz.validate(["c"]) |> formz.get_states
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Valid("-1"))
+  statec |> state_should_be(Invalid("x", "must be a number"))
 }
 
 pub fn validate_all_test() {
-  let f =
+  let assert [statea, stateb, statec] =
     three_field_form()
     |> formz.data([#("a", "1"), #("b", "-1"), #("c", "x")])
+    |> formz.validate_all
+    |> formz.get_states
 
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    f
-    |> formz.items
-
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
+  statea |> state_should_be(Invalid("1", "must be longer than 3"))
+  stateb |> state_should_be(Invalid("-1", "must be positive"))
+  statec |> state_should_be(Invalid("x", "must be a number"))
 }
 
 pub fn sub_form_error_test() {
   let f1 = {
     use a <- formz.optional(field("a"), integer_field())
-    use b <- formz.optional(field("b"), integer_field())
+    use b <- formz.require(field("b"), integer_field())
     use c <- formz.optional(field("c"), integer_field())
 
     formz.create_form(#(a, b, c))
@@ -406,10 +369,7 @@ pub fn sub_form_error_test() {
     formz.create_form(#(a, b))
   }
 
-  let assert [
-    SubForm(_, [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)]),
-    Field(fieldd, _),
-  ] =
+  let tmp =
     f2
     |> formz.data([
       #("name.a", "a"),
@@ -419,17 +379,16 @@ pub fn sub_form_error_test() {
     ])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
 
-  fielda |> should_be_field_with_error("must be a whole number")
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
-  fieldd |> should_be_field_no_error
+  tmp |> formz.items
+  let assert [statea, stateb, statec, stated] = tmp |> formz.get_states
 
-  let assert [
-    SubForm(_, [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)]),
-    Field(fieldd, _),
-  ] =
+  statea |> state_should_be(Invalid("a", "must be a whole number"))
+  stateb |> state_should_be(Valid("2"))
+  statec |> state_should_be(Valid("3"))
+  stated |> state_should_be(Valid("4"))
+
+  let assert [statea, stateb, statec, stated] =
     f2
     |> formz.data([
       #("name.a", "1"),
@@ -439,12 +398,12 @@ pub fn sub_form_error_test() {
     ])
     |> formz.parse
     |> get_form_from_error_result
-    |> formz.items
+    |> formz.get_states
 
-  fielda |> should_be_field_no_error
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
-  fieldd |> should_be_field_with_error("must be a whole number")
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Valid("2"))
+  statec |> state_should_be(Valid("3"))
+  stated |> state_should_be(Invalid("a", "must be a whole number"))
 }
 
 pub fn decoded_and_try_test() {
@@ -467,13 +426,89 @@ pub fn decoded_and_try_test() {
   // can change field
   let assert Error(form) =
     formz.parse_then_try(f, fn(form, _) {
-      form
-      |> formz.update_field("a", field.set_error(_, "woops"))
-      |> Error
+      Error(form |> formz.set_field_error("a", "woops"))
     })
-  let assert [Field(fielda, _), Field(fieldb, _), Field(fieldc, _)] =
-    formz.items(form)
-  fielda |> should_be_field_with_error("woops")
-  fieldb |> should_be_field_no_error
-  fieldc |> should_be_field_no_error
+  let assert [statea, stateb, statec] = formz.get_states(form)
+  statea |> state_should_be(Invalid("string", "woops"))
+  stateb |> state_should_be(Valid("2"))
+  statec |> state_should_be(Valid("3.0"))
+}
+
+pub fn multi_test() {
+  let f = {
+    use a <- formz.list(field("a"), float_field())
+    use b <- formz.list(field("b"), float_field())
+    use c <- formz.list(field("c"), float_field())
+
+    formz.create_form(#(a, b, c))
+  }
+
+  f
+  |> formz.data([#("a", "1"), #("b", "2"), #("c", "3")])
+  |> formz.parse
+  |> should.equal(Ok(#([1.0], [2.0], [3.0])))
+
+  f
+  |> formz.data([#("a", "1.1"), #("a", "1.2"), #("b", "2"), #("c", "3")])
+  |> formz.parse
+  |> should.equal(Ok(#([1.1, 1.2], [2.0], [3.0])))
+
+  f
+  |> formz.data([
+    #("a", "1.1"),
+    #("a", "1.2"),
+    #("b", "2.1"),
+    #("b", "2.2"),
+    #("c", "3.1"),
+    #("c", "3.2"),
+  ])
+  |> formz.parse
+  |> should.equal(Ok(#([1.1, 1.2], [2.1, 2.2], [3.1, 3.2])))
+
+  let assert [statea, stateb, statec] =
+    f
+    |> formz.data([#("a", "a"), #("b", "2"), #("c", "3")])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.get_states
+
+  statea |> state_should_be(Invalid("a", "must be a number"))
+  stateb |> state_should_be(Valid("2"))
+  statec |> state_should_be(Valid("3"))
+
+  let assert [statea, stateb, statec, stated] =
+    f
+    |> formz.data([#("a", "a1"), #("a", "a2"), #("b", "2"), #("c", "3")])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.get_states
+
+  statea |> state_should_be(Invalid("a1", "must be a number"))
+  stateb |> state_should_be(Invalid("a2", "must be a number"))
+  statec |> state_should_be(Valid("2"))
+  stated |> state_should_be(Valid("3"))
+
+  let assert [statea, stateb, statec, stated] =
+    f
+    |> formz.data([#("a", "1"), #("a", "a2"), #("b", "2"), #("c", "3")])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.get_states
+
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Invalid("a2", "must be a number"))
+  statec |> state_should_be(Valid("2"))
+  stated |> state_should_be(Valid("3"))
+
+  let assert [statea, stateb, statec, stated] =
+    f
+    |> formz.data([#("a", "1"), #("b", "b1"), #("b", "2"), #("c", "c")])
+    |> formz.parse
+    |> get_form_from_error_result
+    |> formz.get_states
+
+  statea |> state_should_be(Valid("1"))
+  stateb |> state_should_be(Invalid("b1", "must be a number"))
+  statec |> state_should_be(Valid("2"))
+  stated |> state_should_be(Invalid("c", "must be a number"))
 }

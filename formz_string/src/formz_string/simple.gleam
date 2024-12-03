@@ -1,5 +1,4 @@
 import formz
-import formz/field
 import formz/widget
 import gleam/list
 import gleam/string
@@ -17,13 +16,13 @@ pub fn generate(form) -> String {
 
 pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
   case item {
-    formz.Field(field, _) if field.hidden == True ->
+    formz.Field(field, state, _) if field.hidden == True ->
       "<input"
       <> { " type=\"hidden\"" }
       <> { " name=\"" <> field.name <> "\"" }
-      <> { " value=\"" <> field.value <> "\"" }
+      <> { " value=\"" <> state.value <> "\"" }
       <> ">"
-    formz.Field(field, make_widget) -> {
+    formz.Field(field, state, make_widget) -> {
       let id = field.name
 
       let label_el =
@@ -44,9 +43,9 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
         }
       }
 
-      let #(errors_el, errors_id) = case field {
-        field.Valid(..) -> #("", "")
-        field.Invalid(error:, ..) -> {
+      let #(errors_el, errors_id) = case state {
+        formz.Valid(..) -> #("", "")
+        formz.Invalid(error:, ..) -> {
           #(
             "<span"
               <> { " id=\"" <> id <> "_error" <> "\"" }
@@ -62,6 +61,7 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
       let widget_el =
         make_widget(
           field,
+          state,
           widget.Args(
             id,
             widget.LabelledByLabelFor,
@@ -110,5 +110,7 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
       <> "</div>"
       <> "</fieldset>"
     }
+
+    _ -> ""
   }
 }
