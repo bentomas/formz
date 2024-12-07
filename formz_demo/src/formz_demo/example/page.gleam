@@ -1,5 +1,4 @@
 import formz
-import formz/field
 import gleam/list
 import gleam/option
 import gleam/result
@@ -53,7 +52,12 @@ fn get_fields(form: formz.Form(format, ouput)) {
 fn do_get_fields(items: List(formz.FormItem(format)), acc) {
   case items {
     [] -> acc
-    [formz.Field(field, _), ..rest] -> do_get_fields(rest, [field, ..acc])
+    [formz.Field(field, state, _), ..rest] ->
+      do_get_fields(rest, [#(field, state), ..acc])
+    [formz.ListField(field, states, _, _), ..rest] -> {
+      let tups = list.map(states, fn(s) { #(field, s) }) |> list.reverse
+      do_get_fields(rest, list.append(tups, acc))
+    }
     [formz.SubForm(_, items), ..rest] ->
       do_get_fields(list.flatten([items, rest]), acc)
   }
@@ -68,22 +72,24 @@ pub fn show_post(
     option.None -> element.none()
     option.Some(input_data) -> {
       let fields = get_fields(form)
+
       let fields_no_post =
         fields
         |> list.map(fn(i) {
           html.tr([], [
-            html.td([], [html.text(i.name)]),
+            html.td([], [html.text({ i.0 }.name)]),
             html.td([], [
               html.text(
-                list.key_find(input_data, i.name)
+                list.key_find(input_data, { i.0 }.name)
+                |> result.replace({ i.1 }.value)
                 |> result.map(string.inspect)
                 |> result.unwrap("<EMPTY>"),
               ),
             ]),
             html.td([], [
-              html.text(case i {
-                field.Valid(..) -> ""
-                field.Invalid(error:, ..) -> error
+              html.text(case i.1 {
+                formz.Invalid(error:, ..) -> error
+                _ -> ""
               }),
             ]),
           ])
@@ -93,7 +99,8 @@ pub fn show_post(
       let unknown_input =
         list.filter_map(input_data, fn(t) {
           let #(k, v) = t
-          case list.find(fields, fn(f) { f.name == k }) {
+
+          case list.find(fields, fn(f) { { f.0 }.name == k }) {
             Ok(_) -> Error(Nil)
             Error(_) ->
               Ok(

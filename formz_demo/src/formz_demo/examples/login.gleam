@@ -21,16 +21,16 @@ pub fn make_form() {
 pub fn handle_post(formdata: wisp.FormData, form) {
   form
   |> formz.data(formdata.values)
-  |> formz.parse_then_try(fn(form, credentials) {
+  |> formz.decode_then_try(fn(form, credentials) {
     case credentials {
       Credentials("admin", "l33t") -> Ok(User(credentials.username))
       Credentials("admin", _) ->
         form
-        |> formz.update_field("password", field.set_error(_, "Wrong password"))
+        |> formz.set_field_error("password", "Wrong password")
         |> Error
       Credentials(_, _) ->
         form
-        |> formz.update_field("username", field.set_error(_, "Wrong username"))
+        |> formz.set_field_error("username", "Wrong username")
         |> Error
     }
   })

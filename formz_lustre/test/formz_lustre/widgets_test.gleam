@@ -1,11 +1,12 @@
+import formz
 import formz/field
-import formz/widget
+import formz_lustre/widget
+import formz_lustre/widgets
+import formz_string/widget as string_widget
+import formz_string/widgets as string_widgets
 import gleeunit
 import gleeunit/should
 import lustre/element
-
-import formz_lustre/widgets
-import formz_string/widgets as string_widgets
 
 pub fn main() {
   gleeunit.main()
@@ -16,42 +17,47 @@ fn convert_to_string(input) {
   |> element.to_string
 }
 
-fn test_inputs(
-  name name,
-  label label,
-  help help_text,
-  hidden hidden,
-  disabled disabled,
-  required required,
-  value value,
-  args args,
-  string string_widget,
-  widget widget,
-) {
-  let string_field =
-    field.Valid(
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      value:,
-      disabled:,
-      required:,
-    )
-  let field =
-    field.Valid(
-      name:,
-      label:,
-      help_text:,
-      hidden:,
-      value:,
-      disabled:,
-      required:,
-    )
+pub fn to_string_args(args: widget.Args) {
+  let labelled_by = case args.labelled_by {
+    widget.LabelledByFieldValue -> string_widget.LabelledByFieldValue
+    widget.LabelledByElementsWithIds(ids) ->
+      string_widget.LabelledByElementsWithIds(ids)
+    widget.LabelledByLabelFor -> string_widget.LabelledByLabelFor
+  }
 
-  widget(field, args)
+  let described_by = case args.described_by {
+    widget.DescribedByNone -> string_widget.DescribedByNone
+    widget.DescribedByElementsWithIds(ids) ->
+      string_widget.DescribedByElementsWithIds(ids)
+  }
+
+  string_widget.Args(args.id, labelled_by, described_by)
+}
+
+fn test_inputs(
+  name name: String,
+  label label: String,
+  help help_text: String,
+  hidden hidden: Bool,
+  disabled disabled: Bool,
+  required required: Bool,
+  value value: String,
+  args args: widget.Args,
+  string string_widget: string_widget.Widget,
+  widget widget: widget.Widget(msg),
+) {
+  let string_field = field.Field(name:, label:, help_text:, hidden:, disabled:)
+  let field = field.Field(name:, label:, help_text:, hidden:, disabled:)
+
+  let presence = case required {
+    True -> formz.Required
+    False -> formz.Optional
+  }
+  let state = formz.Valid(value, presence)
+
+  widget(field, state, args)
   |> convert_to_string
-  |> should.equal(string_widget(string_field, args))
+  |> should.equal(string_widget(string_field, state, args |> to_string_args))
 }
 
 pub fn text_widget_test() {

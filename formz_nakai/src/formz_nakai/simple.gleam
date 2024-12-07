@@ -1,6 +1,5 @@
 import formz
-import formz/field
-import formz/widget
+import formz_nakai/widget
 import gleam/list
 import nakai/attr
 import nakai/html
@@ -12,17 +11,15 @@ pub fn generate(form) -> html.Node {
   |> html.div([attr.class("formz_items")], _)
 }
 
-pub fn generate_visible_item(
-  item: formz.FormItem(widget.Widget(html.Node)),
-) -> html.Node {
+pub fn generate_visible_item(item: formz.FormItem(widget.Widget)) -> html.Node {
   case item {
-    formz.Field(field, _) if field.hidden == True ->
+    formz.Field(field, state, _) if field.hidden == True ->
       html.input([
         attr.type_("hidden"),
         attr.name(field.name),
-        attr.value(field.value),
+        attr.value(state.value),
       ])
-    formz.Field(field, make_widget) -> {
+    formz.Field(field, state, make_widget) -> {
       let id = field.name
 
       let label_el =
@@ -38,19 +35,20 @@ pub fn generate_visible_item(
           id <> "_help_text",
         )
       }
-      let error = case field {
-        field.Valid(..) -> #(html.Nothing, "")
-        field.Invalid(error:, ..) -> #(
+      let error = case state {
+        formz.Invalid(error:, ..) -> #(
           html.span([attr.id(id <> "_error"), attr.class("formz_error")], [
             html.Text(error),
           ]),
           id <> "_error",
         )
+        _ -> #(html.Nothing, "")
       }
 
       let widget_el =
         make_widget(
           field,
+          state,
           widget.Args(
             id: id,
             labelled_by: widget.LabelledByLabelFor,
@@ -73,5 +71,7 @@ pub fn generate_visible_item(
       let children = items |> list.map(generate_visible_item)
       html.fieldset([], [legend, html.div([], children)])
     }
+
+    _ -> html.Nothing
   }
 }

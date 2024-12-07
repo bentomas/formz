@@ -37,12 +37,6 @@ pub type Field {
     /// the value or submitting a different value via other means, so (presently)
     /// this doesn't mean the value cannot be tampered with.
     disabled: Bool,
-    /// Whether the field is required. This field is not functional, but is purely
-    /// for whether or not the form generator should indicate to the user that the
-    /// field is required.  Add the field to the form with either `optional` or
-    /// `required` methods to control this functionally.  Those methods will make
-    /// sure this field is set correctly.
-    required: Bool,
     /// Whether the field is hidden. A hidden field is not displayed in the browser.
     hidden: Bool,
   )
@@ -61,7 +55,6 @@ pub fn field(named name: String) -> Field {
     label: justin.sentence_case(name),
     help_text: "",
     disabled: False,
-    required: False,
     hidden: False,
   )
 }
@@ -80,11 +73,6 @@ pub fn set_help_text(field: Field, help_text: String) -> Field {
 
 pub fn set_hidden(field: Field, hidden: Bool) -> Field {
   Field(..field, hidden:)
-}
-
-@internal
-pub fn set_required(field: Field, required: Bool) -> Field {
-  Field(..field, required:)
 }
 
 pub fn make_hidden(field: Field) -> Field {

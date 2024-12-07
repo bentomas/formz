@@ -2,9 +2,9 @@
 # You typically do not need to edit this file
 
 packages = [
-  { name = "formz", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], otp_app = "formz", source = "hex", outer_checksum = "2A3FDACEFDDD87E55344C7A8994A3EF5CC6ACA849D5EDB5C2E1074642C367DB5" },
+  { name = "formz", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "justin"], source = "local", path = "../formz" },
   { name = "formz_string", version = "1.0.0", build_tools = ["gleam"], requirements = ["formz", "gleam_stdlib"], source = "local", path = "../formz_string" },
-  { name = "gleam_erlang", version = "0.32.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "B18643083A0117AC5CFD0C1AEEBE5469071895ECFA426DCC26517A07F6AD9948" },
+  { name = "gleam_erlang", version = "0.33.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_erlang", source = "hex", outer_checksum = "A1D26B80F01901B59AABEE3475DD4C18D27D58FA5C897D922FCB9B099749C064" },
   { name = "gleam_json", version = "2.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "0A57FB5666E695FD2BEE74C0428A98B0FC11A395D2C7B4CDF5E22C5DD32C74C6" },
   { name = "gleam_otp", version = "0.14.1", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_stdlib"], otp_app = "gleam_otp", source = "hex", outer_checksum = "5A8CE8DBD01C29403390A7BD5C0A63D26F865C83173CF9708E6E827E53159C65" },
   { name = "gleam_stdlib", version = "0.45.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "206FCE1A76974AECFC55AEBCD0217D59EDE4E408C016E2CFCCC8FF51278F186E" },
@@ -14,7 +14,7 @@ packages = [
 ]
 
 [requirements]
-formz = { version = ">= 1.0.0 and < 2.0.0" }
+formz = { path = "../formz" }
 formz_string = { path = "../formz_string" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }

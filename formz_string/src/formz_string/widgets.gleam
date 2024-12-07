@@ -1,6 +1,6 @@
-import formz.{type State}
+import formz
 import formz/field
-import formz/widget
+import formz_string/widget.{type Widget}
 import gleam/list
 import gleam/string
 
@@ -97,10 +97,10 @@ fn disabled_attr(disabled: Bool) -> String {
   }
 }
 
-fn required_attr(required: Bool) -> String {
-  case required {
-    True -> " required"
-    False -> ""
+fn required_attr(presence: formz.FieldPresence) -> String {
+  case presence {
+    formz.Required -> " required"
+    formz.Optional -> ""
   }
 }
 
@@ -113,12 +113,13 @@ fn checked_attr(value: String) -> String {
 
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
-pub fn checkbox_widget() -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) {
+pub fn checkbox_widget() -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) {
     let value = state.value
     let state = case state {
-      formz.Valid(_) -> formz.Valid("")
-      formz.Invalid(_, e) -> formz.Invalid("", e)
+      formz.Unvalidated(_, presence) -> formz.Unvalidated("", presence)
+      formz.Valid(_, presence) -> formz.Valid("", presence)
+      formz.Invalid(_, presence, e) -> formz.Invalid("", presence, e)
     }
     do_input_widget(field, state, args, "checkbox", [checked_attr(value)])
   }
@@ -130,19 +131,20 @@ pub fn checkbox_widget() -> widget.Widget(String) {
 /// this way does mean that a user can only input numbers up to the precision of
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
-pub fn number_widget(step_size: String) -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) {
+pub fn number_widget(step_size: String) -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) {
     do_input_widget(field, state, args, "number", [step_size_attr(step_size)])
   }
 }
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
-pub fn password_widget() -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) {
+pub fn password_widget() -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) {
     let state = case state {
-      formz.Valid(_) -> formz.Valid("")
-      formz.Invalid(_, e) -> formz.Invalid("", e)
+      formz.Unvalidated(_, presence) -> formz.Unvalidated("", presence)
+      formz.Valid(_, presence) -> formz.Valid("", presence)
+      formz.Invalid(_, presence, e) -> formz.Invalid("", presence, e)
     }
     do_input_widget(field, state, args, "password", [])
   }
@@ -150,15 +152,15 @@ pub fn password_widget() -> widget.Widget(String) {
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
-pub fn input_widget(type_: String) -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) {
+pub fn input_widget(type_: String) -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) {
     do_input_widget(field, state, args, type_, [])
   }
 }
 
 fn do_input_widget(
   field: field.Field,
-  state: State,
+  state: formz.FieldState,
   args: widget.Args,
   type_: String,
   extra_attrs: List(String),
@@ -167,7 +169,7 @@ fn do_input_widget(
   <> type_attr(type_)
   <> name_attr(field.name)
   <> id_attr(args.id)
-  <> required_attr(field.required)
+  <> required_attr(state.presence)
   <> disabled_attr(field.disabled)
   <> value_attr(state.value)
   <> aria_label_attr(args.labelled_by, field.label)
@@ -177,14 +179,14 @@ fn do_input_widget(
 }
 
 /// Create a `<textarea></textarea>`.
-pub fn textarea_widget() -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) -> String {
+pub fn textarea_widget() -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) -> String {
     // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
     // https://til.simonwillison.net/css/resizing-textarea
     "<textarea"
     <> name_attr(field.name)
     <> id_attr(args.id)
-    <> required_attr(field.required)
+    <> required_attr(state.presence)
     <> disabled_attr(field.disabled)
     <> aria_label_attr(args.labelled_by, field.label)
     <> aria_describedby_attr(args.described_by)
@@ -197,8 +199,8 @@ pub fn textarea_widget() -> widget.Widget(String) {
 /// Create a `<input type="hidden">`. This is useful for if a field is just
 /// passing data around and you don't want it to be visible to the user. Like
 /// say, the ID of a record being edited.
-pub fn hidden_widget() -> widget.Widget(String) {
-  fn(field: field.Field, state: State, _args: widget.Args) -> String {
+pub fn hidden_widget() -> Widget {
+  fn(field: field.Field, state: formz.FieldState, _args: widget.Args) -> String {
     "<input"
     <> type_attr("hidden")
     <> name_attr(field.name)
@@ -210,8 +212,8 @@ pub fn hidden_widget() -> widget.Widget(String) {
 /// Create a `<select></select>` with `<option>`s for each variant.  The list
 /// of variants is a two-tuple, where the first item is the text to display and
 /// the second item is the value.
-pub fn select_widget(variants: List(#(String, String))) -> widget.Widget(String) {
-  fn(field: field.Field, state: State, args: widget.Args) {
+pub fn select_widget(variants: List(#(String, String))) -> Widget {
+  fn(field: field.Field, state: formz.FieldState, args: widget.Args) {
     let choices =
       list.map(variants, fn(variant) {
         let val = variant.1
@@ -229,7 +231,7 @@ pub fn select_widget(variants: List(#(String, String))) -> widget.Widget(String)
       "<select"
       <> name_attr(field.name)
       <> id_attr(args.id)
-      <> required_attr(field.required)
+      <> required_attr(state.presence)
       <> disabled_attr(field.disabled)
       <> aria_label_attr(args.labelled_by, field.label)
       <> aria_describedby_attr(args.described_by)

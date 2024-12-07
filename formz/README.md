@@ -203,7 +203,7 @@ pub fn handle_form_submission(req: Request) -> Response {
 
 However, often you want to parse a form, and then... you know... act on that
 data, and in doing so you might discover more errors for the form.  In this
-situation you can use `parse_then_try`:
+situation you can use `decode_then_try`:
 
 ```gleam
 pub fn handle_form_submission(req: Request) -> Response {
@@ -211,7 +211,7 @@ pub fn handle_form_submission(req: Request) -> Response {
 
   let result = make_form()
   |> formz.data(formdata.values)
-  |> formz.parse_then_try(fn(form, credentials) {
+  |> formz.decode_then_try(fn(form, credentials) {
     case credentials {
       #("admin" as username, "l33t") -> Ok(username)
       #("admin", _) ->

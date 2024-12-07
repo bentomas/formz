@@ -10,9 +10,10 @@
 
 import formz
 import formz/field
+import lustre/element
 
-pub type Widget(format) =
-  fn(field.Field, formz.State, Args) -> format
+pub type Widget(msg) =
+  fn(field.Field, formz.FieldState, Args) -> element.Element(msg)
 
 pub type Args {
   Args(

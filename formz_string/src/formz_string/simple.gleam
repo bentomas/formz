@@ -1,5 +1,5 @@
 import formz
-import formz/widget
+import formz_string/widget
 import gleam/list
 import gleam/string
 
@@ -14,7 +14,7 @@ pub fn generate(form) -> String {
   <> "</div>"
 }
 
-pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
+pub fn generate_item(item: formz.FormItem(widget.Widget)) -> String {
   case item {
     formz.Field(field, state, _) if field.hidden == True ->
       "<input"
@@ -44,7 +44,6 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
       }
 
       let #(errors_el, errors_id) = case state {
-        formz.Valid(..) -> #("", "")
         formz.Invalid(error:, ..) -> {
           #(
             "<span"
@@ -56,6 +55,7 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
             id <> "_error",
           )
         }
+        _ -> #("", "")
       }
 
       let widget_el =
@@ -75,6 +75,69 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
       <> help_text_el
       <> errors_el
       <> "</div>"
+    }
+    formz.ListField(field, states, _, make_widget) -> {
+      let id = field.name
+
+      let #(legend_el, legend_id) = #(
+        "<legend id=\"" <> id <> "_legend\">" <> field.label <> ": </legend>",
+        id <> "_legend",
+      )
+
+      let #(help_text_el, help_text_id) = case field.help_text {
+        "" -> #("", "")
+        _ -> {
+          #(
+            "<span"
+              <> { " id=\"" <> id <> "_help_text" <> "\"" }
+              <> { " class=\"formz_help_text\"" }
+              <> ">"
+              <> field.help_text
+              <> "</span>",
+            id <> "_help_text",
+          )
+        }
+      }
+
+      let widgets_el =
+        states
+        |> list.map(fn(state) {
+          let #(errors_el, errors_id) = case state {
+            formz.Invalid(error:, ..) -> {
+              #(
+                "<span"
+                  <> { " id=\"" <> id <> "_error" <> "\"" }
+                  <> { " class=\"formz_error\"" }
+                  <> ">"
+                  <> error
+                  <> "</span>",
+                id <> "_error",
+              )
+            }
+            _ -> #("", "")
+          }
+
+          let widget_el =
+            make_widget(
+              field,
+              state,
+              widget.Args(
+                id,
+                widget.LabelledByElementsWithIds([legend_id]),
+                widget.DescribedByElementsWithIds([help_text_id, errors_id]),
+              ),
+            )
+
+          widget_el <> errors_el
+        })
+        |> string.join("</li><li>")
+      let widgets_el = "<ol><li>" <> widgets_el <> "</ol>"
+
+      "<fieldset class=\"formz_listfield\">"
+      <> legend_el
+      <> help_text_el
+      <> widgets_el
+      <> "</fieldset>"
     }
     formz.SubForm(subform, items) -> {
       let #(help_text_el, help_text_id) = case subform.help_text {
@@ -110,7 +173,5 @@ pub fn generate_item(item: formz.FormItem(widget.Widget(String))) -> String {
       <> "</div>"
       <> "</fieldset>"
     }
-
-    _ -> ""
   }
 }

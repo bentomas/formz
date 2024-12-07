@@ -1,4 +1,4 @@
-//// Detials about a subform being added to a form. There is a convenience
+//// Details about a subform being added to a form. There is a convenience
 //// function to create a field with just a name, and then you can use the rest
 //// of the functions to set just the values you need to change.
 

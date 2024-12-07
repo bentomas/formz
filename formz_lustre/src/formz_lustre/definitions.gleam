@@ -4,17 +4,15 @@
 //// examples of these in action, please see the [formz_demo](https://github.com/bentomas/formz/tree/main/formz_demo)
 //// example project.
 
-import formz_lustre/widgets
-
-import formz/definition.{Definition}
+import formz
 import formz/validation
+import formz_lustre/widgets
 import gleam/int
 import gleam/list
-import gleam/option
 
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() {
-  Definition(
+  formz.definition_with_custom_optional(
     widgets.input_widget("text"),
     validation.non_empty_string,
     "",
@@ -31,47 +29,29 @@ pub fn text_field() {
 /// Create an email form input. Parsed as a String but must
 /// look like an email address, i.e. the string has an `@`.
 pub fn email_field() {
-  Definition(
-    widgets.input_widget("email"),
-    validation.email,
-    "",
-    definition.make_simple_optional_parse(),
-    option.None,
-  )
+  formz.definition(widgets.input_widget("email"), validation.email, "")
 }
 
 /// Create a whole number form input. Parsed as an Int.
 pub fn integer_field() {
-  Definition(
-    widgets.number_widget(""),
-    validation.int,
-    0,
-    definition.make_simple_optional_parse(),
-    option.None,
-  )
+  formz.definition(widgets.number_widget(""), validation.int, 0)
 }
 
 /// Create a number form input. Parsed as a Float.
 pub fn number_field() {
-  Definition(
-    widgets.number_widget("0.01"),
-    validation.number,
-    0.0,
-    definition.make_simple_optional_parse(),
-    option.None,
-  )
+  formz.definition(widgets.number_widget("0.01"), validation.number, 0.0)
 }
 
 /// Create a checkbox form input. Parsed as a Boolean.
 pub fn boolean_field() {
-  definition.Definition(
+  formz.definition_with_custom_optional(
     widget: widgets.checkbox_widget(),
     parse: validation.on,
     stub: False,
-    optional_parse: fn(fun, str) {
+    optional_parse: fn(parse, str) {
       case str {
         "" -> Ok(False)
-        _ -> fun(str)
+        _ -> parse(str)
       }
     },
     optional_stub: False,
@@ -80,13 +60,7 @@ pub fn boolean_field() {
 
 /// Create a password form input, which hides the input value. Parsed as a String
 pub fn password_field() {
-  Definition(
-    widgets.password_widget(),
-    validation.non_empty_string,
-    "",
-    definition.make_simple_optional_parse(),
-    option.None,
-  )
+  formz.definition(widgets.password_widget(), validation.non_empty_string, "")
 }
 
 /// Creates a `<select>` input.  Takes a tuple of `#(String, String)` where the first
@@ -102,13 +76,11 @@ pub fn choices_field(variants: List(#(String, enum)), stub stub: enum) {
     |> list.index_map(fn(t, i) { #(t.0, int.to_string(i)) })
   let values = variants |> list.map(fn(t) { t.1 })
 
-  Definition(
+  formz.definition(
     widgets.select_widget(keys_indexed),
     validation.list_item_by_index(values)
       |> validation.replace_error("is required"),
     stub,
-    definition.make_simple_optional_parse(),
-    option.None,
   )
 }
 

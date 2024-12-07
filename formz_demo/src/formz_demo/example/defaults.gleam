@@ -19,7 +19,7 @@ pub fn handle_post(
 ) -> Result(output, formz.Form(format, output)) {
   form
   |> formz.data(formdata.values)
-  |> formz.parse()
+  |> formz.decode()
 }
 
 pub fn format_string_form(form) -> String {

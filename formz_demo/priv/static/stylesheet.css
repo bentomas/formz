@@ -107,10 +107,11 @@ h1 {
             display: block;
         } */
 
-        .formz_error {
-            color: #bd2901;
-            /* font-size: 0.9em; */
-        }
+
+    }
+    .formz_error {
+        color: #bd2901;
+        /* font-size: 0.9em; */
     }
     fieldset {
         margin: 15px 0;

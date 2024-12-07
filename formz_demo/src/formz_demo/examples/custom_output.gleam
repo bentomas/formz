@@ -1,7 +1,7 @@
 import formz.{Field}
 import formz/field.{field}
-import formz/widget
 import formz_lustre/definitions
+import formz_lustre/widget
 import lustre/attribute
 import lustre/element/html
 
@@ -13,10 +13,10 @@ pub fn make_form() {
 }
 
 pub fn format_form(form) {
-  let assert Ok(Field(username_field, username_widget)) =
+  let assert Ok(Field(username_field, username_state, username_widget)) =
     formz.get(form, "username")
 
-  let assert Ok(Field(password_field, password_widget)) =
+  let assert Ok(Field(password_field, password_state, password_widget)) =
     formz.get(form, "password")
 
   html.div(
@@ -32,6 +32,7 @@ pub fn format_form(form) {
           html.label([attribute.for("username")], [html.text("Username")]),
           username_widget(
             username_field,
+            username_state,
             widget.Args(
               "username",
               widget.LabelledByLabelFor,
@@ -43,6 +44,7 @@ pub fn format_form(form) {
           html.label([attribute.for("password")], [html.text("Password")]),
           password_widget(
             password_field,
+            password_state,
             widget.Args(
               "username",
               widget.LabelledByLabelFor,

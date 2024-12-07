@@ -1,5 +1,6 @@
+import formz
 import formz/field.{type Field}
-import formz/widget
+import formz_lustre/widget
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -61,12 +62,11 @@ fn value_attr(value: String) -> attribute.Attribute(msg) {
   }
 }
 
-fn required_attr(requried: Bool) -> attribute.Attribute(msg) {
-  // case requried {
-  //   True -> attribute.required(True)
-  //   False -> attribute.none()
-  // }
-  attribute.required(requried)
+fn required_attr(presence: formz.FieldPresence) -> attribute.Attribute(msg) {
+  case presence {
+    formz.Required -> attribute.required(True)
+    formz.Optional -> attribute.none()
+  }
 }
 
 fn step_size_attr(step_size: String) -> attribute.Attribute(msg) {
@@ -93,10 +93,14 @@ fn disabled_attr(disabled: Bool) -> attribute.Attribute(msg) {
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
 pub fn checkbox_widget() {
-  fn(field: Field, args: widget.Args) {
-    do_input_widget(field |> field.set_raw_value(""), args, "checkbox", [
-      checked_attr(field.value),
-    ])
+  fn(field: Field, state: formz.FieldState, args: widget.Args) {
+    let value = state.value
+    let state = case state {
+      formz.Unvalidated(_, presence) -> formz.Unvalidated("", presence)
+      formz.Valid(_, presence) -> formz.Valid("", presence)
+      formz.Invalid(_, presence, e) -> formz.Invalid("", presence, e)
+    }
+    do_input_widget(field, state, args, "checkbox", [checked_attr(value)])
   }
 }
 
@@ -107,29 +111,35 @@ pub fn checkbox_widget() {
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
 pub fn number_widget(step_size: String) {
-  fn(field: Field, args: widget.Args) {
-    do_input_widget(field, args, "number", [step_size_attr(step_size)])
+  fn(field: Field, state: formz.FieldState, args: widget.Args) {
+    do_input_widget(field, state, args, "number", [step_size_attr(step_size)])
   }
 }
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
 pub fn password_widget() {
-  fn(field: Field, args: widget.Args) {
-    do_input_widget(field |> field.set_raw_value(""), args, "password", [])
+  fn(field: Field, state: formz.FieldState, args: widget.Args) {
+    let state = case state {
+      formz.Unvalidated(_, presence) -> formz.Unvalidated("", presence)
+      formz.Valid(_, presence) -> formz.Valid("", presence)
+      formz.Invalid(_, presence, e) -> formz.Invalid("", presence, e)
+    }
+    do_input_widget(field, state, args, "password", [])
   }
 }
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
 pub fn input_widget(type_: String) {
-  fn(field: Field, args: widget.Args) {
-    do_input_widget(field, args, type_, [])
+  fn(field: Field, state: formz.FieldState, args: widget.Args) {
+    do_input_widget(field, state, args, type_, [])
   }
 }
 
 fn do_input_widget(
   field: Field,
+  state: formz.FieldState,
   args: widget.Args,
   type_: String,
   extra_attrs: List(attribute.Attribute(msg)),
@@ -140,9 +150,9 @@ fn do_input_widget(
         attribute.type_(type_),
         name_attr(field.name),
         id_attr(args.id),
-        required_attr(field.required),
+        required_attr(state.presence),
         disabled_attr(field.disabled),
-        value_attr(field.value),
+        value_attr(state.value),
         aria_label_attr(args.labelled_by, field.label),
         aria_describedby_attr(args.described_by),
       ],
@@ -153,16 +163,18 @@ fn do_input_widget(
 
 /// Create a `<textarea></textarea>`.
 pub fn textarea_widget() {
-  fn(field: Field, args: widget.Args) -> element.Element(msg) {
+  fn(field: Field, state: formz.FieldState, args: widget.Args) -> element.Element(
+    msg,
+  ) {
     html.textarea(
       [
         name_attr(field.name),
         id_attr(args.id),
-        required_attr(field.required),
+        required_attr(state.presence),
         aria_label_attr(args.labelled_by, field.label),
         aria_describedby_attr(args.described_by),
       ],
-      field.value,
+      state.value,
     )
   }
 }
@@ -171,11 +183,13 @@ pub fn textarea_widget() {
 /// passing data around and you don't want it to be visible to the user. Like
 /// say, the ID of a record being edited.
 pub fn hidden_widget() {
-  fn(field: Field, _args: widget.Args) -> element.Element(msg) {
+  fn(field: Field, state: formz.FieldState, _args: widget.Args) -> element.Element(
+    msg,
+  ) {
     html.input([
       attribute.type_("hidden"),
       name_attr(field.name),
-      value_attr(field.value),
+      value_attr(state.value),
     ])
   }
 }
@@ -184,12 +198,14 @@ pub fn hidden_widget() {
 /// of variants is a two-tuple, where the first item is the text to display and
 /// the second item is the value.
 pub fn select_widget(variants: List(#(String, String))) {
-  fn(field: Field, args: widget.Args) -> element.Element(msg) {
+  fn(field: Field, state: formz.FieldState, args: widget.Args) -> element.Element(
+    msg,
+  ) {
     html.select(
       [
         name_attr(field.name),
         id_attr(args.id),
-        required_attr(field.required),
+        required_attr(state.presence),
         aria_label_attr(args.labelled_by, field.label),
         aria_describedby_attr(args.described_by),
       ],
@@ -198,7 +214,7 @@ pub fn select_widget(variants: List(#(String, String))) {
         list.map(variants, fn(variant) {
           let val = variant.1
           html.option(
-            [attribute.value(val), attribute.selected(field.value == val)],
+            [attribute.value(val), attribute.selected(state.value == val)],
             variant.0,
           )
         }),

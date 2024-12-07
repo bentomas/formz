@@ -1,7 +1,7 @@
 import birdie
 import formz
 import formz/field
-import formz/widget
+import formz_string/widget
 import formz_string/widgets
 import gleeunit
 
@@ -16,10 +16,9 @@ pub fn input_labelled_by_field_value_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args("", widget.LabelledByFieldValue, widget.DescribedByNone),
   )
   |> birdie.snap(title: "input labelled by field value")
@@ -32,10 +31,9 @@ pub fn input_labelled_by_element_with_id_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args(
       "",
       widget.LabelledByElementsWithIds(["id"]),
@@ -52,10 +50,9 @@ pub fn input_labelled_by_label_for_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "input labelled by label/for")
@@ -68,10 +65,9 @@ pub fn input_described_by_elements_with_ids_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args(
       "",
       widget.LabelledByLabelFor,
@@ -88,10 +84,9 @@ pub fn input_described_by_elements_with_ids_all_empty_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args(
       "",
       widget.LabelledByLabelFor,
@@ -108,10 +103,9 @@ pub fn input_required_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: True,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Required),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "input required")
@@ -124,10 +118,9 @@ pub fn input_disabled_test() {
       label: "Label",
       help_text: "",
       disabled: True,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello"),
+    formz.Valid("hello", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "input disabled")
@@ -140,10 +133,9 @@ pub fn input_sanitized_value_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("hello\"<-_=>"),
+    formz.Valid("hello\"<-_=>", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "input sanitized value")
@@ -156,10 +148,9 @@ pub fn checkbox_checked_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("on"),
+    formz.Valid("on", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "checkbox checked")
@@ -172,10 +163,9 @@ pub fn checkbox_unchecked_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid(""),
+    formz.Valid("", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "checkbox unchecked")
@@ -188,10 +178,9 @@ pub fn password_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("pass"),
+    formz.Valid("pass", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "password ignores input")
@@ -204,10 +193,9 @@ pub fn numeric_no_step_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("1"),
+    formz.Valid("1", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "number input with no step")
@@ -220,10 +208,9 @@ pub fn numeric_step_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("1.0"),
+    formz.Valid("1.0", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "number input with step")
@@ -236,10 +223,9 @@ pub fn select_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid(""),
+    formz.Valid("", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "basic select")
@@ -252,10 +238,9 @@ pub fn select_selected_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: False,
       hidden: False,
     ),
-    formz.Valid("1"),
+    formz.Valid("1", formz.Optional),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "select selected")
@@ -268,10 +253,9 @@ pub fn select_required_test() {
       label: "Label",
       help_text: "",
       disabled: False,
-      required: True,
       hidden: False,
     ),
-    formz.Valid(""),
+    formz.Valid("", formz.Required),
     widget.Args("", widget.LabelledByLabelFor, widget.DescribedByNone),
   )
   |> birdie.snap(title: "required select")

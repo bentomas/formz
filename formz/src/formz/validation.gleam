@@ -122,7 +122,7 @@ pub fn int(str: String) -> Result(Int, String) {
 }
 
 /// Validates that the input is one from a list of allowed values. Takes a list
-/// of Gleam values that can be chosen.  This uses the index of the item in to
+/// of Gleam values that can be chosen.  This uses the index of the item to
 /// find the desired value.
 ///
 /// ## Examples

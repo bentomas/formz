@@ -1,5 +1,4 @@
 import formz
-import formz/definition
 import formz/field.{field}
 import formz_string/definitions
 import formz_string/widgets
@@ -22,7 +21,7 @@ pub fn make_form() {
   use i <- formz.optional(
     field("textarea_widget"),
     definitions.text_field()
-      |> definition.set_widget(widgets.textarea_widget()),
+      |> formz.widget(widgets.textarea_widget()),
   )
 
   formz.create_form(#(a, b, c, d, e, f, g, h, i))

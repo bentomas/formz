@@ -1,6 +1,5 @@
 import formz
-import formz/field
-import formz/widget
+import formz_lustre/widget
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -15,17 +14,17 @@ pub fn generate(form) -> element.Element(msg) {
 }
 
 pub fn generate_item(
-  item: formz.FormItem(widget.Widget(element.Element(msg))),
+  item: formz.FormItem(widget.Widget(msg)),
 ) -> element.Element(msg) {
   case item {
-    formz.Field(field, _) if field.hidden == True ->
+    formz.Field(field, state, _) if field.hidden == True ->
       html.input([
         attribute.type_("hidden"),
         attribute.name(field.name),
-        attribute.value(field.value),
+        attribute.value(state.value),
       ])
 
-    formz.Field(field, make_widget) -> {
+    formz.Field(field, state, make_widget) -> {
       let id = field.name
 
       let label_el =
@@ -48,20 +47,21 @@ pub fn generate_item(
         )
       }
 
-      let error = case field {
-        field.Valid(..) -> #(element.none(), "")
-        field.Invalid(error:, ..) -> #(
+      let error = case state {
+        formz.Invalid(error:, ..) -> #(
           html.span(
             [attribute.id(id <> "_error"), attribute.class("formz_error")],
             [html.text(error)],
           ),
           id <> "_error",
         )
+        _ -> #(element.none(), "")
       }
 
       let widget_el =
         make_widget(
           field,
+          state,
           widget.Args(
             id: id,
             labelled_by: widget.LabelledByLabelFor,
@@ -84,5 +84,6 @@ pub fn generate_item(
       let children = items |> list.map(generate_item)
       html.fieldset([], [legend, html.div([], children)])
     }
+    _ -> element.none()
   }
 }
