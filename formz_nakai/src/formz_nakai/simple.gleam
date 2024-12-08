@@ -4,14 +4,14 @@ import gleam/list
 import nakai/attr
 import nakai/html
 
-pub fn generate(form) -> html.Node {
+pub fn generate(form: formz.Form(widget.Widget, a)) -> html.Node {
   form
   |> formz.items
   |> list.map(generate_visible_item)
   |> html.div([attr.class("formz_items")], _)
 }
 
-pub fn generate_visible_item(item: formz.FormItem(widget.Widget)) -> html.Node {
+pub fn generate_visible_item(item: formz.Item(widget.Widget)) -> html.Node {
   case item {
     formz.Field(field, state, _) if field.hidden == True ->
       html.input([

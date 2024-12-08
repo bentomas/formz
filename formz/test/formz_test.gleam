@@ -2,7 +2,6 @@ import formz.{Invalid, Optional, Required, Unvalidated, Valid}
 import formz/field.{field}
 import formz/subform.{subform}
 import formz/validation
-import gleam/option
 import gleam/string
 import gleeunit
 import gleeunit/should
@@ -53,7 +52,7 @@ fn boolean_field() {
   )
 }
 
-fn state_should_be(state: formz.FieldState, expected: formz.FieldState) {
+fn state_should_be(state: formz.InputState, expected: formz.InputState) {
   should.equal(state, expected)
 }
 
@@ -602,7 +601,7 @@ pub fn list_test() {
 pub fn limited_list_test() {
   let zero_extra = {
     use a <- formz.limited_list(
-      formz.simple_blank_fields(1, 4, 0),
+      formz.simple_limit_check(1, 4, 0),
       field("a"),
       integer_field(),
     )
@@ -611,7 +610,7 @@ pub fn limited_list_test() {
   }
   let one_extra = {
     use a <- formz.limited_list(
-      formz.simple_blank_fields(1, 4, 1),
+      formz.simple_limit_check(1, 4, 1),
       field("a"),
       integer_field(),
     )
@@ -621,7 +620,7 @@ pub fn limited_list_test() {
 
   let two_extra = {
     use a <- formz.limited_list(
-      formz.simple_blank_fields(1, 4, 2),
+      formz.simple_limit_check(1, 4, 2),
       field("a"),
       integer_field(),
     )

@@ -13,7 +13,7 @@ import formz/field
 import nakai/html
 
 pub type Widget =
-  fn(field.Field, formz.FieldState, Args) -> html.Node
+  fn(field.Field, formz.InputState, Args) -> html.Node
 
 pub type Args {
   Args(

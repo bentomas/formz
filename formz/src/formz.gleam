@@ -1,5 +1,5 @@
 //// A form is a list of fields and a decoder function. This module uses a
-//// series of callbacks to construct a decoder function as the fields are
+//// series of callbacks to construct the decoder function as the fields are
 //// being added to the form.  The idea is that you'd have a function that
 //// makes the form using the `use` syntax, and then be able to use the form
 //// later for parsing or rendering in different contexts.
@@ -33,8 +33,6 @@
 ////   <td>
 ////     <a href="#definition">definition</a><br>
 ////     <a href="#definition_with_custom_optional">definition_with_custom_optional</a><br>
-////     <a href="#transform">transform</a><br>
-////     <a href="#transform_with_custom_optional">transform_with_custom_optional</a><br>
 ////     <a href="#verify">verify</a><br>
 ////     <a href="#widget">widget</a>
 ////   </td>
@@ -45,11 +43,11 @@
 ////     <a href="#limit_at_least">limit_at_least</a><br>
 ////     <a href="#limit_at_most">limit_at_most</a><br>
 ////     <a href="#limit_between">limit_between</a><br>
-////     <a href="#simple_blank_fields">simple_blank_fields</a>
+////     <a href="#simple_limit_check">simple_limit_check</a>
 ////   </td>
 //// </tr>
 //// <tr>
-////   <td>Accessing and manipulating form fields</td>
+////   <td>Accessing and manipulating form items</td>
 ////   <td>
 ////     <a href="#get">get</a><br>
 ////     <a href="#items">items</a><br>
@@ -67,7 +65,7 @@
 ////
 //// ```gleam
 //// fn make_form() {
-////  use name <- formz.require(field("name"), defintions.text_field())
+////  use name <- formz.require(field("name"), definitions.text_field())
 ////
 ////  formz.create_form(name)
 //// }
@@ -82,8 +80,8 @@
 ////
 //// ```gleam
 //// fn make_form() {
-////  use greeting <- optional(field("greeting"), defintions.text_field())
-////  use name <- optional(field("name"), defintions.text_field())
+////  use greeting <- optional(field("greeting"), definitions.text_field())
+////  use name <- optional(field("name"), definitions.text_field())
 ////
 ////  formz.create_form(greeting <> " " <> name)
 //// }
@@ -115,18 +113,21 @@ import gleam/string
 /// been added.
 pub opaque type Form(widget, output) {
   Form(
-    items: List(FormItem(widget)),
-    decode: fn(List(FormItem(widget))) -> Result(output, List(FormItem(widget))),
+    items: List(Item(widget)),
+    decode: fn(List(Item(widget))) -> Result(output, List(Item(widget))),
     stub: output,
   )
 }
 
-/// A form is a decode function and a list of `FormItem`s.  You add `FormItem`s
-/// to a form using the `optional`, `require`, `list`, etc functions.  You
-/// primarily only use these directly when writing a form generator function to
-/// output your function to HTML.
+/// You add an `Item` to a form using the `optional`, `require`, `list`,
+/// `limited_list` and `subform` functions. A form is a list of `Item`s and
+/// each item is parsed to a single value, which the decode function will
+/// choose how to use.
 ///
-/// You can also manipulate these after a form has been created, to change
+/// You primarily only use an `Item` directly when writing a form generator
+/// function to output your function to HTML.
+///
+/// You can also manipulate an `Item` after a form has been created, to change
 /// things like labels, help text, etc. There are specific functions,
 /// `update_field`, `update_listfield` and `update_subform`, to help with this,
 /// so you don't have to pattern match when updating a specific item.
@@ -135,53 +136,66 @@ pub opaque type Form(widget, output) {
 /// let form = make_form()
 /// form.update_field("name", field.set_label(_, "Full Name"))
 /// ```
-pub type FormItem(widget) {
+pub type Item(widget) {
   /// A single field that (generally speaking) corresponds to a single
   /// HTML input
-  Field(detail: field.Field, state: FieldState, widget: widget)
+  Field(detail: field.Field, state: InputState, widget: widget)
   /// A single field that a consumer can submit multiple values for.
   ListField(
     detail: field.Field,
-    states: List(FieldState),
-    blank_fields: fn(Int) -> List(FieldState),
+    states: List(InputState),
+    limit_check: LimitCheck,
     widget: widget,
   )
   /// A group of fields that are added as and then parsed to a single unit.
-  SubForm(detail: subform.SubForm, items: List(FormItem(widget)))
+  SubForm(detail: subform.SubForm, items: List(Item(widget)))
 }
 
-/// The state of the field, this is used to track the current raw value,
-/// whether the field is required or not, if the field has been validated,
-/// and the outcome of that validation.
-pub type FieldState {
-  Unvalidated(value: String, presence: FieldPresence)
-  Valid(value: String, presence: FieldPresence)
-  Invalid(value: String, presence: FieldPresence, error: String)
+/// The state of the an input for a field. This is used to track the current
+/// raw value,  whether a value is required or not, if the value has been
+/// validated, and the outcome of that validation.
+pub type InputState {
+  Unvalidated(value: String, requirement: Requirement)
+  Valid(value: String, requirement: Requirement)
+  Invalid(value: String, requirement: Requirement, error: String)
 }
 
-/// Whether a field is required or not.
-pub type FieldPresence {
+/// Whether an input value is required for an input field.
+pub type Requirement {
   Optional
   Required
 }
 
-/// A `Definition` is the second argument needed to [add a field to a form](#require).
-/// It is what describes how a field works, e.g. how it looks and how it's
-/// parsed. It is the heavy compared to the lightness of a [Field](https://hexdocs.pm/formz/formz/field.html);
-/// they take a bit more work to make as they are intended to be reusable.
+/// A `Definition` describes how a field works, e.g. how it looks and how it's
+/// parsed. It is the heavy compared to the lightness of a
+/// [Field](https://hexdocs.pm/formz/formz/field.html);
+/// definitions take a bit more work to make as they are intended to be reusable.
 ///
-/// The first role of a `Defintion` is to generate the HTML widget for the field.
-/// This library is format-agnostic and you can generate HTML widgets as raw
-/// strings, Lustre elements, Nakai nodes, something else, etc. There are
-/// currently three `formz` libraries that provide common field
-/// definitions (and widgets) for the most common HTML inputs.
+/// The first role of a `Defintion` is to generate the HTML input for the field.
+/// This library is format-agnostic and you can generate inputs as raw
+/// strings, Lustre elements, Nakai nodes, something else, etc. The second role
+/// of a `Definition` is to parse the raw string data from the input into a
+/// Gleam type.
+///
+/// There are currently three `formz` libraries that provide common field
+/// definitions for the most common HTML inputs:
 ///
 /// - [formz_string](https://hexdocs.pm/formz_string/)
 /// - [formz_nakai](https://hexdocs.pm/formz_nakai/)
-/// - [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser,
-///   would it be useful there??)
+/// - [formz_lustre](https://hexdocs.pm/formz_lustre/)
 ///
-/// The second role  of a `Definition` is to parse the data from the field.
+/// How a definition parses an input value depends on whether a value is required
+/// for that input (i.e.  whether `optional`, `require`, `list`, or `limited_list`
+/// was used to add it to the form).  If a value is required, the definition is
+/// expected to return a string error if the input is empty, or the `required` type
+/// if it isn't.  You can use the `definition` function to create a simple
+/// definition that just parses to an `Option` if an input is empty.
+///
+/// However, not all fields should be parsed into an `Option` when
+/// given an empty input value. For example, an optional text field might be an
+/// empty string or an optional checkbox might be False.  For these cases, you
+/// can use the `definition_with_custom_optional` function to create a definition
+/// that can parse to any type when the input is empty.
 pub opaque type Definition(widget, required, optional) {
   Definition(
     widget: widget,
@@ -202,15 +216,42 @@ pub opaque type Definition(widget, required, optional) {
   )
 }
 
+/// When adding a list field to a form with `limited_list`, you have to provide
+/// a `LimitCheck` function that checks the number of inputs (and associated
+/// values) for the field. This function can either say the number of inputs
+/// is Ok and optionally add more, or say the number of inputs was too high
+/// and return an error. For example, you are presenting a blank form to a
+/// consumer, and you want to show three initial fields for them to fill out,
+/// or you want to always show one more additional field than the number of
+/// values that have already belong to the form, etc.
+///
+/// There are helper functions, `limit_at_least`, `limit_at_most`, and
+/// `limit_between` or more generally `simple_limit_check` to make a
+/// `LimitCheck` function for you.  I would imagine that those will cover 99.9%
+/// of cases and almost no one will need to write their own `LimitCheck`.  But
+/// if you do, look at the source for `simple_limit_check` for a better idea
+/// of how to write one.
+///
+/// This function takes as its only argument, the number of fields that already
+/// have a value.  It should return a list of `Unvalidated` `InputState` items
+/// that specify if the value is required or not.
+///
+/// This is used multiple times... when the form is created so we know how many
+/// initial inputs to present, when data is added so we know if we need to add
+/// more inputs so users can add more items, and when the form is decoded and
+/// we are checking if too many fields have been added.
+pub type LimitCheck =
+  fn(Int) -> Result(List(InputState), Int)
+
 type ListParsingResult(input_output) {
   ListParsingResult(
     value: String,
-    presence: FieldPresence,
+    requirement: Requirement,
     output: Result(input_output, String),
   )
 }
 
-/// Create an empty form that only parses to `thing`. This is primarily
+/// Create an empty form that "decodes" directly to `thing`. This is
 /// intended to be the final return value of a chain of callbacks that adds
 /// the form's fields.
 ///
@@ -246,7 +287,7 @@ pub fn create_form(thing: thing) -> Form(widget, thing) {
 /// callback should be a function without side effects.** It can be called any
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
-/// `decode_then_try` instead.
+/// `decode_then_try`.
 pub fn optional(
   field: field.Field,
   definition: Definition(widget, _, input_output),
@@ -276,7 +317,7 @@ pub fn optional(
 /// callback should be a function without side effects.** It can be called any
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
-/// `decode_then_try` instead.
+/// `decode_then_try`.
 pub fn require(
   field: field.Field,
   is definition: Definition(widget, required_output, _),
@@ -294,7 +335,7 @@ pub fn require(
 
 fn add_field(
   field: field.Field,
-  required: FieldPresence,
+  requirement: Requirement,
   widget: widget,
   parse_field: fn(String) -> Result(input_output, String),
   stub: input_output,
@@ -307,14 +348,14 @@ fn add_field(
 
   // prepend the new field to the items from the form we got in the previous step.
   let updated_items = [
-    Field(field, Unvalidated("", required), widget),
+    Field(field, Unvalidated("", requirement), widget),
     ..next_form.items
   ]
 
   // now create the decode function. decode function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
-  let decode = fn(items: List(FormItem(widget))) {
+  let decode = fn(items: List(Item(widget))) {
     // pull out the latest version of this field to get latest input data
     let assert [Field(field, state, widget), ..next_items] = items
 
@@ -336,7 +377,7 @@ fn add_field(
       // form has errors, but this field was good, so add it to the list
       // of fields as is.
       Error(error_items), Ok(_) -> {
-        let f = Field(field, Valid(state.value, required), widget)
+        let f = Field(field, Valid(state.value, requirement), widget)
         Error([f, ..error_items])
       }
 
@@ -344,14 +385,14 @@ fn add_field(
       // mark this field as invalid, mark all the existing fields as valid,
       // and return all the fields we've got so far
       Ok(_), Error(error) -> {
-        let f = Field(field, Invalid(state.value, required, error), widget)
+        let f = Field(field, Invalid(state.value, requirement, error), widget)
         Error([f, ..mark_all_fields_as_valid(next_items)])
       }
 
       // form already has errors and this field errored, so mark this field
       // as invalid, and add it to the list of errors
       Error(error_items), Error(error) -> {
-        let f = Field(field, Invalid(state.value, required, error), widget)
+        let f = Field(field, Invalid(state.value, requirement, error), widget)
         Error([f, ..error_items])
       }
     }
@@ -359,77 +400,70 @@ fn add_field(
   Form(items: updated_items, decode:, stub: next_form.stub)
 }
 
-pub fn simple_blank_fields(
-  min: Int,
-  max: Int,
-  extra: Int,
-) -> fn(Int) -> List(FieldState) {
+/// Convenience function for creating a `LimitCheck` function.  This takes
+/// the minimum number of required values, the maximum number of allowed values,
+/// and the number of "extra" blank inputs that should be offered to the user
+/// for filling out.
+///
+/// If "extra" is 0, (say, to manage blank fields via javascript), then this
+/// will show 1 blank field initially.
+pub fn simple_limit_check(min: Int, max: Int, extra: Int) -> LimitCheck {
   fn(num_nonempty) {
-    int.max(1 - num_nonempty, int.min(extra, max - num_nonempty))
-    list.fold([1, extra, min], 0, int.max)
+    case max - num_nonempty {
+      x if x < 0 -> Error(x)
+      _ -> {
+        int.max(1 - num_nonempty, int.min(extra, max - num_nonempty))
+        list.fold([1, extra, min], 0, int.max)
 
-    // if they've specified a minimum required, then start there
-    let num_required = int.max(min - num_nonempty, 0)
+        // if they've specified a minimum required, then start there
+        let num_required = int.max(min - num_nonempty, 0)
 
-    // at least one field needs to be present.  don't want a form that is asking
-    // for no input
-    let num_base = case num_nonempty, num_required {
-      x, y if x > 0 || y > 0 -> 0
-      _, _ -> 1
+        // at least one field needs to be present.  don't want a form that is asking
+        // for no input
+        let num_base = case num_nonempty, num_required {
+          x, y if x > 0 || y > 0 -> 0
+          _, _ -> 1
+        }
+
+        // they've asked for extra fields, add those unless doing so would
+        // exceed the max
+        let num_extra = int.min(extra, max - num_nonempty)
+
+        // take whatever's bigger for our optional ones, either the bare minimum
+        // (base) or the extra if they've got room for it and they've asked for it
+        let num_optional = int.max(num_base, num_extra) - num_required
+
+        Ok(list.append(
+          list.repeat(Unvalidated("", Required), num_required),
+          list.repeat(Unvalidated("", Optional), num_optional),
+        ))
+      }
     }
-
-    // they've asked for extra fields, add those unless doing so would
-    // exceed the max
-    let num_extra = int.min(extra, max - num_nonempty)
-
-    // take whatever's bigger for our optional ones, either the bare minimum
-    // (base) or the extra if they've got room for it and they've asked for it
-    let num_optional = int.max(num_base, num_extra) - num_required
-
-    list.append(
-      list.repeat(Unvalidated("", Required), num_required),
-      list.repeat(Unvalidated("", Optional), num_optional),
-    )
   }
 }
 
-/// Convenience function for creating a `BlankFieldsFunc` with a minimum number
+/// Convenience function for creating a `LimitCheck` with a minimum number
 /// of required values.  This sets the maximum to `1,000,000`, effectively unlimited.
-pub fn limit_at_least(min: Int) {
-  simple_blank_fields(min, 1_000_000, 1)
+pub fn limit_at_least(min: Int) -> LimitCheck {
+  simple_limit_check(min, 1_000_000, 1)
 }
 
-/// Convenience function for creating a `BlankFieldsFunc` with a maximum number
+/// Convenience function for creating a `LimitCheck` with a maximum number
 /// of accepted values.  This sets the minimum to `0`.
-pub fn limit_at_most(max: Int) {
-  simple_blank_fields(0, max, 1)
+pub fn limit_at_most(max: Int) -> LimitCheck {
+  simple_limit_check(0, max, 1)
 }
 
-/// Convenience function for creating a `BlankFieldsFunc` with a minimum and maximum
+/// Convenience function for creating a `LimitCheck` with a minimum and maximum
 /// number of values.
-pub fn limit_between(min: Int, max: Int) {
-  simple_blank_fields(min, max, 1)
+pub fn limit_between(min: Int, max: Int) -> LimitCheck {
+  simple_limit_check(min, max, 1)
 }
 
 /// Add a list field to a form, but with limits on the number of values that
-/// can be submitted.
-///
-/// When adding a list field to a form, you have to provide a function that
-/// tells the form if and how many blank fields to provide for the
-/// consumer to fill out.
-///
-/// For example, you are presenting an empty form to a consumer, and you
-/// want to show three blank fields for them to fill out, or you want to always
-/// show one more blank field than the number of values that already belong to
-/// the form, etc.
-///
-/// This function takes as its only argument, the number of fields that already
-/// have a value.  It should return a list of `Unvalidated` `FieldState` items
-/// that specify if the value is required or not.
-///
-/// There are helper functions, `limit_at_least`, `limit_at_most`, and
-/// `limit_between` or more generally `simple_blank_fields` for the most common
-/// use cases.
+/// can be submitted.  The `limit_check` function is used to impose those
+/// limits, and the `limit_at_least`, `limit_at_most`, and `limit_between`
+/// functions help you create this function for the most likely scenarios.
 ///
 /// The final argument is a callback that will be called when the form
 /// is being... constructed to look for more fields; validated to check for
@@ -437,9 +471,18 @@ pub fn limit_between(min: Int, max: Int) {
 /// callback should be a function without side effects.** It can be called any
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
-/// `decode_then_try` instead.
+/// `decode_then_try`.
+///
+///### Example
+///
+/// ```gleam
+/// fn make_form() {
+///  use names <- formz.limited_list(formz.limit_at_most(4), field("name"), definitions.text_field())
+///  // names is a List(String)
+///  formz.create_form(name)
+/// }
 pub fn limited_list(
-  blank_fields: fn(Int) -> List(FieldState),
+  limit_check: fn(Int) -> Result(List(InputState), Int),
   field: field.Field,
   is definition: Definition(widget, required_output, _),
   next next: fn(List(required_output)) -> Form(widget, form_output),
@@ -449,18 +492,19 @@ pub fn limited_list(
   // from the form.
   let next_form = next([definition.stub])
 
+  let initial_fields = limit_check(0) |> result.unwrap([])
   // prepend the new field to the items from the form we got in the previous step.
   let updated_items = [
-    ListField(field, blank_fields(0), blank_fields, definition.widget),
+    ListField(field, initial_fields, limit_check, definition.widget),
     ..next_form.items
   ]
 
   // now create the decode function. decode function accepts most recent
   // version of input list, since data can be added to it.  the list
   // above we just needed for the initial setup.
-  let decode = fn(items: List(FormItem(widget))) {
+  let decode = fn(items: List(Item(widget))) {
     // pull out the latest version of this field to get latest input data
-    let assert [ListField(field, states, blank_fields, widget), ..next_items] =
+    let assert [ListField(field, states, limit_check, widget), ..next_items] =
       items
 
     // go through all decode all input values.  these can have empty rows
@@ -489,8 +533,8 @@ pub fn limited_list(
 
       // form has errors, but this field was good, so mark all states as valid
       Error(error_items), Ok(_) -> {
-        let states = states |> list.map(fn(s) { Valid(s.value, s.presence) })
-        let f = ListField(field, states, blank_fields, widget)
+        let states = states |> list.map(fn(s) { Valid(s.value, s.requirement) })
+        let f = ListField(field, states, limit_check, widget)
         Error([f, ..error_items])
       }
 
@@ -499,7 +543,7 @@ pub fn limited_list(
       // valid, and then return all these fields we've got so far
       Ok(_), Error(_) -> {
         let states = list.map(item_results, state_from_parse_result)
-        let f = ListField(field, states, blank_fields, widget)
+        let f = ListField(field, states, limit_check, widget)
         Error([f, ..mark_all_fields_as_valid(next_items)])
       }
 
@@ -507,7 +551,7 @@ pub fn limited_list(
       // to the list of errors, but first marking the invalid states as... invalid
       Error(error_items), Error(_) -> {
         let states = list.map(item_results, state_from_parse_result)
-        let f = ListField(field, states, blank_fields, widget)
+        let f = ListField(field, states, limit_check, widget)
         Error([f, ..error_items])
       }
     }
@@ -518,11 +562,11 @@ pub fn limited_list(
 
 fn state_from_parse_result(
   result: ListParsingResult(input_output),
-) -> FieldState {
-  let ListParsingResult(value, presence, output) = result
+) -> InputState {
+  let ListParsingResult(value, requirement, output) = result
   case output {
-    Ok(_) -> Valid(value, presence)
-    Error(error) -> Invalid(value, presence, error)
+    Ok(_) -> Valid(value, requirement)
+    Error(error) -> Invalid(value, requirement, error)
   }
 }
 
@@ -530,7 +574,7 @@ fn outputs_for_required_or_nonempty(
   states: List(ListParsingResult(output)),
 ) -> List(Result(output, String)) {
   list.filter_map(states, fn(result) {
-    case result.value, result.presence {
+    case result.value, result.requirement {
       "", Optional -> Error(Nil)
       _, _ -> Ok(result.output)
     }
@@ -538,16 +582,16 @@ fn outputs_for_required_or_nonempty(
 }
 
 fn parse_list_state(
-  state: FieldState,
+  state: InputState,
   parse: fn(String) -> Result(a, String),
   stub: a,
 ) -> ListParsingResult(a) {
-  case state.value, state.presence {
+  case state.value, state.requirement {
     "", Required -> parse(state.value)
     "", Optional -> Ok(stub)
     _, _ -> parse(state.value)
   }
-  |> ListParsingResult(state.value, state.presence, _)
+  |> ListParsingResult(state.value, state.requirement, _)
 }
 
 /// Add a list field to a form, but with no limits on the number of values that
@@ -560,7 +604,7 @@ fn parse_list_state(
 /// callback should be a function without side effects.** It can be called any
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
-/// `decode_then_try` instead.
+/// `decode_then_try`.
 pub fn list(
   field: field.Field,
   is definition: Definition(widget, required_output, _),
@@ -569,21 +613,18 @@ pub fn list(
   limited_list(limit_at_most(1_000_000), field, definition, next)
 }
 
-fn add_prefix_to_item(
-  item: FormItem(widget),
-  prefix: String,
-) -> FormItem(widget) {
+fn add_prefix_to_item(item: Item(widget), prefix: String) -> Item(widget) {
   case item {
     Field(item_details, state, widget) -> {
       let name = prefix <> "." <> item_details.name
       Field(item_details |> field.set_name(name), state, widget)
     }
-    ListField(item_details, states, blank_fields, widget) -> {
+    ListField(item_details, states, limit_check, widget) -> {
       let name = prefix <> "." <> item_details.name
       ListField(
         item_details |> field.set_name(name),
         states,
-        blank_fields,
+        limit_check,
         widget,
       )
     }
@@ -605,7 +646,7 @@ fn add_prefix_to_item(
 /// callback should be a function without side effects.** It can be called any
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
-/// `decode_then_try` instead.
+/// `decode_then_try`.
 pub fn subform(
   subform: subform.SubForm,
   form: Form(widget, sub_output),
@@ -617,7 +658,7 @@ pub fn subform(
   let subform = SubForm(subform, sub_items)
   let updated_items = [subform, ..next_form.items]
 
-  let decode = fn(items: List(FormItem(widget))) {
+  let decode = fn(items: List(Item(widget))) {
     // pull out the latest version of this field to get latest input data
     let assert [SubForm(details, sub_items), ..next_items] = items
 
@@ -657,9 +698,9 @@ pub fn subform(
 }
 
 /// Add input data to this form. This will set the raw string value of the fields.
-/// It does not trigger any parsing, so you can also use this to set default values
-/// (if you do it in your form generator function) or initial values (if you do it
-/// before rendering an empty form).
+/// It does not trigger any parsing or decoding, so you can also use this to set
+/// default values (if you do it in your form generator function) or initial values
+/// (if you do it before rendering a blank form).
 ///
 /// The input data is a list of tuples, where the first element is the name of the
 /// field and the second element is the value to set.  If the field does not exist
@@ -677,30 +718,31 @@ pub fn data(
 }
 
 fn do_data(
-  items: List(FormItem(widget)),
+  items: List(Item(widget)),
   data: Dict(String, List(String)),
-) -> List(FormItem(widget)) {
+) -> List(Item(widget)) {
   list.map(items, fn(item) {
     let values = dict.get(data, get_item_name(item))
     case item, values {
       Field(detail, state, widget), Ok([_, ..] as values) -> {
         let assert Ok(last) = list.last(values)
-        Field(detail, Unvalidated(last, state.presence), widget)
+        Field(detail, Unvalidated(last, state.requirement), widget)
       }
-      ListField(detail, states, blank_fields, widget), Ok(values) -> {
+      ListField(detail, states, limit_check, widget), Ok(values) -> {
         let nonempty = list.filter(values, fn(v) { !string.is_empty(v) })
         let num_nonempty = list.length(nonempty)
 
+        let additional_fields = limit_check(num_nonempty) |> result.unwrap([])
         let items =
-          list.map2(states, nonempty, fn(s, v) { Unvalidated(v, s.presence) })
+          list.map2(states, nonempty, fn(s, v) { Unvalidated(v, s.requirement) })
           |> list.append(
             nonempty
             |> list.drop(list.length(states))
             |> list.map(fn(v) { Unvalidated(v, Optional) }),
           )
-          |> list.append(blank_fields(num_nonempty))
+          |> list.append(additional_fields)
 
-        ListField(detail, items, blank_fields, widget)
+        ListField(detail, items, limit_check, widget)
       }
       SubForm(detail, items), _ -> SubForm(detail, do_data(items, data))
       _, _ -> item
@@ -738,7 +780,7 @@ pub fn decode(
   }
 }
 
-/// Parse the form, then apply a function to the output if it was successful.
+/// Decode the form, then apply a function to the output if it was successful.
 /// This is a very thin wrapper around `decode` and `result.try`, but the
 /// difference being it will pass the form along to the function as a second
 /// argument in addition to the successful result.  This allows you to easily
@@ -774,18 +816,16 @@ pub fn decode_then_try(
   })
 }
 
-fn mark_all_fields_as_valid(
-  items: List(FormItem(widget)),
-) -> List(FormItem(widget)) {
+fn mark_all_fields_as_valid(items: List(Item(widget))) -> List(Item(widget)) {
   list.map(items, fn(item) {
     case item {
       Field(field, state, widget) ->
-        Field(field, Valid(state.value, state.presence), widget)
-      ListField(field, states, blank_fields, widget) -> {
+        Field(field, Valid(state.value, state.requirement), widget)
+      ListField(field, states, limit_check, widget) -> {
         let new_states =
           states
-          |> list.map(fn(state) { Valid(state.value, state.presence) })
-        ListField(field, new_states, blank_fields, widget)
+          |> list.map(fn(state) { Valid(state.value, state.requirement) })
+        ListField(field, new_states, limit_check, widget)
       }
       SubForm(subform, items) ->
         SubForm(subform, mark_all_fields_as_valid(items))
@@ -846,38 +886,40 @@ pub fn validate_all(form: Form(widget, output)) -> Form(widget, output) {
   form.items |> list.map(get_item_name) |> validate(form, _)
 }
 
-/// Get each [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) added
-/// to the form.  Any time a field, list field, or subform are added, a FormItem is created.
-pub fn items(form: Form(widget, output)) -> List(FormItem(widget)) {
+/// Get each [`Item`](https://hexdocs.pm/formz/formz.html#Item) added
+/// to the form.  Any time a field, list field, or subform are added, a `Item`
+/// is created.  Use this to loop through all the fields of your form and
+/// generate HTML for them.
+pub fn items(form: Form(widget, output)) -> List(Item(widget)) {
   form.items
 }
 
-/// Get the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with the
+/// Get the [`Item`](https://hexdocs.pm/formz/formz.html#Item) with the
 /// given name.  If multiple items have the same name, the first one is returned.
 pub fn get(
   form: Form(widget, output),
   name: String,
-) -> Result(FormItem(widget), Nil) {
+) -> Result(Item(widget), Nil) {
   list.find(form.items, fn(item) { name == get_item_name(item) })
 }
 
-/// Update the [`FormItem`](https://hexdocs.pm/formz/formz.html#FormItem) with
+/// Update the [`Item`](https://hexdocs.pm/formz/formz.html#Item) with
 /// the given name using the provided function.  If multiple items have the same
 /// name, it will be called on all of them.
 pub fn update(
   form: Form(widget, output),
   name: String,
-  fun: fn(FormItem(widget)) -> FormItem(widget),
+  fun: fn(Item(widget)) -> Item(widget),
 ) {
   let items = do_update(form.items, name, fun)
   Form(..form, items:)
 }
 
 fn do_update(
-  items: List(FormItem(widget)),
+  items: List(Item(widget)),
   name: String,
-  fun: fn(FormItem(widget)) -> FormItem(widget),
-) -> List(FormItem(widget)) {
+  fun: fn(Item(widget)) -> Item(widget),
+) -> List(Item(widget)) {
   list.map(items, fn(item) {
     case item {
       Field(detail, _, _) if detail.name == name -> fun(item)
@@ -894,7 +936,7 @@ fn do_update(
   })
 }
 
-/// Update the [`Field`](https://hexdocs.pm/formz/formz/field.html) with
+/// Update the `Field` [details](https://hexdocs.pm/formz/formz/field.html) with
 /// the given name using the provided function.  If multiple items have the same
 /// name, it will be called on all of them.  If no items have the given name,
 /// or an item with the given name exists but isn't a `Field`, this function
@@ -902,7 +944,7 @@ fn do_update(
 ///
 /// ```gleam
 /// let form = make_form()
-/// update(form, "name", field.set_label(_, "Full Name"))
+/// update_field(form, "name", field.set_label(_, "Full Name"))
 /// ```
 pub fn update_field(
   form: Form(widget, output),
@@ -917,7 +959,7 @@ pub fn update_field(
   })
 }
 
-/// Update the [`ListField`](https://hexdocs.pm/formz/formz/field.html) with
+/// Update the `ListField` [details]](https://hexdocs.pm/formz/formz/field.html) with
 /// the given name using the provided function.  If multiple items have the same
 /// name, it will be called on all of them.  If no items have the given name,
 /// or an item with the given name exists but isn't a `ListField`, this function
@@ -963,6 +1005,14 @@ pub fn update_subform(
   })
 }
 
+/// Convenience function for setting the `InputState` of a field to
+/// Invalid with a given error message.
+///
+/// ### Example
+///
+/// ```
+/// set_field_error(form, "username",  "Username is taken")
+/// ```
 pub fn set_field_error(
   form: Form(widget, output),
   name: String,
@@ -971,12 +1021,21 @@ pub fn set_field_error(
   update(form, name, fn(item) {
     case item {
       Field(field, state, widget) ->
-        Field(field, Invalid(state.value, state.presence, str), widget)
+        Field(field, Invalid(state.value, state.requirement, str), widget)
       _ -> item
     }
   })
 }
 
+/// Convenience function for setting the `InputState`s of a list field. This
+/// takes a list of Results, where the Ok means the input is `Valid` and
+/// `Error` means the input is `Invalid` with the given error message.
+///
+/// ### Example
+///
+/// ```
+/// set_listfield_errors(form, "pet_names",  [Ok(Nil), Ok(Nil), Error("Must be a cat")])
+/// ```
 pub fn set_listfield_errors(
   form: Form(widget, output),
   name: String,
@@ -984,22 +1043,22 @@ pub fn set_listfield_errors(
 ) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
-      ListField(field, states, blank_fields, widget) -> {
+      ListField(field, states, limit_check, widget) -> {
         let invalid_states =
           list.map2(states, errors, fn(state, err) {
             case err {
-              Error(str) -> Invalid(state.value, state.presence, str)
+              Error(str) -> Invalid(state.value, state.requirement, str)
               Ok(Nil) -> state
             }
           })
-        ListField(field, invalid_states, blank_fields, widget)
+        ListField(field, invalid_states, limit_check, widget)
       }
       _ -> item
     }
   })
 }
 
-fn get_item_name(item: FormItem(widget)) -> String {
+fn get_item_name(item: Item(widget)) -> String {
   case item {
     Field(field, _, _) -> field.name
     ListField(field, _, _, _) -> field.name
@@ -1008,7 +1067,8 @@ fn get_item_name(item: FormItem(widget)) -> String {
 }
 
 /// Create a simple `Definition` that is parsed as an `Option` if the field
-/// is empty.
+/// is empty.  See [formz_string](https://hexdocs.pm/formz_string/formz_string/definitions.html)
+/// for more examples of making widgets and definitions.
 pub fn definition(
   widget widget: widget,
   parse parse: fn(String) -> Result(required, String),
@@ -1028,6 +1088,16 @@ pub fn definition(
   )
 }
 
+/// Create a `Definition` that can parse to any type if the field is optional.
+/// This takes two functions.  The first, `parse`, is the "required"" parse
+/// function, which takes the raw string value, and turns it into the required
+/// type.  The second, `optional_parse`, is a function that takes the normal
+/// parse function and the raw string value, and it is supposed to check the
+/// input string: if it is empty, return an `Ok` with the `optional_stub`
+/// value; and if it's not empty use the normal parse function.
+///
+/// See [formz_string](https://hexdocs.pm/formz_string/formz_string/definitions.html)
+/// for more examples of making widgets and definitions.
 pub fn definition_with_custom_optional(
   widget widget: widget,
   parse parse: fn(String) -> Result(required, String),
@@ -1064,44 +1134,45 @@ pub fn verify(
   Definition(..def, parse: fn(val) { val |> def.parse |> result.try(fun) })
 }
 
-pub fn transform(
-  def: Definition(widget, old_required, old_optional),
-  transform: fn(old_required) -> Result(new_required, String),
-  stub: new_required,
-) -> Definition(widget, new_required, option.Option(new_required)) {
-  let Definition(widget, parse, _, _, _) = def
-  Definition(
-    widget:,
-    parse: fn(val) { val |> parse |> result.try(transform) },
-    stub:,
-    optional_parse: fn(parse, str) {
-      case str {
-        "" -> Ok(option.None)
-        _ -> parse(str) |> result.map(option.Some)
-      }
-    },
-    optional_stub: option.None,
-  )
-}
+// pub fn transform(
+//   def: Definition(widget, old_required, old_optional),
+//   transform: fn(old_required) -> Result(new_required, String),
+//   stub: new_required,
+// ) -> Definition(widget, new_required, option.Option(new_required)) {
+//   let Definition(widget, parse, _, _, _) = def
+//   Definition(
+//     widget:,
+//     parse: fn(val) { val |> parse |> result.try(transform) },
+//     stub:,
+//     optional_parse: fn(parse, str) {
+//       case str {
+//         "" -> Ok(option.None)
+//         _ -> parse(str) |> result.map(option.Some)
+//       }
+//     },
+//     optional_stub: option.None,
+//   )
+// }
 
-pub fn transform_with_custom_optional(
-  def: Definition(widget, old_required, old_optional),
-  transform: fn(old_required) -> Result(new_required, String),
-  stub: new_required,
-  optional_parse: fn(fn(String) -> Result(new_required, String), String) ->
-    Result(new_optional, String),
-  optional_stub: new_optional,
-) -> Definition(widget, new_required, new_optional) {
-  let Definition(widget, parse, _, _, _) = def
-  Definition(
-    widget:,
-    parse: fn(val) { val |> parse |> result.try(transform) },
-    stub:,
-    optional_parse:,
-    optional_stub:,
-  )
-}
+// pub fn transform_with_custom_optional(
+//   def: Definition(widget, old_required, old_optional),
+//   transform: fn(old_required) -> Result(new_required, String),
+//   stub: new_required,
+//   optional_parse: fn(fn(String) -> Result(new_required, String), String) ->
+//     Result(new_optional, String),
+//   optional_stub: new_optional,
+// ) -> Definition(widget, new_required, new_optional) {
+//   let Definition(widget, parse, _, _, _) = def
+//   Definition(
+//     widget:,
+//     parse: fn(val) { val |> parse |> result.try(transform) },
+//     stub:,
+//     optional_parse:,
+//     optional_stub:,
+//   )
+// }
 
+/// Update the widget of a definition.
 pub fn widget(
   def: Definition(widget, a, b),
   widget: widget,
@@ -1124,11 +1195,11 @@ pub fn get_optional_parse(
 }
 
 @internal
-pub fn get_states(form: Form(widget, output)) -> List(FieldState) {
+pub fn get_states(form: Form(widget, output)) -> List(InputState) {
   form.items |> do_get_states |> list.reverse
 }
 
-fn do_get_states(items: List(FormItem(widget))) -> List(FieldState) {
+fn do_get_states(items: List(Item(widget))) -> List(InputState) {
   list.fold(items, [], fn(acc, item) {
     case item {
       Field(_, state, _) -> [state, ..acc]

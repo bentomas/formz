@@ -67,11 +67,11 @@ fn test_inputs(
   let string_field = field.Field(name:, label:, help_text:, hidden:, disabled:)
   let field = field.Field(name:, label:, help_text:, hidden:, disabled:)
 
-  let presence = case required {
+  let requirement = case required {
     True -> formz.Required
     False -> formz.Optional
   }
-  let state = formz.Valid(value, presence)
+  let state = formz.Valid(value, requirement)
 
   widget(field, state, args)
   |> convert_to_string

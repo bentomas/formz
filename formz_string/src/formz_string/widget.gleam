@@ -12,7 +12,7 @@ import formz
 import formz/field
 
 pub type Widget =
-  fn(field.Field, formz.FieldState, Args) -> String
+  fn(field.Field, formz.InputState, Args) -> String
 
 pub type Args {
   Args(

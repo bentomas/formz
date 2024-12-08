@@ -46,20 +46,20 @@ pub fn build_page(
 }
 
 fn get_fields(form: formz.Form(format, ouput)) {
-  form |> formz.items |> do_get_fields([]) |> list.reverse
+  form |> formz.items |> do_get_items([]) |> list.reverse
 }
 
-fn do_get_fields(items: List(formz.FormItem(format)), acc) {
+fn do_get_items(items: List(formz.Item(format)), acc) {
   case items {
     [] -> acc
     [formz.Field(field, state, _), ..rest] ->
-      do_get_fields(rest, [#(field, state), ..acc])
+      do_get_items(rest, [#(field, state), ..acc])
     [formz.ListField(field, states, _, _), ..rest] -> {
       let tups = list.map(states, fn(s) { #(field, s) }) |> list.reverse
-      do_get_fields(rest, list.append(tups, acc))
+      do_get_items(rest, list.append(tups, acc))
     }
     [formz.SubForm(_, items), ..rest] ->
-      do_get_fields(list.flatten([items, rest]), acc)
+      do_get_items(list.flatten([items, rest]), acc)
   }
 }
 
