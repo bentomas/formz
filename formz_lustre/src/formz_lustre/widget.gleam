@@ -12,8 +12,10 @@ import formz
 import formz/field
 import lustre/element
 
-pub type Widget(msg) =
-  fn(field.Field, formz.InputState, Args) -> element.Element(msg)
+pub type Widget(msg) {
+  Widget(fn(field.Field, formz.InputState, Args) -> element.Element(msg))
+  Hidden
+}
 
 pub type Args {
   Args(

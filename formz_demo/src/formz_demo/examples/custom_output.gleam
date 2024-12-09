@@ -13,11 +13,17 @@ pub fn make_form() {
 }
 
 pub fn format_form(form) {
-  let assert Ok(Field(username_field, username_state, username_widget)) =
-    formz.get(form, "username")
+  let assert Ok(Field(
+    username_field,
+    username_state,
+    widget.Widget(username_widget),
+  )) = formz.get(form, "username")
 
-  let assert Ok(Field(password_field, password_state, password_widget)) =
-    formz.get(form, "password")
+  let assert Ok(Field(
+    password_field,
+    password_state,
+    widget.Widget(password_widget),
+  )) = formz.get(form, "password")
 
   html.div(
     [

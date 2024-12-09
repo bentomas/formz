@@ -11,8 +11,10 @@
 import formz
 import formz/field
 
-pub type Widget =
-  fn(field.Field, formz.InputState, Args) -> String
+pub type Widget {
+  Widget(fn(field.Field, formz.InputState, Args) -> String)
+  Hidden
+}
 
 pub type Args {
   Args(

@@ -13,13 +13,13 @@ pub fn generate(form: formz.Form(widget.Widget, a)) -> html.Node {
 
 pub fn generate_visible_item(item: formz.Item(widget.Widget)) -> html.Node {
   case item {
-    formz.Field(field, state, _) if field.hidden == True ->
+    formz.Field(field, state, widget.Hidden) ->
       html.input([
         attr.type_("hidden"),
         attr.name(field.name),
         attr.value(state.value),
       ])
-    formz.Field(field, state, make_widget) -> {
+    formz.Field(field, state, widget.Widget(make_widget)) -> {
       let id = field.name
 
       let label_el =

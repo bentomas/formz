@@ -16,13 +16,23 @@ pub fn generate(form) -> String {
 
 pub fn generate_item(item: formz.Item(widget.Widget)) -> String {
   case item {
-    formz.Field(field, state, _) if field.hidden == True ->
+    formz.Field(field, state, widget.Hidden) ->
       "<input"
       <> { " type=\"hidden\"" }
       <> { " name=\"" <> field.name <> "\"" }
       <> { " value=\"" <> state.value <> "\"" }
       <> ">"
-    formz.Field(field, state, make_widget) -> {
+    formz.ListField(field, states, _, widget.Hidden) ->
+      states
+      |> list.map(fn(state) {
+        "<input"
+        <> { " type=\"hidden\"" }
+        <> { " name=\"" <> field.name <> "[]\"" }
+        <> { " value=\"" <> state.value <> "\"" }
+        <> ">"
+      })
+      |> string.join("")
+    formz.Field(field, state, widget.Widget(make_widget)) -> {
       let id = field.name
 
       let label_el =
@@ -76,7 +86,7 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> String {
       <> errors_el
       <> "</div>"
     }
-    formz.ListField(field, states, _, make_widget) -> {
+    formz.ListField(field, states, _, widget.Widget(make_widget)) -> {
       let id = field.name
 
       let #(legend_el, legend_id) = #(

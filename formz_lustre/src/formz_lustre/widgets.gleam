@@ -93,7 +93,7 @@ fn disabled_attr(disabled: Bool) -> attribute.Attribute(msg) {
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
 pub fn checkbox_widget() {
-  fn(field: Field, state: formz.InputState, args: widget.Args) {
+  widget.Widget(fn(field: Field, state: formz.InputState, args: widget.Args) {
     let value = state.value
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
@@ -101,7 +101,7 @@ pub fn checkbox_widget() {
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
     do_input_widget(field, state, args, "checkbox", [checked_attr(value)])
-  }
+  })
 }
 
 /// Create a `<input type="number">`.  Normally browsers only allow whole numbers,
@@ -111,30 +111,30 @@ pub fn checkbox_widget() {
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
 pub fn number_widget(step_size: String) {
-  fn(field: Field, state: formz.InputState, args: widget.Args) {
+  widget.Widget(fn(field: Field, state: formz.InputState, args: widget.Args) {
     do_input_widget(field, state, args, "number", [step_size_attr(step_size)])
-  }
+  })
 }
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
 pub fn password_widget() {
-  fn(field: Field, state: formz.InputState, args: widget.Args) {
+  widget.Widget(fn(field: Field, state: formz.InputState, args: widget.Args) {
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
       formz.Valid(_, requirement) -> formz.Valid("", requirement)
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
     do_input_widget(field, state, args, "password", [])
-  }
+  })
 }
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
 pub fn input_widget(type_: String) {
-  fn(field: Field, state: formz.InputState, args: widget.Args) {
+  widget.Widget(fn(field: Field, state: formz.InputState, args: widget.Args) {
     do_input_widget(field, state, args, type_, [])
-  }
+  })
 }
 
 fn do_input_widget(
@@ -163,62 +163,58 @@ fn do_input_widget(
 
 /// Create a `<textarea></textarea>`.
 pub fn textarea_widget() {
-  fn(field: Field, state: formz.InputState, args: widget.Args) -> element.Element(
-    msg,
-  ) {
-    html.textarea(
-      [
-        name_attr(field.name),
-        id_attr(args.id),
-        required_attr(state.requirement),
-        aria_label_attr(args.labelled_by, field.label),
-        aria_describedby_attr(args.described_by),
-      ],
-      state.value,
-    )
-  }
+  widget.Widget(
+    fn(field: Field, state: formz.InputState, args: widget.Args) -> element.Element(
+      msg,
+    ) {
+      html.textarea(
+        [
+          name_attr(field.name),
+          id_attr(args.id),
+          required_attr(state.requirement),
+          aria_label_attr(args.labelled_by, field.label),
+          aria_describedby_attr(args.described_by),
+        ],
+        state.value,
+      )
+    },
+  )
 }
 
 /// Create a `<input type="hidden">`. This is useful for if a field is just
 /// passing data around and you don't want it to be visible to the user. Like
 /// say, the ID of a record being edited.
 pub fn hidden_widget() {
-  fn(field: Field, state: formz.InputState, _args: widget.Args) -> element.Element(
-    msg,
-  ) {
-    html.input([
-      attribute.type_("hidden"),
-      name_attr(field.name),
-      value_attr(state.value),
-    ])
-  }
+  widget.Hidden
 }
 
 /// Create a `<select></select>` with `<option>`s for each variant.  The list
 /// of variants is a two-tuple, where the first item is the text to display and
 /// the second item is the value.
 pub fn select_widget(variants: List(#(String, String))) {
-  fn(field: Field, state: formz.InputState, args: widget.Args) -> element.Element(
-    msg,
-  ) {
-    html.select(
-      [
-        name_attr(field.name),
-        id_attr(args.id),
-        required_attr(state.requirement),
-        aria_label_attr(args.labelled_by, field.label),
-        aria_describedby_attr(args.described_by),
-      ],
-      list.flatten([
-        [html.option([attribute.value("")], "Select..."), html.hr([])],
-        list.map(variants, fn(variant) {
-          let val = variant.1
-          html.option(
-            [attribute.value(val), attribute.selected(state.value == val)],
-            variant.0,
-          )
-        }),
-      ]),
-    )
-  }
+  widget.Widget(
+    fn(field: Field, state: formz.InputState, args: widget.Args) -> element.Element(
+      msg,
+    ) {
+      html.select(
+        [
+          name_attr(field.name),
+          id_attr(args.id),
+          required_attr(state.requirement),
+          aria_label_attr(args.labelled_by, field.label),
+          aria_describedby_attr(args.described_by),
+        ],
+        list.flatten([
+          [html.option([attribute.value("")], "Select..."), html.hr([])],
+          list.map(variants, fn(variant) {
+            let val = variant.1
+            html.option(
+              [attribute.value(val), attribute.selected(state.value == val)],
+              variant.0,
+            )
+          }),
+        ]),
+      )
+    },
+  )
 }

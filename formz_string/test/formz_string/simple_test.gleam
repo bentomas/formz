@@ -27,8 +27,8 @@ pub fn one_field_and_subform_form() {
 
 pub fn hidden_field_form() {
   use a <- formz.require(
-    field("a") |> field.make_hidden,
-    definitions.integer_field(),
+    field("a"),
+    definitions.integer_field() |> definitions.make_hidden,
   )
 
   formz.create_form(#(a))

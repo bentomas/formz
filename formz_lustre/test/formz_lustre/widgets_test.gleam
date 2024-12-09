@@ -38,7 +38,6 @@ fn test_inputs(
   name name: String,
   label label: String,
   help help_text: String,
-  hidden hidden: Bool,
   disabled disabled: Bool,
   required required: Bool,
   value value: String,
@@ -46,8 +45,8 @@ fn test_inputs(
   string string_widget: string_widget.Widget,
   widget widget: widget.Widget(msg),
 ) {
-  let string_field = field.Field(name:, label:, help_text:, hidden:, disabled:)
-  let field = field.Field(name:, label:, help_text:, hidden:, disabled:)
+  let string_field = field.Field(name:, label:, help_text:, disabled:)
+  let field = field.Field(name:, label:, help_text:, disabled:)
 
   let requirement = case required {
     True -> formz.Required
@@ -55,9 +54,18 @@ fn test_inputs(
   }
   let state = formz.Valid(value, requirement)
 
-  widget(field, state, args)
-  |> convert_to_string
-  |> should.equal(string_widget(string_field, state, args |> to_string_args))
+  case widget, string_widget {
+    widget.Hidden, string_widget.Hidden -> Nil
+    widget.Widget(make_widget), string_widget.Widget(make_string_widget) ->
+      make_widget(field, state, args)
+      |> convert_to_string
+      |> should.equal(make_string_widget(
+        string_field,
+        state,
+        args |> to_string_args,
+      ))
+    _, _ -> should.fail()
+  }
 }
 
 pub fn text_widget_test() {
@@ -67,7 +75,6 @@ pub fn text_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -84,7 +91,6 @@ pub fn text_widget_test() {
     name: "",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -101,7 +107,6 @@ pub fn text_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "val",
@@ -118,7 +123,6 @@ pub fn text_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -137,7 +141,6 @@ pub fn checkbox_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -153,7 +156,6 @@ pub fn checkbox_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "on",
@@ -170,7 +172,6 @@ pub fn checkbox_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "on",
@@ -189,7 +190,6 @@ pub fn password_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -205,7 +205,6 @@ pub fn password_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "xxxx",
@@ -222,7 +221,6 @@ pub fn password_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "xxxx",
@@ -241,7 +239,6 @@ pub fn textarea_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -257,7 +254,6 @@ pub fn textarea_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",
@@ -274,7 +270,6 @@ pub fn textarea_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",
@@ -293,7 +288,6 @@ pub fn hidden_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -309,7 +303,6 @@ pub fn hidden_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",
@@ -326,7 +319,6 @@ pub fn hidden_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",
@@ -346,7 +338,6 @@ pub fn select_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "",
@@ -362,7 +353,6 @@ pub fn select_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",
@@ -379,7 +369,6 @@ pub fn select_widget_test() {
     name: "a",
     label: "A",
     help: "help",
-    hidden: False,
     disabled: False,
     required: True,
     value: "1",

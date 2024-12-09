@@ -17,14 +17,14 @@ pub fn generate_item(
   item: formz.Item(widget.Widget(msg)),
 ) -> element.Element(msg) {
   case item {
-    formz.Field(field, state, _) if field.hidden == True ->
+    formz.Field(field, state, widget.Hidden) ->
       html.input([
         attribute.type_("hidden"),
         attribute.name(field.name),
         attribute.value(state.value),
       ])
 
-    formz.Field(field, state, make_widget) -> {
+    formz.Field(field, state, widget.Widget(make_widget)) -> {
       let id = field.name
 
       let label_el =

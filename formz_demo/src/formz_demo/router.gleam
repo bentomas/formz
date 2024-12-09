@@ -11,6 +11,7 @@ import wisp.{type Request, type Response}
 import formz_demo/examples/all_the_inputs
 import formz_demo/examples/custom_output
 import formz_demo/examples/hello_world
+import formz_demo/examples/hidden_inputs
 import formz_demo/examples/labels
 import formz_demo/examples/list_fields
 import formz_demo/examples/login
@@ -54,6 +55,19 @@ fn get_examples() {
           dir,
           require_all_the_inputs.make_form,
           defaults.handle_get,
+          defaults.handle_post,
+          defaults.format_string_form,
+          defaults.formatted_string_form_to_string,
+        ),
+      )
+    }),
+    #("hidden_inputs", fn(req, dir) {
+      run.handle(
+        req,
+        run.ExampleRun(
+          dir,
+          hidden_inputs.make_form,
+          hidden_inputs.handle_get,
           defaults.handle_post,
           defaults.format_string_form,
           defaults.formatted_string_form_to_string,

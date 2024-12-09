@@ -12,8 +12,10 @@ import formz
 import formz/field
 import nakai/html
 
-pub type Widget =
-  fn(field.Field, formz.InputState, Args) -> html.Node
+pub type Widget {
+  Widget(fn(field.Field, formz.InputState, Args) -> html.Node)
+  Hidden
+}
 
 pub type Args {
   Args(
