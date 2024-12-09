@@ -410,7 +410,7 @@ fn add_field(
 pub fn simple_limit_check(min: Int, max: Int, extra: Int) -> LimitCheck {
   fn(num_nonempty) {
     case max - num_nonempty {
-      x if x < 0 -> Error(x)
+      x if x < 0 -> Error(-x)
       _ -> {
         int.max(1 - num_nonempty, int.min(extra, max - num_nonempty))
         list.fold([1, extra, min], 0, int.max)
@@ -507,12 +507,16 @@ pub fn limited_list(
     let assert [ListField(field, states, limit_check, widget), ..next_items] =
       items
 
-    // go through all decode all input values.  these can have empty rows
+    // go through and parse all input values.  these can have empty rows
     // that were offered to the consumer, but they didn't fill out.  we need
-    // to keep track of those so they can be used when generating the form
-    // again on error
+    // to keep track of those so they can be displayed when generating the form
+    // again on error.
     let item_results =
-      list.map(states, parse_list_state(_, definition.parse, definition.stub))
+      states
+      |> list.map(parse_list_state(_, definition.parse, definition.stub))
+      // then we need to check if too many values were submitted, and if so
+      // mark the extra ones as having errors
+      |> mark_above_max_values_as_invalid(limit_check)
 
     // but we don't want them for considering the output of this list field,
     // so remove the empty optional fields and just grab the outputs
@@ -587,11 +591,48 @@ fn parse_list_state(
   stub: a,
 ) -> ListParsingResult(a) {
   case state.value, state.requirement {
-    "", Required -> parse(state.value)
     "", Optional -> Ok(stub)
     _, _ -> parse(state.value)
   }
   |> ListParsingResult(state.value, state.requirement, _)
+}
+
+fn mark_above_max_values_as_invalid(
+  list: List(ListParsingResult(output)),
+  limit_check: LimitCheck,
+) -> List(ListParsingResult(output)) {
+  let count =
+    list.fold(list, 0, fn(acc, r) {
+      case r.value, r.requirement {
+        "", Optional -> acc
+        _, _ -> acc + 1
+      }
+    })
+
+  case limit_check(count) {
+    Ok(_) -> list
+    Error(num_too_many) -> {
+      let max_index = count - num_too_many
+
+      let #(mapped_results, _) =
+        list.fold(list, #([], 0), fn(acc, r) {
+          let #(results, i) = acc
+          case r.value, r.requirement, i >= max_index {
+            "", Optional, _ -> #([r, ..results], i)
+            _, _, False -> #([r, ..results], i + 1)
+            v, r, True -> #(
+              [
+                ListParsingResult(v, r, Error("exceeds maximum allowed items")),
+                ..results
+              ],
+              i + 1,
+            )
+          }
+        })
+
+      mapped_results |> list.reverse
+    }
+  }
 }
 
 /// Add a list field to a form, but with no limits on the number of values that

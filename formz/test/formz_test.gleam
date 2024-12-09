@@ -690,3 +690,48 @@ pub fn limited_list_test() {
     Valid("2", Optional),
   ])
 }
+
+pub fn limited_list_too_many_test() {
+  let f = {
+    use a <- formz.limited_list(
+      formz.limit_between(2, 3),
+      field("a"),
+      integer_field(),
+    )
+
+    formz.create_form(a)
+  }
+
+  // straight up too many
+  f
+  |> formz.data([
+    #("a", "1"),
+    #("a", "2"),
+    #("a", "3"),
+    #("a", "4"),
+    #("a", "5"),
+  ])
+  |> formz.decode
+  |> get_form_from_error_result
+  |> formz.get_states
+  |> should.equal([
+    Valid("1", Required),
+    Valid("2", Required),
+    Valid("3", Optional),
+    Invalid("4", Optional, "exceeds maximum allowed items"),
+    Invalid("5", Optional, "exceeds maximum allowed items"),
+  ])
+
+  // too many but with an empty value that should be skipped
+  f
+  |> formz.data([#("a", "1"), #("a", ""), #("a", "3"), #("a", "4"), #("a", "5")])
+  |> formz.decode
+  |> get_form_from_error_result
+  |> formz.get_states
+  |> should.equal([
+    Valid("1", Required),
+    Valid("3", Required),
+    Valid("4", Optional),
+    Invalid("5", Optional, "exceeds maximum allowed items"),
+  ])
+}
