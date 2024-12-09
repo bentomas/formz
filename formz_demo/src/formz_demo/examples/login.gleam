@@ -1,6 +1,6 @@
 import formz
 import formz/field.{field}
-import formz_string/definitions
+import formz_string/definition
 import wisp
 
 pub type Credentials {
@@ -12,8 +12,8 @@ pub type User {
 }
 
 pub fn make_form() {
-  use username <- formz.require(field("username"), definitions.text_field())
-  use password <- formz.require(field("password"), definitions.password_field())
+  use username <- formz.require(field("username"), definition.text_field())
+  use password <- formz.require(field("password"), definition.password_field())
 
   formz.create_form(Credentials(username, password))
 }

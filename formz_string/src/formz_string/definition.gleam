@@ -7,7 +7,6 @@
 import formz
 import formz/validation
 import formz_string/widget
-import formz_string/widgets
 import gleam/int
 import gleam/list
 import gleam/option
@@ -15,7 +14,7 @@ import gleam/option
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() -> formz.Definition(widget.Widget, String, String) {
   formz.definition_with_custom_optional(
-    widgets.input_widget("text"),
+    widget.input_widget("text"),
     validation.non_empty_string,
     "",
     fn(fun, str) {
@@ -35,7 +34,7 @@ pub fn email_field() -> formz.Definition(
   String,
   option.Option(String),
 ) {
-  formz.definition(widgets.input_widget("email"), validation.email, "")
+  formz.definition(widget.input_widget("email"), validation.email, "")
 }
 
 /// Create a whole number form input. Parsed as an Int.
@@ -44,7 +43,7 @@ pub fn integer_field() -> formz.Definition(
   Int,
   option.Option(Int),
 ) {
-  formz.definition(widgets.number_widget(""), validation.int, 0)
+  formz.definition(widget.number_widget(""), validation.int, 0)
 }
 
 /// Create a number form input. Parsed as a Float.
@@ -53,14 +52,14 @@ pub fn number_field() -> formz.Definition(
   Float,
   option.Option(Float),
 ) {
-  formz.definition(widgets.number_widget("0.01"), validation.number, 0.0)
+  formz.definition(widget.number_widget("0.01"), validation.number, 0.0)
 }
 
 /// Create a checkbox form input. Parsed as a `Bool`. If required, the parsed
 /// `Bool` must be `True`.
 pub fn boolean_field() -> formz.Definition(widget.Widget, Bool, Bool) {
   formz.definition_with_custom_optional(
-    widget: widgets.checkbox_widget(),
+    widget: widget.checkbox_widget(),
     parse: validation.on,
     stub: False,
     optional_parse: fn(fun, str) {
@@ -79,7 +78,7 @@ pub fn password_field() -> formz.Definition(
   String,
   option.Option(String),
 ) {
-  formz.definition(widgets.password_widget(), validation.non_empty_string, "")
+  formz.definition(widget.password_widget(), validation.non_empty_string, "")
 }
 
 /// Creates a `<select>` input.  Takes a tuple of `#(String, String)` where the first
@@ -101,7 +100,7 @@ pub fn choices_field(
   let values = variants |> list.map(fn(t) { t.1 })
 
   formz.definition(
-    widgets.select_widget(keys_indexed),
+    widget.select_widget(keys_indexed),
     validation.list_item_by_index(values)
       |> validation.replace_error("is required"),
     stub,
@@ -120,5 +119,5 @@ pub fn list_field(
 pub fn make_hidden(
   def: formz.Definition(widget.Widget, a, b),
 ) -> formz.Definition(widget.Widget, a, b) {
-  def |> formz.widget(widgets.hidden_widget())
+  def |> formz.widget(widget.hidden_widget())
 }

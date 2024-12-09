@@ -1,9 +1,7 @@
 import formz
 import formz/field
 import formz_lustre/widget
-import formz_lustre/widgets
 import formz_string/widget as string_widget
-import formz_string/widgets as string_widgets
 import gleeunit
 import gleeunit/should
 import lustre/element
@@ -70,8 +68,8 @@ fn test_inputs(
 
 pub fn text_widget_test() {
   test_inputs(
-    string_widgets.input_widget("text"),
-    widgets.input_widget("text"),
+    string_widget.input_widget("text"),
+    widget.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -86,8 +84,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.input_widget("text"),
-    widgets.input_widget("text"),
+    string_widget.input_widget("text"),
+    widget.input_widget("text"),
     name: "",
     label: "A",
     help: "help",
@@ -102,8 +100,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.input_widget("text"),
-    widgets.input_widget("text"),
+    string_widget.input_widget("text"),
+    widget.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -118,8 +116,8 @@ pub fn text_widget_test() {
   )
 
   test_inputs(
-    string_widgets.input_widget("text"),
-    widgets.input_widget("text"),
+    string_widget.input_widget("text"),
+    widget.input_widget("text"),
     name: "a",
     label: "A",
     help: "help",
@@ -136,8 +134,8 @@ pub fn text_widget_test() {
 
 pub fn checkbox_widget_test() {
   test_inputs(
-    string_widgets.checkbox_widget(),
-    widgets.checkbox_widget(),
+    string_widget.checkbox_widget(),
+    widget.checkbox_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -151,8 +149,8 @@ pub fn checkbox_widget_test() {
     ),
   )
   test_inputs(
-    string_widgets.checkbox_widget(),
-    widgets.checkbox_widget(),
+    string_widget.checkbox_widget(),
+    widget.checkbox_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -167,8 +165,8 @@ pub fn checkbox_widget_test() {
   )
 
   test_inputs(
-    string_widgets.checkbox_widget(),
-    widgets.checkbox_widget(),
+    string_widget.checkbox_widget(),
+    widget.checkbox_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -185,8 +183,8 @@ pub fn checkbox_widget_test() {
 
 pub fn password_widget_test() {
   test_inputs(
-    string_widgets.password_widget(),
-    widgets.password_widget(),
+    string_widget.password_widget(),
+    widget.password_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -200,8 +198,8 @@ pub fn password_widget_test() {
     ),
   )
   test_inputs(
-    string_widgets.password_widget(),
-    widgets.password_widget(),
+    string_widget.password_widget(),
+    widget.password_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -216,8 +214,8 @@ pub fn password_widget_test() {
   )
 
   test_inputs(
-    string_widgets.password_widget(),
-    widgets.password_widget(),
+    string_widget.password_widget(),
+    widget.password_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -234,8 +232,8 @@ pub fn password_widget_test() {
 
 pub fn textarea_widget_test() {
   test_inputs(
-    string_widgets.textarea_widget(),
-    widgets.textarea_widget(),
+    string_widget.textarea_widget(),
+    widget.textarea_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -249,8 +247,8 @@ pub fn textarea_widget_test() {
     ),
   )
   test_inputs(
-    string_widgets.textarea_widget(),
-    widgets.textarea_widget(),
+    string_widget.textarea_widget(),
+    widget.textarea_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -265,8 +263,8 @@ pub fn textarea_widget_test() {
   )
 
   test_inputs(
-    string_widgets.textarea_widget(),
-    widgets.textarea_widget(),
+    string_widget.textarea_widget(),
+    widget.textarea_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -283,8 +281,8 @@ pub fn textarea_widget_test() {
 
 pub fn hidden_widget_test() {
   test_inputs(
-    string_widgets.hidden_widget(),
-    widgets.hidden_widget(),
+    string_widget.hidden_widget(),
+    widget.hidden_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -298,8 +296,8 @@ pub fn hidden_widget_test() {
     ),
   )
   test_inputs(
-    string_widgets.hidden_widget(),
-    widgets.hidden_widget(),
+    string_widget.hidden_widget(),
+    widget.hidden_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -314,8 +312,8 @@ pub fn hidden_widget_test() {
   )
 
   test_inputs(
-    string_widgets.hidden_widget(),
-    widgets.hidden_widget(),
+    string_widget.hidden_widget(),
+    widget.hidden_widget(),
     name: "a",
     label: "A",
     help: "help",
@@ -333,8 +331,8 @@ pub fn hidden_widget_test() {
 pub fn select_widget_test() {
   let list = [#("One", "a"), #("Two", "b"), #("Three", "c")]
   test_inputs(
-    string_widgets.select_widget(list),
-    widgets.select_widget(list),
+    string_widget.select_widget(list),
+    widget.select_widget(list),
     name: "a",
     label: "A",
     help: "help",
@@ -348,8 +346,8 @@ pub fn select_widget_test() {
     ),
   )
   test_inputs(
-    string_widgets.select_widget(list),
-    widgets.select_widget(list),
+    string_widget.select_widget(list),
+    widget.select_widget(list),
     name: "a",
     label: "A",
     help: "help",
@@ -364,8 +362,8 @@ pub fn select_widget_test() {
   )
 
   test_inputs(
-    string_widgets.select_widget(list),
-    widgets.select_widget(list),
+    string_widget.select_widget(list),
+    widget.select_widget(list),
     name: "a",
     label: "A",
     help: "help",

@@ -1,20 +1,20 @@
 import formz
 import formz/field.{field}
-import formz_string/definitions
-import formz_string/widgets
+import formz_string/definition
+import formz_string/widget
 
 pub fn make_form() {
   use id1 <- formz.require(
     field("id_1"),
-    definitions.make_hidden(definitions.integer_field()),
+    definition.make_hidden(definition.integer_field()),
   )
   use id2 <- formz.require(
     field("id_2"),
-    definitions.integer_field() |> definitions.make_hidden,
+    definition.integer_field() |> definition.make_hidden,
   )
   use id3 <- formz.require(
     field("id_3"),
-    definitions.integer_field() |> formz.widget(widgets.hidden_widget()),
+    definition.integer_field() |> formz.widget(widget.hidden_widget()),
   )
   formz.create_form(#(id1, id2, id3))
 }

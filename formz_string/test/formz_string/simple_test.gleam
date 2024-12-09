@@ -2,7 +2,7 @@ import birdie
 import formz
 import formz/field.{field}
 import formz/subform
-import formz_string/definitions
+import formz_string/definition
 import formz_string/simple
 import gleeunit
 
@@ -11,15 +11,15 @@ pub fn main() {
 }
 
 pub fn three_field_form() {
-  use a <- formz.require(field("a"), definitions.integer_field())
-  use b <- formz.require(field("b"), definitions.integer_field())
-  use c <- formz.optional(field("c"), definitions.integer_field())
+  use a <- formz.require(field("a"), definition.integer_field())
+  use b <- formz.require(field("b"), definition.integer_field())
+  use c <- formz.optional(field("c"), definition.integer_field())
 
   formz.create_form(#(a, b, c))
 }
 
 pub fn one_field_and_subform_form() {
-  use a <- formz.require(field("a"), definitions.integer_field())
+  use a <- formz.require(field("a"), definition.integer_field())
   use b <- formz.subform(subform.subform("b"), three_field_form())
 
   formz.create_form(#(a, b))
@@ -28,7 +28,7 @@ pub fn one_field_and_subform_form() {
 pub fn hidden_field_form() {
   use a <- formz.require(
     field("a"),
-    definitions.integer_field() |> definitions.make_hidden,
+    definition.integer_field() |> definition.make_hidden,
   )
 
   formz.create_form(#(a))

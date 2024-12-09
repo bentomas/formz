@@ -6,20 +6,20 @@
 
 import formz
 import formz/validation
-import formz_lustre/widgets
+import formz_nakai/widget
 import gleam/int
 import gleam/list
 
 /// Create a basic form input. Parsed as a String.
 pub fn text_field() {
   formz.definition_with_custom_optional(
-    widgets.input_widget("text"),
+    widget.input_widget("text"),
     validation.non_empty_string,
     "",
-    fn(fun, str) {
+    fn(parse, str) {
       case str {
         "" -> Ok("")
-        _ -> fun(str)
+        _ -> parse(str)
       }
     },
     "",
@@ -29,23 +29,23 @@ pub fn text_field() {
 /// Create an email form input. Parsed as a String but must
 /// look like an email address, i.e. the string has an `@`.
 pub fn email_field() {
-  formz.definition(widgets.input_widget("email"), validation.email, "")
+  formz.definition(widget.input_widget("email"), validation.email, "")
 }
 
 /// Create a whole number form input. Parsed as an Int.
 pub fn integer_field() {
-  formz.definition(widgets.number_widget(""), validation.int, 0)
+  formz.definition(widget.number_widget(""), validation.int, 0)
 }
 
 /// Create a number form input. Parsed as a Float.
 pub fn number_field() {
-  formz.definition(widgets.number_widget("0.01"), validation.number, 0.0)
+  formz.definition(widget.number_widget("0.01"), validation.number, 0.0)
 }
 
 /// Create a checkbox form input. Parsed as a Boolean.
 pub fn boolean_field() {
   formz.definition_with_custom_optional(
-    widget: widgets.checkbox_widget(),
+    widget: widget.checkbox_widget(),
     parse: validation.on,
     stub: False,
     optional_parse: fn(parse, str) {
@@ -60,7 +60,7 @@ pub fn boolean_field() {
 
 /// Create a password form input, which hides the input value. Parsed as a String
 pub fn password_field() {
-  formz.definition(widgets.password_widget(), validation.non_empty_string, "")
+  formz.definition(widget.password_widget(), validation.non_empty_string, "")
 }
 
 /// Creates a `<select>` input.  Takes a tuple of `#(String, String)` where the first
@@ -77,7 +77,7 @@ pub fn choices_field(variants: List(#(String, enum)), stub stub: enum) {
   let values = variants |> list.map(fn(t) { t.1 })
 
   formz.definition(
-    widgets.select_widget(keys_indexed),
+    widget.select_widget(keys_indexed),
     validation.list_item_by_index(values)
       |> validation.replace_error("is required"),
     stub,
