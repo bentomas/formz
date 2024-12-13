@@ -1,3 +1,4 @@
+- document the formz_x modules beter. add guide for writing a form generator.
 - better error messages.  include field name?
 - form sets
 - csrf token?

@@ -59,7 +59,7 @@
 //// <tr>
 ////   <td>Accessing and manipulating config for a form item</td>
 ////   <td>
-////     <a href="#update_field">update_field</a><br>
+////     <a href="#update_config">update_config</a><br>
 ////     <a href="#set_name">set_name</a><br>
 ////     <a href="#set_label">set_label</a><br>
 ////     <a href="#set_help_text">set_help_text</a><br>

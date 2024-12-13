@@ -1,12 +1,10 @@
 //// The goal of a "widget" in `formz` is to produce an HTML input like
-//// `<input>`, `<select>`, or `<textarea>`. In a [`Definition`](https://hexdocs.pm/formz/formz/definition.html),
+//// `<input>`, `<select>`, or `<textarea>`. In a formz `Definition`
 //// a widget can be any Gleam type, and it's up to the form generator being
 //// used to know the exact type you need.
 ////
-//// That said, in the bundled form generators a widget is a function that
-//// takes the details of a field and some render time arguments that the form
-//// generator needs to construct an input.  This module is for those form
-//// generators, and it's use is optional if you have different needs.
+//// In this generator, the widget is either a function that takes the details
+//// and state of a field, or a special value for a hidden field.
 
 import formz
 import gleam/list
