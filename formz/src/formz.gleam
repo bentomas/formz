@@ -708,15 +708,15 @@ pub fn list(
 fn add_prefix_to_item(item: Item(widget), prefix: String) -> Item(widget) {
   case item {
     Field(item_details, state, widget) -> {
-      let new_name = prefix <> "." <> item_details.name
+      let new_name = prefix <> "-" <> item_details.name
       Field(item_details |> set_name(new_name), state, widget)
     }
     ListField(item_details, states, limit_check, widget) -> {
-      let new_name = prefix <> "." <> item_details.name
+      let new_name = prefix <> "-" <> item_details.name
       ListField(item_details |> set_name(new_name), states, limit_check, widget)
     }
     SubForm(item_details, sub_items) -> {
-      let new_name = prefix <> "." <> item_details.name
+      let new_name = prefix <> "-" <> item_details.name
       SubForm(item_details |> set_name(new_name), sub_items)
     }
   }

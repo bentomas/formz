@@ -102,7 +102,7 @@ pub fn subform_with_help_text_test() {
 pub fn subform_with_help_text_and_error_test() {
   one_field_and_subform_form()
   |> formz.update_config("b", formz.set_help_text(_, "this is subform b"))
-  |> formz.field_error("b.a", "woops")
+  |> formz.field_error("b-a", "woops")
   |> generator.build
   |> birdie.snap(title: "subform with help text and error")
 }

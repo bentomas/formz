@@ -250,9 +250,9 @@ pub fn sub_form_test() {
 
   f2
   |> formz.data([
-    #("name.a", "1"),
-    #("name.b", "2"),
-    #("name.c", "3"),
+    #("name-a", "1"),
+    #("name-b", "2"),
+    #("name-c", "3"),
     #("d", "4"),
   ])
   |> formz.decode
@@ -402,9 +402,9 @@ pub fn sub_form_error_test() {
 
   f2
   |> formz.data([
-    #("name.a", "a"),
-    #("name.b", "2"),
-    #("name.c", "3"),
+    #("name-a", "a"),
+    #("name-b", "2"),
+    #("name-c", "3"),
     #("d", "4"),
   ])
   |> formz.decode
@@ -419,9 +419,9 @@ pub fn sub_form_error_test() {
 
   f2
   |> formz.data([
-    #("name.a", "1"),
-    #("name.b", "2"),
-    #("name.c", "3"),
+    #("name-a", "1"),
+    #("name-b", "2"),
+    #("name-c", "3"),
     #("d", "a"),
   ])
   |> formz.decode
