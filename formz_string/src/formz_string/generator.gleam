@@ -28,7 +28,7 @@ pub fn build_item(item: formz.Item(widget.Widget)) -> String {
       let args =
         widget.Args(
           id,
-          widget.LabelledByLabelFor,
+          widget.LabelledByLabelElement,
           widget.DescribedByElementsWithIds([help_text.id, error.id]),
         )
       let widget_el = make_widget(config, state, args)

@@ -12,10 +12,10 @@ pub fn main() {
 
 pub fn to_string_args(args: widget.Args) {
   let labelled_by = case args.labelled_by {
-    widget.LabelledByFieldValue -> string_widget.LabelledByFieldValue
+    widget.LabelledByConfigValue -> string_widget.LabelledByConfigValue
     widget.LabelledByElementsWithIds(ids) ->
       string_widget.LabelledByElementsWithIds(ids)
-    widget.LabelledByLabelFor -> string_widget.LabelledByLabelFor
+    widget.LabelledByLabelElement -> string_widget.LabelledByLabelElement
   }
 
   let described_by = case args.described_by {
@@ -95,7 +95,7 @@ pub fn text_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -111,7 +111,7 @@ pub fn text_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -127,7 +127,7 @@ pub fn text_widget_test() {
     value: "val",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -143,7 +143,7 @@ pub fn text_widget_test() {
     value: "",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -176,7 +176,7 @@ pub fn checkbox_widget_test() {
     value: "on",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -192,7 +192,7 @@ pub fn checkbox_widget_test() {
     value: "on",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -225,7 +225,7 @@ pub fn password_widget_test() {
     value: "xxxx",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -241,7 +241,7 @@ pub fn password_widget_test() {
     value: "xxxx",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -274,7 +274,7 @@ pub fn textarea_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -290,7 +290,7 @@ pub fn textarea_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -323,7 +323,7 @@ pub fn hidden_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -339,7 +339,7 @@ pub fn hidden_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -373,7 +373,7 @@ pub fn select_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByFieldValue,
+      labelled_by: widget.LabelledByConfigValue,
       described_by: widget.DescribedByNone,
     ),
   )
@@ -389,7 +389,7 @@ pub fn select_widget_test() {
     value: "1",
     args: widget.Args(
       "id",
-      labelled_by: widget.LabelledByLabelFor,
+      labelled_by: widget.LabelledByLabelElement,
       described_by: widget.DescribedByNone,
     ),
   )

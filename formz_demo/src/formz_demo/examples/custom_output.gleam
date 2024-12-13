@@ -46,7 +46,7 @@ pub fn format_form(form) {
             username_state,
             widget.Args(
               "username",
-              widget.LabelledByLabelFor,
+              widget.LabelledByLabelElement,
               widget.DescribedByNone,
             ),
           ),
@@ -58,7 +58,7 @@ pub fn format_form(form) {
             password_state,
             widget.Args(
               "username",
-              widget.LabelledByLabelFor,
+              widget.LabelledByLabelElement,
               widget.DescribedByNone,
             ),
           ),

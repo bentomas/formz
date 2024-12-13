@@ -35,9 +35,9 @@ pub type LabelledBy {
   /// The input is labelled by a `<label>` element with a `for` attribute
   /// pointing to this input's id. This has the best accessibility support
   /// and should be [preferred when possible](https://www.w3.org/WAI/tutorials/forms/labels/).
-  LabelledByLabelFor
+  LabelledByLabelElement
   /// The input should be labelled using the `formz.Config`'s `label` field.
-  LabelledByFieldValue
+  LabelledByConfigValue
   /// The input is labelled by elements with the specified ids.
   LabelledByElementsWithIds(ids: List(String))
 }
@@ -68,10 +68,10 @@ fn aria_label_attr(
   label: String,
 ) -> attribute.Attribute(msg) {
   case labelled_by {
-    LabelledByLabelFor -> attribute.none()
+    LabelledByLabelElement -> attribute.none()
     LabelledByElementsWithIds(ids) ->
       attribute.attribute("aria-labelledby", string.join(ids, " "))
-    LabelledByFieldValue ->
+    LabelledByConfigValue ->
       case label {
         "" -> attribute.none()
         _ -> attribute.attribute("aria-label", label)

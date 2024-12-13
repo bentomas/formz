@@ -36,7 +36,7 @@ pub fn build_item(item: formz.Item(widget.Widget(msg))) -> element.Element(msg) 
           state,
           widget.Args(
             id: id,
-            labelled_by: widget.LabelledByLabelFor,
+            labelled_by: widget.LabelledByLabelElement,
             described_by: widget.DescribedByElementsWithIds([
               help_text.id,
               error.id,
