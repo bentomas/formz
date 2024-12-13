@@ -1,23 +1,26 @@
 import formz
-import formz_nakai/widget
+import formz_lustre/widget
 import gleam/int
 import gleam/list
-import nakai/attr
-import nakai/html
+import lustre/attribute
+import lustre/element
+import lustre/element/html.{html}
 
-pub fn generate(form: formz.Form(widget.Widget, a)) -> html.Node {
+pub fn build(form) -> element.Element(msg) {
   form
   |> formz.items
-  |> list.map(generate_item)
-  |> html.div([attr.class("formz_items")], _)
+  |> list.map(build_item)
+  |> html.div([attribute.class("formz_items")], _)
 }
 
-pub fn generate_item(item: formz.Item(widget.Widget)) -> html.Node {
+pub fn build_item(item: formz.Item(widget.Widget(msg))) -> element.Element(msg) {
   case item {
     formz.Field(config, state, widget.Hidden) -> hidden_input(config, state)
 
     formz.ListField(config, states, _, widget.Hidden) ->
-      states |> list.map(hidden_input(config, _)) |> html.Fragment
+      states
+      |> list.map(hidden_input(config, _))
+      |> element.fragment
 
     formz.Field(config, state, widget.Widget(make_widget)) -> {
       let id = config.name
@@ -41,7 +44,7 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> html.Node {
           ),
         )
 
-      html.div([attr.class("formz_field")], [
+      html.div([attribute.class("formz_field")], [
         label.element,
         help_text.element,
         widget_el,
@@ -73,7 +76,7 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> html.Node {
         })
         |> html.ol([], _)
 
-      html.fieldset([attr.class("formz_listfield")], [
+      html.fieldset([attribute.class("formz_listfield")], [
         legend.element,
         help_text.element,
         widgets_el,
@@ -84,8 +87,8 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> html.Node {
       let id = config.name
       let legend = legend(id, config.label)
       let help_text = help_text(id, config.help_text, html.p, "formz_help_text")
-      let children = items |> list.map(generate_item)
-      html.fieldset(list.flatten([described_by_attr(help_text.id)]), [
+      let children = items |> list.map(build_item)
+      html.fieldset([described_by_attr(help_text.id)], [
         legend.element,
         help_text.element,
         html.div([], children),
@@ -94,52 +97,57 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> html.Node {
   }
 }
 
-fn described_by_attr(id) -> List(attr.Attr) {
+fn described_by_attr(id) -> attribute.Attribute(msg) {
   case id {
-    "" -> []
-    _ -> [attr.Attr("aria-describedby", id)]
+    "" -> attribute.none()
+    _ -> attribute.attribute("aria-describedby", id)
   }
 }
 
-pub type ElementAndId {
-  ElementAndId(element: html.Node, id: String)
+pub type ElementAndId(msg) {
+  ElementAndId(element: element.Element(msg), id: String)
 }
 
-pub fn label(id, label) -> ElementAndId {
+pub fn label(id, label) -> ElementAndId(msg) {
   ElementAndId(
-    html.label([attr.for(id)], [html.Text(label), html.Text(": ")]),
+    html.label([attribute.for(id)], [html.text(label), html.text(": ")]),
     "",
   )
 }
 
-pub fn legend(id, label) -> ElementAndId {
+pub fn legend(id, label) -> ElementAndId(msg) {
   ElementAndId(
-    html.legend([attr.id(id <> "_legend")], [html.Text(label <> ": ")]),
+    html.legend([attribute.id(id <> "_legend")], [html.text(label <> ": ")]),
     id <> "_legend",
   )
 }
 
-fn hidden_input(config: formz.Config, state: formz.InputState) -> html.Node {
+fn hidden_input(
+  config: formz.Config,
+  state: formz.InputState,
+) -> element.Element(msg) {
   html.input([
-    attr.type_("hidden"),
-    attr.name(config.name),
-    attr.value(state.value),
+    attribute.type_("hidden"),
+    attribute.name(config.name),
+    attribute.value(state.value),
   ])
 }
 
 pub fn help_text(
   id: String,
   help_text: String,
-  element: fn(List(attr.Attr), List(html.Node)) -> html.Node,
+  element: fn(List(attribute.Attribute(msg)), List(element.Element(msg))) ->
+    element.Element(msg),
   class_name: String,
-) -> ElementAndId {
+) -> ElementAndId(msg) {
   case help_text {
-    "" -> ElementAndId(html.Nothing, "")
+    "" -> ElementAndId(element.none(), "")
     _ ->
       ElementAndId(
-        element([attr.id(id <> "_help_text"), attr.class(class_name)], [
-          html.Text(help_text),
-        ]),
+        element(
+          [attribute.id(id <> "_help_text"), attribute.class(class_name)],
+          [html.text(help_text)],
+        ),
         id <> "_help_text",
       )
   }
@@ -148,18 +156,19 @@ pub fn help_text(
 pub fn error(
   id: String,
   state: formz.InputState,
-  element: fn(List(attr.Attr), List(html.Node)) -> html.Node,
+  element: fn(List(attribute.Attribute(msg)), List(element.Element(msg))) ->
+    element.Element(msg),
   class_name: String,
-) -> ElementAndId {
+) -> ElementAndId(msg) {
   case state {
     formz.Invalid(error:, ..) -> {
       ElementAndId(
-        element([attr.id(id <> "_error"), attr.class(class_name)], [
-          html.Text(error),
+        element([attribute.id(id <> "_error"), attribute.class(class_name)], [
+          html.text(error),
         ]),
         id <> "_error",
       )
     }
-    _ -> ElementAndId(html.Nothing, "")
+    _ -> ElementAndId(element.none(), "")
   }
 }

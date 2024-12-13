@@ -4,14 +4,14 @@ import gleam/int
 import gleam/list
 import gleam/string
 
-pub fn generate(form) -> String {
+pub fn build(form) -> String {
   formz.items(form)
-  |> list.map(generate_item)
+  |> list.map(build_item)
   |> string.join("")
   |> wrap("<div class=\"formz_items\">", _, "</div>")
 }
 
-pub fn generate_item(item: formz.Item(widget.Widget)) -> String {
+pub fn build_item(item: formz.Item(widget.Widget)) -> String {
   case item {
     formz.Field(config, state, widget.Hidden) -> hidden_input(config, state)
 
@@ -80,7 +80,7 @@ pub fn generate_item(item: formz.Item(widget.Widget)) -> String {
       let help_text = help_text(id, config.help_text, "p", "formz_help_text")
 
       let items_el =
-        "<div>" <> list.map(items, generate_item) |> string.join("") <> "</div>"
+        "<div>" <> list.map(items, build_item) |> string.join("") <> "</div>"
 
       { "<fieldset" <> described_by_attr(help_text.id) <> ">" }
       <> legend.element
