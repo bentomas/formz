@@ -90,3 +90,9 @@ pub fn list_field(variants: List(String)) {
   let labels_and_values = list.map(variants, fn(s) { #(s, s) })
   choices_field(labels_and_values, "")
 }
+
+pub fn make_hidden(
+  def: formz.Definition(widget.Widget, a, b),
+) -> formz.Definition(widget.Widget, a, b) {
+  def |> formz.widget(widget.hidden_widget())
+}

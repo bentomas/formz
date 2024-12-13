@@ -1,25 +1,30 @@
-import formz
-import formz/field.{field}
+import formz.{named}
 import formz_string/definition
 import formz_string/widget
 
 pub fn make_form() {
-  use a <- formz.require(field("text"), definition.text_field())
-  use b <- formz.require(field("int"), definition.integer_field())
-  use c <- formz.require(field("number"), definition.number_field())
-  use d <- formz.require(field("bool"), definition.boolean_field())
-  use e <- formz.require(field("email"), definition.email_field())
-  use f <- formz.require(field("password"), definition.password_field())
-  use g <- formz.require(
-    field("choices"),
+  use a <- formz.required_field(named("text"), definition.text_field())
+  use b <- formz.required_field(formz.named("int"), definition.integer_field())
+  use c <- formz.required_field(
+    formz.named("number"),
+    definition.number_field(),
+  )
+  use d <- formz.required_field(formz.named("bool"), definition.boolean_field())
+  use e <- formz.required_field(formz.named("email"), definition.email_field())
+  use f <- formz.required_field(
+    formz.named("password"),
+    definition.password_field(),
+  )
+  use g <- formz.required_field(
+    formz.named("choices"),
     definition.choices_field(letters(), stub: A),
   )
-  use h <- formz.require(
-    field("list"),
+  use h <- formz.required_field(
+    formz.named("list"),
     definition.list_field(["Dog", "Cat", "Ant"]),
   )
-  use i <- formz.require(
-    field("textarea_widget"),
+  use i <- formz.required_field(
+    formz.named("textarea_widget"),
     definition.text_field()
       |> formz.widget(widget.textarea_widget()),
   )

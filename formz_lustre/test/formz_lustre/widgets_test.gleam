@@ -1,5 +1,4 @@
 import formz
-import formz/field
 import formz_lustre/widget
 import formz_string/widget as string_widget
 import gleeunit
@@ -43,8 +42,8 @@ fn test_inputs(
   string string_widget: string_widget.Widget,
   widget widget: widget.Widget(msg),
 ) {
-  let string_field = field.Field(name:, label:, help_text:, disabled:)
-  let field = field.Field(name:, label:, help_text:, disabled:)
+  let string_config = formz.Config(name:, label:, help_text:, disabled:)
+  let config = formz.Config(name:, label:, help_text:, disabled:)
 
   let requirement = case required {
     True -> formz.Required
@@ -55,10 +54,10 @@ fn test_inputs(
   case widget, string_widget {
     widget.Hidden, string_widget.Hidden -> Nil
     widget.Widget(make_widget), string_widget.Widget(make_string_widget) ->
-      make_widget(field, state, args)
+      make_widget(config, state, args)
       |> convert_to_string
       |> should.equal(make_string_widget(
-        string_field,
+        string_config,
         state,
         args |> to_string_args,
       ))

@@ -9,12 +9,11 @@
 //// generators, and it's use is optional if you have different needs.
 
 import formz
-import formz/field
 import gleam/list
 import gleam/string
 
 pub type Widget {
-  Widget(fn(field.Field, formz.InputState, Args) -> String)
+  Widget(fn(formz.Config, formz.InputState, Args) -> String)
   Hidden
 }
 
@@ -34,7 +33,7 @@ pub type LabelledBy {
   /// pointing to this input's id. This has the best accessibility support
   /// and should be [preferred when possible](https://www.w3.org/WAI/tutorials/forms/labels/).
   LabelledByLabelFor
-  /// The input should be labelled using the `Field`'s `label` field.
+  /// The input should be labelled using the `formz.Config`'s `label`.
   LabelledByFieldValue
   /// The input is labelled by elements with the specified ids.
   LabelledByElementsWithIds(ids: List(String))
@@ -47,7 +46,7 @@ pub type DescribedBy {
   DescribedByNone
 }
 
-fn sanitize_attr(str: String) -> String {
+pub fn sanitize_attr(str: String) -> String {
   str
   |> string.replace("\"", "&quot;")
   |> string.replace(">", "&gt;")
@@ -157,14 +156,15 @@ fn checked_attr(value: String) -> String {
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
 pub fn checkbox_widget() -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) {
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
     let value = state.value
+
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
       formz.Valid(_, requirement) -> formz.Valid("", requirement)
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
-    do_input_widget(field, state, args, "checkbox", [checked_attr(value)])
+    do_input_widget(config, state, args, "checkbox", [checked_attr(value)])
   })
 }
 
@@ -175,34 +175,34 @@ pub fn checkbox_widget() -> Widget {
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
 pub fn number_widget(step_size: String) -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) {
-    do_input_widget(field, state, args, "number", [step_size_attr(step_size)])
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
+    do_input_widget(config, state, args, "number", [step_size_attr(step_size)])
   })
 }
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
 pub fn password_widget() -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) {
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
       formz.Valid(_, requirement) -> formz.Valid("", requirement)
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
-    do_input_widget(field, state, args, "password", [])
+    do_input_widget(config, state, args, "password", [])
   })
 }
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
 pub fn input_widget(type_: String) -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) {
-    do_input_widget(field, state, args, type_, [])
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
+    do_input_widget(config, state, args, type_, [])
   })
 }
 
 fn do_input_widget(
-  field: field.Field,
+  config: formz.Config,
   state: formz.InputState,
   args: Args,
   type_: String,
@@ -210,12 +210,12 @@ fn do_input_widget(
 ) -> String {
   "<input"
   <> type_attr(type_)
-  <> name_attr(field.name)
+  <> name_attr(config.name)
   <> id_attr(args.id)
   <> required_attr(state.requirement)
-  <> disabled_attr(field.disabled)
+  <> disabled_attr(config.disabled)
   <> value_attr(state.value)
-  <> aria_label_attr(args.labelled_by, field.label)
+  <> aria_label_attr(args.labelled_by, config.label)
   <> aria_describedby_attr(args.described_by)
   <> extra_attrs |> string.join("")
   <> ">"
@@ -223,20 +223,22 @@ fn do_input_widget(
 
 /// Create a `<textarea></textarea>`.
 pub fn textarea_widget() -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) -> String {
-    // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
-    // https://til.simonwillison.net/css/resizing-textarea
-    "<textarea"
-    <> name_attr(field.name)
-    <> id_attr(args.id)
-    <> required_attr(state.requirement)
-    <> disabled_attr(field.disabled)
-    <> aria_label_attr(args.labelled_by, field.label)
-    <> aria_describedby_attr(args.described_by)
-    <> ">"
-    <> state.value
-    <> "</textarea>"
-  })
+  Widget(
+    fn(config: formz.Config, state: formz.InputState, args: Args) -> String {
+      // https://chriscoyier.net/2023/09/29/css-solves-auto-expanding-textareas-probably-eventually/
+      // https://til.simonwillison.net/css/resizing-textarea
+      "<textarea"
+      <> name_attr(config.name)
+      <> id_attr(args.id)
+      <> required_attr(state.requirement)
+      <> disabled_attr(config.disabled)
+      <> aria_label_attr(args.labelled_by, config.label)
+      <> aria_describedby_attr(args.described_by)
+      <> ">"
+      <> state.value
+      <> "</textarea>"
+    },
+  )
 }
 
 /// Create a `<input type="hidden">`. This is useful for if a field is just
@@ -250,7 +252,7 @@ pub fn hidden_widget() -> Widget {
 /// of variants is a two-tuple, where the first item is the text to display and
 /// the second item is the value.
 pub fn select_widget(variants: List(#(String, String))) -> Widget {
-  Widget(fn(field: field.Field, state: formz.InputState, args: Args) {
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
     let choices =
       list.map(variants, fn(variant) {
         let val = variant.1
@@ -266,11 +268,11 @@ pub fn select_widget(variants: List(#(String, String))) -> Widget {
 
     {
       "<select"
-      <> name_attr(field.name)
+      <> name_attr(config.name)
       <> id_attr(args.id)
       <> required_attr(state.requirement)
-      <> disabled_attr(field.disabled)
-      <> aria_label_attr(args.labelled_by, field.label)
+      <> disabled_attr(config.disabled)
+      <> aria_label_attr(args.labelled_by, config.label)
       <> aria_describedby_attr(args.described_by)
       <> ">"
     }

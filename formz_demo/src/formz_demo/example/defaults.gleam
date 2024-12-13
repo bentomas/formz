@@ -1,6 +1,4 @@
 import formz
-import formz_lustre/simple as lustre_simple
-import formz_nakai/simple as nakai_simple
 import formz_string/simple
 import lustre/element
 import nakai
@@ -24,14 +22,6 @@ pub fn handle_post(
 
 pub fn format_string_form(form) -> String {
   simple.generate(form)
-}
-
-pub fn format_lustre_form(form) -> element.Element(msg) {
-  lustre_simple.generate(form)
-}
-
-pub fn format_nakai_form(form) -> html.Node {
-  nakai_simple.generate(form)
 }
 
 pub fn formatted_string_form_to_string(str) -> String {

@@ -1,6 +1,4 @@
 import formz.{Invalid, Optional, Required, Unvalidated, Valid}
-import formz/field.{field}
-import formz/subform.{subform}
 import formz/validation
 import gleam/string
 import gleeunit
@@ -68,20 +66,20 @@ fn empty_form(val) {
 }
 
 fn one_field_form() {
-  use a <- formz.optional(field("a"), text_field())
+  use a <- formz.field(formz.named("a"), text_field())
   formz.create_form("hello " <> a)
 }
 
 fn two_field_form() {
-  use a <- formz.optional(field("a"), text_field())
-  use b <- formz.optional(field("b"), text_field())
+  use a <- formz.field(formz.named("a"), text_field())
+  use b <- formz.field(formz.named("b"), text_field())
 
   formz.create_form(#(a, b))
 }
 
 fn three_field_form() {
-  use a <- formz.optional(
-    field("x") |> field.set_name("a") |> field.set_label("A"),
+  use a <- formz.field(
+    formz.named("x") |> formz.set_name("a") |> formz.set_label("A"),
     text_field()
       |> formz.verify(fn(str) {
         case string.length(str) > 3 {
@@ -91,8 +89,8 @@ fn three_field_form() {
       }),
   )
 
-  use b <- formz.optional(
-    field(named: "b"),
+  use b <- formz.field(
+    formz.named("b"),
     integer_field()
       |> formz.verify(fn(i) {
         case i > 0 {
@@ -102,8 +100,8 @@ fn three_field_form() {
       }),
   )
 
-  use c <- formz.optional(
-    field(named: "c") |> field.set_name("c") |> field.set_label("C"),
+  use c <- formz.field(
+    formz.named("c") |> formz.set_name("c") |> formz.set_label("C"),
     float_field(),
   )
 
@@ -167,7 +165,7 @@ pub fn parse_double_field_form_test() {
 pub fn parse_single_field_form_with_error_test() {
   let assert Error(f) =
     {
-      use a <- formz.optional(field("a"), boolean_field())
+      use a <- formz.field(formz.named("a"), boolean_field())
       formz.create_form(a)
     }
     |> formz.data([#("a", "world")])
@@ -236,16 +234,16 @@ pub fn parse_triple_field_form_with_error_test() {
 
 pub fn sub_form_test() {
   let f1 = {
-    use a <- formz.require(field("a"), integer_field())
-    use b <- formz.require(field("b"), integer_field())
-    use c <- formz.require(field("c"), integer_field())
+    use a <- formz.required_field(formz.named("a"), integer_field())
+    use b <- formz.required_field(formz.named("b"), integer_field())
+    use c <- formz.required_field(formz.named("c"), integer_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
-    use a <- formz.subform(subform("name"), f1)
-    use b <- formz.require(field("d"), integer_field())
+    use a <- formz.subform(formz.named("name"), f1)
+    use b <- formz.required_field(formz.named("d"), integer_field())
 
     formz.create_form(#(a, b))
   }
@@ -388,16 +386,16 @@ pub fn validate_all_test() {
 
 pub fn sub_form_error_test() {
   let f1 = {
-    use a <- formz.optional(field("a"), integer_field())
-    use b <- formz.require(field("b"), integer_field())
-    use c <- formz.optional(field("c"), integer_field())
+    use a <- formz.field(formz.named("a"), integer_field())
+    use b <- formz.required_field(formz.named("b"), integer_field())
+    use c <- formz.field(formz.named("c"), integer_field())
 
     formz.create_form(#(a, b, c))
   }
 
   let f2 = {
-    use a <- formz.subform(subform("name"), f1)
-    use b <- formz.optional(field("d"), integer_field())
+    use a <- formz.subform(formz.named("name"), f1)
+    use b <- formz.field(formz.named("d"), integer_field())
 
     formz.create_form(#(a, b))
   }
@@ -463,7 +461,7 @@ pub fn decoded_and_try_test() {
   // can change field
   let assert Error(form) =
     formz.decode_then_try(f, fn(form, _) {
-      Error(form |> formz.set_field_error("a", "woops"))
+      Error(form |> formz.field_error("a", "woops"))
     })
   formz.get_states(form)
   |> should.equal([
@@ -473,14 +471,14 @@ pub fn decoded_and_try_test() {
   ])
 
   let f = {
-    use a <- formz.list(field("a"), float_field())
+    use a <- formz.list(formz.named("a"), float_field())
     formz.create_form(a)
   }
 
   formz.data(f, [#("a", "1"), #("a", "2")])
   |> formz.decode_then_try(fn(form, _) {
     Error(
-      formz.set_listfield_errors(form, "a", [Error("woops 1"), Error("woops 2")]),
+      formz.listfield_errors(form, "a", [Error("woops 1"), Error("woops 2")]),
     )
   })
   |> get_form_from_error_result
@@ -492,7 +490,7 @@ pub fn decoded_and_try_test() {
 
   formz.data(f, [#("a", "1"), #("a", "2")])
   |> formz.decode_then_try(fn(form, _) {
-    Error(formz.set_listfield_errors(form, "a", [Error("woops"), Ok(Nil)]))
+    Error(formz.listfield_errors(form, "a", [Error("woops"), Ok(Nil)]))
   })
   |> get_form_from_error_result
   |> formz.get_states
@@ -500,7 +498,7 @@ pub fn decoded_and_try_test() {
 
   formz.data(f, [#("a", "1"), #("a", "2")])
   |> formz.decode_then_try(fn(form, _) {
-    Error(formz.set_listfield_errors(form, "a", [Ok(Nil), Error("woops")]))
+    Error(formz.listfield_errors(form, "a", [Ok(Nil), Error("woops")]))
   })
   |> get_form_from_error_result
   |> formz.get_states
@@ -509,9 +507,9 @@ pub fn decoded_and_try_test() {
 
 pub fn list_test() {
   let f = {
-    use a <- formz.list(field("a"), float_field())
-    use b <- formz.list(field("b"), float_field())
-    use c <- formz.list(field("c"), float_field())
+    use a <- formz.list(formz.named("a"), float_field())
+    use b <- formz.list(formz.named("b"), float_field())
+    use c <- formz.list(formz.named("c"), float_field())
 
     formz.create_form(#(a, b, c))
   }
@@ -602,7 +600,7 @@ pub fn limited_list_test() {
   let zero_extra = {
     use a <- formz.limited_list(
       formz.simple_limit_check(1, 4, 0),
-      field("a"),
+      formz.named("a"),
       integer_field(),
     )
 
@@ -611,7 +609,7 @@ pub fn limited_list_test() {
   let one_extra = {
     use a <- formz.limited_list(
       formz.simple_limit_check(1, 4, 1),
-      field("a"),
+      formz.named("a"),
       integer_field(),
     )
 
@@ -621,7 +619,7 @@ pub fn limited_list_test() {
   let two_extra = {
     use a <- formz.limited_list(
       formz.simple_limit_check(1, 4, 2),
-      field("a"),
+      formz.named("a"),
       integer_field(),
     )
 
@@ -695,7 +693,7 @@ pub fn limited_list_too_many_test() {
   let f = {
     use a <- formz.limited_list(
       formz.limit_between(2, 3),
-      field("a"),
+      formz.named("a"),
       integer_field(),
     )
 

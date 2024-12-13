@@ -1,13 +1,18 @@
 import formz.{Field}
-import formz/field.{field}
 import formz_lustre/definition
 import formz_lustre/widget
 import lustre/attribute
 import lustre/element/html
 
 pub fn make_form() {
-  use username <- formz.require(field("username"), definition.text_field())
-  use password <- formz.require(field("password"), definition.password_field())
+  use username <- formz.required_field(
+    formz.named("username"),
+    definition.text_field(),
+  )
+  use password <- formz.required_field(
+    formz.named("password"),
+    definition.password_field(),
+  )
 
   formz.create_form(#(username, password))
 }

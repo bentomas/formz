@@ -11,8 +11,8 @@
 ////   <td>Creating a form</td>
 ////   <td>
 ////     <a href="#create_form">create_form</a><br>
-////     <a href="#require">require</a><br>
-////     <a href="#optional">optional</a><br>
+////     <a href="#required_field">required_field</a><br>
+////     <a href="#field">field</a><br>
 ////     <a href="#list">list</a><br>
 ////     <a href="#limited_list">limited_list</a><br>
 ////     <a href="#subform">subform</a>
@@ -51,12 +51,20 @@
 ////   <td>
 ////     <a href="#get">get</a><br>
 ////     <a href="#items">items</a><br>
-////     <a href="#set_field_error">set_field_error</a><br>
-////     <a href="#set_listfield_errors">set_listfield_errors</a><br>
+////     <a href="#field_error">field_error</a><br>
+////     <a href="#listfield_errors">listfield_errors</a><br>
 ////     <a href="#update">update</a><br>
+////   </td>
+//// </tr>
+//// <tr>
+////   <td>Accessing and manipulating config for a form item</td>
+////   <td>
 ////     <a href="#update_field">update_field</a><br>
-////     <a href="#update_listfield">update_listfield</a><br>
-////     <a href="#update_subform">update_subform</a>
+////     <a href="#set_name">set_name</a><br>
+////     <a href="#set_label">set_label</a><br>
+////     <a href="#set_help_text">set_help_text</a><br>
+////     <a href="#set_disabled">set_disabled</a><br>
+////     <a href="#make_disabled">make_disabled</a><br>
 ////   </td>
 //// </tr>
 //// </table>
@@ -65,7 +73,7 @@
 ////
 //// ```gleam
 //// fn make_form() {
-////  use name <- formz.require(field("name"), definitions.text_field())
+////  use name <- formz.required_field(field("name"), definitions.text_field())
 ////
 ////  formz.create_form(name)
 //// }
@@ -80,8 +88,8 @@
 ////
 //// ```gleam
 //// fn make_form() {
-////  use greeting <- optional(field("greeting"), definitions.text_field())
-////  use name <- optional(field("name"), definitions.text_field())
+////  use greeting <- field(field("greeting"), definitions.text_field())
+////  use name <- field(field("name"), definitions.text_field())
 ////
 ////  formz.create_form(greeting <> " " <> name)
 //// }
@@ -94,14 +102,13 @@
 //// }
 //// ```
 
-import formz/field
-import formz/subform
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
+import justin
 
 /// You create this using the `create_form` function.
 ///
@@ -119,36 +126,36 @@ pub opaque type Form(widget, output) {
   )
 }
 
-/// You add an `Item` to a form using the `optional`, `require`, `list`,
+/// You add an `Item` to a form using the `field`, `required_field`, `list`,
 /// `limited_list` and `subform` functions. A form is a list of `Item`s and
-/// each item is parsed to a single value, which the decode function will
-/// choose how to use.
+/// each item is parsed to a single value, and then passed to the decode
+/// function.
 ///
 /// You primarily only use an `Item` directly when writing a form generator
-/// function to output your function to HTML.
+/// function to output your form to HTML.
 ///
 /// You can also manipulate an `Item` after a form has been created, to change
-/// things like labels, help text, etc. There are specific functions,
-/// `update_field`, `update_listfield` and `update_subform`, to help with this,
-/// so you don't have to pattern match when updating a specific item.
+/// things like labels, help text, etc with `update`. Each item has a `Config`
+/// that describes how it works, and this can be updated directly
+/// with `update_config`.
 ///
 /// ```
 /// let form = make_form()
-/// form.update_field("name", field.set_label(_, "Full Name"))
+/// formz.update_config("name", formz.set_label(_, "Full Name"))
 /// ```
 pub type Item(widget) {
   /// A single field that (generally speaking) corresponds to a single
   /// HTML input
-  Field(detail: field.Field, state: InputState, widget: widget)
+  Field(config: Config, state: InputState, widget: widget)
   /// A single field that a consumer can submit multiple values for.
   ListField(
-    detail: field.Field,
+    config: Config,
     states: List(InputState),
     limit_check: LimitCheck,
     widget: widget,
   )
   /// A group of fields that are added as and then parsed to a single unit.
-  SubForm(detail: subform.SubForm, items: List(Item(widget)))
+  SubForm(config: Config, items: List(Item(widget)))
 }
 
 /// The state of the an input for a field. This is used to track the current
@@ -166,10 +173,53 @@ pub type Requirement {
   Required
 }
 
-/// A `Definition` describes how a field works, e.g. how it looks and how it's
-/// parsed. It is the heavy compared to the lightness of a
-/// [Field](https://hexdocs.pm/formz/formz/field.html);
-/// definitions take a bit more work to make as they are intended to be reusable.
+/// Configuration for the form `Item`.  The only required information here is
+/// `name` and there is a `named` function to make a config with a name.  You
+/// can then chain the `set_x` functions to add the other information as needed.
+///
+/// ### Example
+///
+/// ```
+/// let config = formz.named("name") |> formz.set_label("Full Name")
+/// ```
+///
+/// ```
+/// let config =
+///   formz.named("name")
+///   |> formz.set_label("Full Name")
+///   |> formz.set_help_text("Enter your full name")
+/// ```
+///
+/// ```
+/// let config = formz.named("name") |> formz.make_disabled
+/// ```
+pub type Config {
+  Config(
+    /// The name of the field or subform. The only truly required information
+    /// for a form `Item`. This is used to identify the field in the form.
+    /// It should be unique for each form, and is untested with any values other
+    /// than strings solely consisting of alphanumeric characters
+    /// and underscores.
+    name: String,
+    /// This library thinks of a label as required, but will make one for you from
+    /// the name if you don't provide one via the `field` function. For
+    /// accessibility reasons, a field should always provide a label and all
+    /// the maintained form generators will output one.
+    label: String,
+    /// Optional help text for the field. This is used to provide additional
+    /// instructions or context for the field.  It is up to the form generator
+    /// to decide if and how to display this text.
+    help_text: String,
+    /// Whether the field is disabled. A disabled field is not editable in
+    /// the browser.  However, there is nothing stopping a user from changing
+    /// the value or submitting a different value via other means, so (presently)
+    /// this doesn't mean the value cannot be tampered with.
+    disabled: Bool,
+  )
+}
+
+/// A `Definition` describes how an input works, e.g. how it looks and how it's
+/// parsed. Definitions are intended to be reusable.
 ///
 /// The first role of a `Defintion` is to generate the HTML input for the field.
 /// This library is format-agnostic and you can generate inputs as raw
@@ -185,7 +235,7 @@ pub type Requirement {
 /// - [formz_lustre](https://hexdocs.pm/formz_lustre/)
 ///
 /// How a definition parses an input value depends on whether a value is required
-/// for that input (i.e.  whether `optional`, `require`, `list`, or `limited_list`
+/// for that input (i.e.  whether `field`, `required_field`, `list`, or `limited_list`
 /// was used to add it to the form).  If a value is required, the definition is
 /// expected to return a string error if the input is empty, or the `required` type
 /// if it isn't.  You can use the `definition` function to create a simple
@@ -233,8 +283,9 @@ pub opaque type Definition(widget, required, optional) {
 /// of how to write one.
 ///
 /// This function takes as its only argument, the number of fields that already
-/// have a value.  It should return a list of `Unvalidated` `InputState` items
-/// that specify if the value is required or not.
+/// have a value.  It should return either `Ok` with a list of `Unvalidated`
+/// `InputState` items if it wants to offer more inputs to consumers of the
+/// form, or `Error` amount of inputs that were too many.
 ///
 /// This is used multiple times... when the form is created so we know how many
 /// initial inputs to present, when data is added so we know if we need to add
@@ -262,9 +313,9 @@ type ListParsingResult(input_output) {
 /// ```
 /// ```gleam
 /// fn make_form() {
-///   use field1 <- formz.require(field("field1"), definitions.text_field())
-///   use field2 <- formz.require(field("field2"), definitions.text_field())
-///   use field3 <- formz.require(field("field3"), definitions.text_field())
+///   use field1 <- formz.required_field(field("field1"), definitions.text_field())
+///   use field2 <- formz.required_field(field("field2"), definitions.text_field())
+///   use field3 <- formz.required_field(field("field3"), definitions.text_field())
 ///
 ///   formz.create_form(#(field1, field2, field3))
 /// }
@@ -288,13 +339,13 @@ pub fn create_form(thing: thing) -> Form(widget, thing) {
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
 /// `decode_then_try`.
-pub fn optional(
-  field: field.Field,
+pub fn field(
+  config: Config,
   definition: Definition(widget, _, input_output),
   next: fn(input_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
   add_field(
-    field,
+    config,
     Optional,
     definition.widget,
     definition.optional_parse(definition.parse, _),
@@ -318,13 +369,13 @@ pub fn optional(
 /// number of times. Don't do anything but create the type with the data you
 /// need!  If you need to do decoding that has side effects, you should use
 /// `decode_then_try`.
-pub fn require(
-  field: field.Field,
+pub fn required_field(
+  config: Config,
   is definition: Definition(widget, required_output, _),
   next next: fn(required_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
   add_field(
-    field,
+    config,
     Required,
     definition.widget,
     definition.parse,
@@ -334,7 +385,7 @@ pub fn require(
 }
 
 fn add_field(
-  field: field.Field,
+  config: Config,
   requirement: Requirement,
   widget: widget,
   parse_field: fn(String) -> Result(input_output, String),
@@ -348,7 +399,7 @@ fn add_field(
 
   // prepend the new field to the items from the form we got in the previous step.
   let updated_items = [
-    Field(field, Unvalidated("", requirement), widget),
+    Field(config, Unvalidated("", requirement), widget),
     ..next_form.items
   ]
 
@@ -483,7 +534,7 @@ pub fn limit_between(min: Int, max: Int) -> LimitCheck {
 /// }
 pub fn limited_list(
   limit_check: fn(Int) -> Result(List(InputState), Int),
-  field: field.Field,
+  config: Config,
   is definition: Definition(widget, required_output, _),
   next next: fn(List(required_output)) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
@@ -495,7 +546,7 @@ pub fn limited_list(
   let initial_fields = limit_check(0) |> result.unwrap([])
   // prepend the new field to the items from the form we got in the previous step.
   let updated_items = [
-    ListField(field, initial_fields, limit_check, definition.widget),
+    ListField(config, initial_fields, limit_check, definition.widget),
     ..next_form.items
   ]
 
@@ -647,31 +698,26 @@ fn mark_above_max_values_as_invalid(
 /// need!  If you need to do decoding that has side effects, you should use
 /// `decode_then_try`.
 pub fn list(
-  field: field.Field,
+  config: Config,
   is definition: Definition(widget, required_output, _),
   next next: fn(List(required_output)) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
-  limited_list(limit_at_most(1_000_000), field, definition, next)
+  limited_list(limit_at_most(1_000_000), config, definition, next)
 }
 
 fn add_prefix_to_item(item: Item(widget), prefix: String) -> Item(widget) {
   case item {
     Field(item_details, state, widget) -> {
-      let name = prefix <> "." <> item_details.name
-      Field(item_details |> field.set_name(name), state, widget)
+      let new_name = prefix <> "." <> item_details.name
+      Field(item_details |> set_name(new_name), state, widget)
     }
     ListField(item_details, states, limit_check, widget) -> {
-      let name = prefix <> "." <> item_details.name
-      ListField(
-        item_details |> field.set_name(name),
-        states,
-        limit_check,
-        widget,
-      )
+      let new_name = prefix <> "." <> item_details.name
+      ListField(item_details |> set_name(new_name), states, limit_check, widget)
     }
     SubForm(item_details, sub_items) -> {
-      let name = prefix <> "." <> item_details.name
-      SubForm(item_details |> subform.set_name(name), sub_items)
+      let new_name = prefix <> "." <> item_details.name
+      SubForm(item_details |> set_name(new_name), sub_items)
     }
   }
 }
@@ -689,14 +735,14 @@ fn add_prefix_to_item(item: Item(widget), prefix: String) -> Item(widget) {
 /// need!  If you need to do decoding that has side effects, you should use
 /// `decode_then_try`.
 pub fn subform(
-  subform: subform.SubForm,
+  config: Config,
   form: Form(widget, sub_output),
   next: fn(sub_output) -> Form(widget, form_output),
 ) -> Form(widget, form_output) {
   let next_form = next(form.stub)
 
-  let sub_items = form.items |> list.map(add_prefix_to_item(_, subform.name))
-  let subform = SubForm(subform, sub_items)
+  let sub_items = form.items |> list.map(add_prefix_to_item(_, config.name))
+  let subform = SubForm(config, sub_items)
   let updated_items = [subform, ..next_form.items]
 
   let decode = fn(items: List(Item(widget))) {
@@ -763,7 +809,7 @@ fn do_data(
   data: Dict(String, List(String)),
 ) -> List(Item(widget)) {
   list.map(items, fn(item) {
-    let values = dict.get(data, get_item_name(item))
+    let values = dict.get(data, item.config.name)
     case item, values {
       Field(detail, state, widget), Ok([_, ..] as values) -> {
         let assert Ok(last) = list.last(values)
@@ -842,7 +888,7 @@ pub fn decode(
 /// |> decode_then_try(fn(username, form) {
 ///   case is_username_taken(username) {
 ///     Ok(false) -> Ok(form)
-///     Ok(true) -> set_field_error(form, "username",  "Username is taken")
+///     Ok(true) -> field_error(form, "username",  "Username is taken")
 ///   }
 /// }
 pub fn decode_then_try(
@@ -987,61 +1033,16 @@ fn do_update(
 /// let form = make_form()
 /// update_field(form, "name", field.set_label(_, "Full Name"))
 /// ```
-pub fn update_field(
+pub fn update_config(
   form: Form(widget, output),
   name: String,
-  fun: fn(field.Field) -> field.Field,
+  fun: fn(Config) -> Config,
 ) -> Form(widget, output) {
   update(form, name, fn(item) {
     case item {
-      Field(field, ..) -> Field(..item, detail: fun(field))
-      _ -> item
-    }
-  })
-}
-
-/// Update the `ListField` [details]](https://hexdocs.pm/formz/formz/field.html) with
-/// the given name using the provided function.  If multiple items have the same
-/// name, it will be called on all of them.  If no items have the given name,
-/// or an item with the given name exists but isn't a `ListField`, this function
-/// will do nothing.
-///
-/// ```gleam
-/// let form = make_form()
-/// update(form, "name", field.set_label(_, "Full Name"))
-/// ```
-pub fn update_listfield(
-  form: Form(widget, output),
-  name: String,
-  fun: fn(field.Field) -> field.Field,
-) -> Form(widget, output) {
-  update(form, name, fn(item) {
-    case item {
-      ListField(field, ..) -> ListField(..item, detail: fun(field))
-      _ -> item
-    }
-  })
-}
-
-/// Update the [`SubForm`](https://hexdocs.pm/formz/formz/subform.html) with
-/// the given name using the provided function.  If multiple subforms have the same
-/// name, it will be called on all of them. If no items have the given name,
-/// or an item with the given name exists but isn't a `SubForm`, this function
-/// will do nothing.
-///
-/// ```gleam
-/// let form = make_form()
-/// update(form, "name", subform.set_help_text(_, "..."))
-/// ```
-pub fn update_subform(
-  form: Form(widget, output),
-  name: String,
-  fun: fn(subform.SubForm) -> subform.SubForm,
-) -> Form(widget, output) {
-  update(form, name, fn(item) {
-    case item {
-      SubForm(subform, items) -> SubForm(fun(subform), items)
-      _ -> item
+      Field(details, ..) -> Field(..item, config: fun(details))
+      ListField(details, ..) -> ListField(..item, config: fun(details))
+      SubForm(details, ..) -> SubForm(..item, config: fun(details))
     }
   })
 }
@@ -1052,9 +1053,9 @@ pub fn update_subform(
 /// ### Example
 ///
 /// ```
-/// set_field_error(form, "username",  "Username is taken")
+/// field_error(form, "username",  "Username is taken")
 /// ```
-pub fn set_field_error(
+pub fn field_error(
   form: Form(widget, output),
   name: String,
   str: String,
@@ -1072,12 +1073,16 @@ pub fn set_field_error(
 /// takes a list of Results, where the Ok means the input is `Valid` and
 /// `Error` means the input is `Invalid` with the given error message.
 ///
+/// This does not clear any existing errors, it will just set the errors marked
+/// in the input list.  If you want to clear errors you'll have to use the
+/// `update` function and do it manually.
+///
 /// ### Example
 ///
 /// ```
-/// set_listfield_errors(form, "pet_names",  [Ok(Nil), Ok(Nil), Error("Must be a cat")])
+/// listfield_errors(form, "pet_names",  [Ok(Nil), Ok(Nil), Error("Must be a cat")])
 /// ```
-pub fn set_listfield_errors(
+pub fn listfield_errors(
   form: Form(widget, output),
   name: String,
   errors: List(Result(Nil, String)),
@@ -1130,12 +1135,12 @@ pub fn definition(
 }
 
 /// Create a `Definition` that can parse to any type if the field is optional.
-/// This takes two functions.  The first, `parse`, is the "required"" parse
+/// This takes two functions.  The first, `parse`, is the "required" parse
 /// function, which takes the raw string value, and turns it into the required
 /// type.  The second, `optional_parse`, is a function that takes the normal
 /// parse function and the raw string value, and it is supposed to check the
-/// input string: if it is empty, return an `Ok` with the `optional_stub`
-/// value; and if it's not empty use the normal parse function.
+/// input string: if it is empty, return an `Ok` with a value of the optional
+/// type; and if it's not empty use the normal parse function.
 ///
 /// See [formz_string](https://hexdocs.pm/formz_string/formz_string/definitions.html)
 /// for more examples of making widgets and definitions.
@@ -1248,4 +1253,56 @@ fn do_get_states(items: List(Item(widget))) -> List(InputState) {
       SubForm(_, sub_items) -> list.flatten([do_get_states(sub_items), acc])
     }
   })
+}
+
+/// Create a field with the given name.
+///
+/// It uses
+/// [justin.sentence_case](https://hexdocs.pm/justin/justin.html#sentence_case)
+/// to create an initial label. You can override the label with the `set_label`
+/// function. I don't know if this is very english-centric, so let me know if
+/// this is a bad experience in other languages and I'll consider
+/// something else.
+///
+/// ```gleam
+/// field("name")
+/// |> set_label("Full Name")
+/// ```
+pub fn named(name: String) -> Config {
+  Config(
+    name: name,
+    label: justin.sentence_case(name),
+    help_text: "",
+    disabled: False,
+  )
+}
+
+/// Set the name of the field.  This is the key that will be used for the data.
+pub fn set_name(config: Config, name: String) -> Config {
+  Config(..config, name:)
+}
+
+/// Set the label of the field.  This is the primary text that will be displayed
+/// to the user about the field.
+pub fn set_label(config: Config, label: String) -> Config {
+  Config(..config, label:)
+}
+
+/// Additional instructions or help text to display to the user about the field.
+pub fn set_help_text(config: Config, help_text: String) -> Config {
+  Config(..config, help_text:)
+}
+
+/// Set the `disabled` flag directly.
+pub fn set_disabled(config: Config, disabled: Bool) -> Config {
+  Config(..config, disabled:)
+}
+
+/// Mark the form `Item` as disabled.  This will prevent the user from
+/// interacting with the field.  If you do this for a subform, it will
+/// only work if the form generator renders the subform as a `fieldset`.
+/// For example, HTML does not allow you to mark inputs in a `<div>`
+/// disabled as group but you can do this with a `<fieldset>`.
+pub fn make_disabled(config: Config) -> Config {
+  set_disabled(config, True)
 }

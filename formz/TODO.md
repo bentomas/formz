@@ -1,3 +1,4 @@
+- better error messages.  include field name?
 - form sets
 - csrf token?
 - multiple value fields?

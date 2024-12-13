@@ -1,18 +1,19 @@
 import formz
-import formz/field.{field}
 import formz_string/definition
 
 pub fn make_form() {
-  use name <- formz.require(field(named: "name"), is: definition.text_field())
-  use age <- formz.require(
-    field("age") |> field.set_label("Age"),
-    is: definition.integer_field(),
+  use name <- formz.required_field(formz.named("name"), definition.text_field())
+  use age <- formz.required_field(
+    formz.named("age")
+      |> formz.set_label("Age")
+      |> formz.set_help_text("Please enter your age"),
+    definition.integer_field(),
   )
-  use height <- formz.require(
-    field("height")
-      |> field.set_label("Height (cm)")
-      |> field.set_help_text("Please enter your height in centimeters"),
-    is: definition.integer_field(),
+  use height <- formz.required_field(
+    formz.named("height")
+      |> formz.set_label("Height (cm)")
+      |> formz.set_help_text("Please enter your height in centimeters"),
+    definition.integer_field(),
   )
 
   formz.create_form(#(name, age, height))

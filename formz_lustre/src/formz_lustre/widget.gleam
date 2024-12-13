@@ -9,7 +9,6 @@
 //// generators, and it's use is optional if you have different needs.
 
 import formz
-import formz/field.{type Field}
 import gleam/list
 import gleam/string
 import lustre/attribute
@@ -17,7 +16,7 @@ import lustre/element
 import lustre/element/html
 
 pub type Widget(msg) {
-  Widget(fn(field.Field, formz.InputState, Args) -> element.Element(msg))
+  Widget(fn(formz.Config, formz.InputState, Args) -> element.Element(msg))
   Hidden
 }
 
@@ -37,7 +36,7 @@ pub type LabelledBy {
   /// pointing to this input's id. This has the best accessibility support
   /// and should be [preferred when possible](https://www.w3.org/WAI/tutorials/forms/labels/).
   LabelledByLabelFor
-  /// The input should be labelled using the `Field`'s `label` field.
+  /// The input should be labelled using the `formz.Config`'s `label` field.
   LabelledByFieldValue
   /// The input is labelled by elements with the specified ids.
   LabelledByElementsWithIds(ids: List(String))
@@ -134,14 +133,14 @@ fn disabled_attr(disabled: Bool) -> attribute.Attribute(msg) {
 /// Create an `<input type="checkbox">`. The checkbox is checked
 /// if the value is "on" (the browser default).
 pub fn checkbox_widget() {
-  Widget(fn(field: Field, state: formz.InputState, args: Args) {
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
     let value = state.value
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
       formz.Valid(_, requirement) -> formz.Valid("", requirement)
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
-    do_input_widget(field, state, args, "checkbox", [checked_attr(value)])
+    do_input_widget(config, state, args, "checkbox", [checked_attr(value)])
   })
 }
 
@@ -152,34 +151,34 @@ pub fn checkbox_widget() {
 /// the step size.  If you truly need any float, then a `type="text"` input might be a
 /// better choice.
 pub fn number_widget(step_size: String) {
-  Widget(fn(field: Field, state: formz.InputState, args: Args) {
-    do_input_widget(field, state, args, "number", [step_size_attr(step_size)])
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
+    do_input_widget(config, state, args, "number", [step_size_attr(step_size)])
   })
 }
 
 /// Create an `<input type="password">`. This will not output the value in the
 /// generated HTML for privacy/security concerns.
 pub fn password_widget() {
-  Widget(fn(field: Field, state: formz.InputState, args: Args) {
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
     let state = case state {
       formz.Unvalidated(_, requirement) -> formz.Unvalidated("", requirement)
       formz.Valid(_, requirement) -> formz.Valid("", requirement)
       formz.Invalid(_, requirement, e) -> formz.Invalid("", requirement, e)
     }
-    do_input_widget(field, state, args, "password", [])
+    do_input_widget(config, state, args, "password", [])
   })
 }
 
 /// Generate any `<input>` like `type="text"`, `type="email"` or
 /// `type="url"`.
 pub fn input_widget(type_: String) {
-  Widget(fn(field: Field, state: formz.InputState, args: Args) {
-    do_input_widget(field, state, args, type_, [])
+  Widget(fn(config: formz.Config, state: formz.InputState, args: Args) {
+    do_input_widget(config, state, args, type_, [])
   })
 }
 
 fn do_input_widget(
-  field: Field,
+  config: formz.Config,
   state: formz.InputState,
   args: Args,
   type_: String,
@@ -189,12 +188,12 @@ fn do_input_widget(
     list.flatten([
       [
         attribute.type_(type_),
-        name_attr(field.name),
+        name_attr(config.name),
         id_attr(args.id),
         required_attr(state.requirement),
-        disabled_attr(field.disabled),
+        disabled_attr(config.disabled),
         value_attr(state.value),
-        aria_label_attr(args.labelled_by, field.label),
+        aria_label_attr(args.labelled_by, config.label),
         aria_describedby_attr(args.described_by),
       ],
       extra_attrs,
@@ -205,15 +204,15 @@ fn do_input_widget(
 /// Create a `<textarea></textarea>`.
 pub fn textarea_widget() {
   Widget(
-    fn(field: Field, state: formz.InputState, args: Args) -> element.Element(
+    fn(config: formz.Config, state: formz.InputState, args: Args) -> element.Element(
       msg,
     ) {
       html.textarea(
         [
-          name_attr(field.name),
+          name_attr(config.name),
           id_attr(args.id),
           required_attr(state.requirement),
-          aria_label_attr(args.labelled_by, field.label),
+          aria_label_attr(args.labelled_by, config.label),
           aria_describedby_attr(args.described_by),
         ],
         state.value,
@@ -234,15 +233,15 @@ pub fn hidden_widget() {
 /// the second item is the value.
 pub fn select_widget(variants: List(#(String, String))) {
   Widget(
-    fn(field: Field, state: formz.InputState, args: Args) -> element.Element(
+    fn(config: formz.Config, state: formz.InputState, args: Args) -> element.Element(
       msg,
     ) {
       html.select(
         [
-          name_attr(field.name),
+          name_attr(config.name),
           id_attr(args.id),
           required_attr(state.requirement),
-          aria_label_attr(args.labelled_by, field.label),
+          aria_label_attr(args.labelled_by, config.label),
           aria_describedby_attr(args.described_by),
         ],
         list.flatten([

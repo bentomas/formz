@@ -1,0 +1,7 @@
+---
+version: 1.2.4
+title: list field form hidden
+file: ./test/formz_string/simple_test.gleam
+test_name: list_field_hidden_test
+---
+<div class="formz_items"><input type="hidden" name="a" value="1"><input type="hidden" name="a" value="2"><input type="hidden" name="a" value></div>

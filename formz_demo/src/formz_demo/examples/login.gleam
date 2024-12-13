@@ -1,5 +1,4 @@
-import formz
-import formz/field.{field}
+import formz.{named}
 import formz_string/definition
 import wisp
 
@@ -12,8 +11,14 @@ pub type User {
 }
 
 pub fn make_form() {
-  use username <- formz.require(field("username"), definition.text_field())
-  use password <- formz.require(field("password"), definition.password_field())
+  use username <- formz.required_field(
+    named("username"),
+    definition.text_field(),
+  )
+  use password <- formz.required_field(
+    named("password"),
+    definition.password_field(),
+  )
 
   formz.create_form(Credentials(username, password))
 }
@@ -26,11 +31,11 @@ pub fn handle_post(formdata: wisp.FormData, form) {
       Credentials("admin", "l33t") -> Ok(User(credentials.username))
       Credentials("admin", _) ->
         form
-        |> formz.set_field_error("password", "Wrong password")
+        |> formz.field_error("password", "Wrong password")
         |> Error
       Credentials(_, _) ->
         form
-        |> formz.set_field_error("username", "Wrong username")
+        |> formz.field_error("username", "Wrong username")
         |> Error
     }
   })

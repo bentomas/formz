@@ -1,0 +1,7 @@
+---
+version: 1.2.4
+title: list field form with error
+file: ./test/formz_string/simple_test.gleam
+test_name: list_field_with_error_test
+---
+<div class="formz_items"><fieldset class="formz_listfield"><legend id="a_legend">A: </legend><ol><li><input type="number" name="a" id="a_0" required aria-labelledby="a_legend" aria-describedby="a_0_error"><span id="a_0_error" class="formz_error">must be a whole number</span></li><li><input type="number" name="a" id="a_1" required aria-labelledby="a_legend" aria-describedby="a_1_error"><span id="a_1_error" class="formz_error">woops</span></li></ol></fieldset></div>

@@ -11,11 +11,11 @@ problems to solve is inconvenient and leads to bugs. This library aims
 to make that link explicit and easy to manage, while making it really easy
 to make accessible forms.
 
-Note: This library is not particularly well-suited for generating one-off
-forms, but is more intended for use in projects where you have a few forms to
+Note: This library is not necessarily well-suited for generating one-off
+forms, and is intended for use in projects where you have a few forms to
 manage, and would like to keep the form markup and parsing logic in sync.  It
 takes some amount of effort to make an actual form generator with markup and
-styles, and that might not be worth it for a one-off form.  That said, a simple
+styles, and that might not be worth it for a one-off form. That said, a simple
 form generator is provided if you aren't opinionated about your markup.
 
 ```sh
@@ -29,18 +29,11 @@ decoder function as fields are added:
 
 ```gleam
 import formz
-import formz/field.{field}
 import formz_string/definitions
 
 pub fn make_form() {
-  use username <- formz.field(
-    formz.named("username"),
-    formz.required(definitions.text_field()),
-  )
-  use password <- formz.field(
-    formz.named("password"),
-    formz.required(definitions.password_field()),
-  )
+  use username <- formz.field(formz.named("username"), definitions.text_field())
+  use password <- formz.field(formz.named("password"), definitions.password_field())
 
   formz.create_form(#(username, password))
 }
@@ -50,87 +43,73 @@ pub fn make_form() {
 
 There are two arguments to adding a field to a form (seen above):
 
-1. A [Field](https://hexdocs.pm/formz/formz/field.html), which holds specific,
-   unique details about the field, such as its name, label, help text, disabled
-   state, etc.
-2. A [Definition](https://hexdocs.pm/formz/formz/definition.html), which
-   says (A) how to generate the HTML input element for the field, and (B) how
-   to parse the data from the field. These definitions are reusable and can be
-   shared across fields, forms and projects.
+1. A `Config`, which holds specific, unique details about the field: its name,
+   label, help text, and disabled state.
+2. A `Definition`, which says (A) how to generate the HTML input element for
+   the field, and (B) how to parse the data from the field. These definitions
+   are reusable and can be shared across fields, forms and projects.
 
-### Field details
+### Field config
 
 ```gleam
-// name is required, the other details are optional
-field(named: "username")
-|> field.set_label("Username")
-|> field.set_help_text("Only alphanumeric characters are allowed.")
+// name is required, the other confg are optional
+formz.named("username")
+|> formz.set_label("Username")
+|> formz.set_help_text("Only alphanumeric characters are allowed.")
 ```
 
 ```gleam
-field(named: "userid") |> field.make_hidden |> field.set_raw_value("42")
+formz.named("userid") |> formz.make_disabled
 ```
 
 ### Field definition
 
-[Defintions](https://hexdocs.pm/formz/formz/definition.html) are the heavy
-compared to the lightness of fields; they take a bit more work to make as they
-are intended to be more reusable.
+A `Definition` describes how an input works, e.g. how it looks and how it's
+parsed. Definitions are intended to be reusable.
 
-The first role of a `Defintion` is to generate the HTML widget for the field.
-This library is format-agnostic and you can generate HTML widgets as raw
-strings, Lustre elements, Nakai nodes, something else, etc. There are
-currently three `formz` libraries that provide common field definitions for the
-most common HTML formats.
+The first role of a `Defintion` is to generate the HTML input for the field.
+This library is format-agnostic and you can generate inputs as raw
+strings, Lustre elements, Nakai nodes, something else, etc. The second role
+of a `Definition` is to parse the raw string data from the input into a
+Gleam type.
+
+There are currently three `formz` libraries that provide common field
+definitions for the most common HTML inputs:
 
 - [formz_string](https://hexdocs.pm/formz_string/)
 - [formz_nakai](https://hexdocs.pm/formz_nakai/)
-- [formz_lustre](https://hexdocs.pm/formz_lustre/) (untested in a browser, I've only done this server side)
-
-The second role  of a `Definition` is to parse the data from the field. There
-are a two parts to this, as how you parse a field's value depends on if it is
-optional or required.  Not all scenarios can be cookie-cutter placed into an
-`Option`. So you need to provide two parse functions, one for when a field is
-required, and a second for when it's optional.
+- [formz_lustre](https://hexdocs.pm/formz_lustre/)
 
 ```gleam
 /// you won't often need to do this directly (I think??).  The idea is that
 /// there'd be libs with the definitions you need.
 
-import formz/definition.{Definition}
-import formz/field
+import formz
 import formz/validation
-import formz/widget
 import lustre/attribute
 import lustre/element
 import lustre/element/html
 
 fn password_widget(
-  field: field.Field,
-  args: widget.Args,
+  config: formz.Config,
+  state: formz.InputState,
 ) -> element.Element(msg) {
   html.input([
     attribute.type_("password"),
-    attribute.name(field.name),
-    attribute.id(args.id),
-    attribute.attribute("aria-labelledby", field.label),
+    attribute.name(config.name),
+    attribute.id(config.name),
+    attribute.attribute("aria-labelledby", config.label),
   ])
 }
 
 pub fn password_field() {
-  Definition(
+  definition(
     widget: password_widget,
     parse: validation.string,
-    optional_parse: fn(parse, str) {
-      case str {
-        "" -> Ok(option.None)
-        _ -> parse(str)
-      }
-    },
-    // We need to have a stub value for each parser. The stubs are used when
-    // building the decoder and parse functions for the form.
+    // We need to have a stub value for each definition. The stubs are used when
+    // building the decoder functions for the form. This is just any value of
+    // the same type that the parse function returns.
     stub: "",
-    optional_stub: option.None,
   )
 }
 ```
@@ -144,8 +123,8 @@ to generate the HTML for each field individually, but rather, you'd use
 a function to loop through each field, generating semantic, accessible
 markup for each one.
 
-The specifics of how you would do this are going
-to vary greatly for each project and its styling/markup needs.
+The specifics of how you would do this are going to vary greatly for each
+project and its styling/markup needs.
 
 However, the three `formz_*` libraries mentioned above all provide a
 simple form generator function that you can use as is, or as a starting
@@ -215,9 +194,9 @@ pub fn handle_form_submission(req: Request) -> Response {
     case credentials {
       #("admin" as username, "l33t") -> Ok(username)
       #("admin", _) ->
-        Error(form |> formz.set_field_error("password", "Wrong password"))
+        Error(form |> formz.field_error("password", "Wrong password"))
       _ ->
-        Error(form |> formz.set_field_error("username", "Unknown username"))
+        Error(form |> formz.field_error("username", "Unknown username"))
     }
   })
 
