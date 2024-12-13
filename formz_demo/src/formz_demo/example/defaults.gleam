@@ -1,5 +1,5 @@
 import formz
-import formz_string/simple
+import formz_string/generator
 import lustre/element
 import nakai
 import nakai/html
@@ -21,7 +21,7 @@ pub fn handle_post(
 }
 
 pub fn format_string_form(form) -> String {
-  simple.generate(form)
+  generator.build(form)
 }
 
 pub fn formatted_string_form_to_string(str) -> String {

@@ -1,4 +1,4 @@
-import formz.{named}
+import formz
 import formz_string/definition
 import wisp
 
@@ -12,11 +12,11 @@ pub type User {
 
 pub fn make_form() {
   use username <- formz.required_field(
-    named("username"),
+    formz.named("username"),
     definition.text_field(),
   )
   use password <- formz.required_field(
-    named("password"),
+    formz.named("password"),
     definition.password_field(),
   )
 

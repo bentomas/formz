@@ -1,5 +1,4 @@
 import formz
-
 import formz_string/definition
 import gleam/string
 

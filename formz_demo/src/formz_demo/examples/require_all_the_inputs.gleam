@@ -1,9 +1,9 @@
-import formz.{named}
+import formz
 import formz_string/definition
 import formz_string/widget
 
 pub fn make_form() {
-  use a <- formz.required_field(named("text"), definition.text_field())
+  use a <- formz.required_field(formz.named("text"), definition.text_field())
   use b <- formz.required_field(formz.named("int"), definition.integer_field())
   use c <- formz.required_field(
     formz.named("number"),
