@@ -29,11 +29,11 @@ decoder function as fields are added:
 
 ```gleam
 import formz
-import formz_string/definitions
+import formz_string/definition
 
 pub fn make_form() {
-  use username <- formz.field(formz.named("username"), definitions.text_field())
-  use password <- formz.field(formz.named("password"), definitions.password_field())
+  use username <- formz.field(formz.named("username"), definition.text_field())
+  use password <- formz.field(formz.named("password"), definition.password_field())
 
   formz.create_form(#(username, password))
 }

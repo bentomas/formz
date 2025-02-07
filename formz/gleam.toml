@@ -1,10 +1,10 @@
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 name = "formz"
-version = "2.0.0"
+version = "2.0.1"
 description = "Accessible, type safe form parsing and generating for Gleam"
 licences = ["Unlicense"]
-repository = { type = "github", user = "bentomas", repo = "formz" }
+repository = { type = "github", user = "bentomas", repo = "formz", path = "formz" }
 gleam = ">= 1.6.0"
 
 [dependencies]

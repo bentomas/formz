@@ -1,10 +1,10 @@
 # For a full reference of all the available options, you can have a look at
 # https://gleam.run/writing-gleam/gleam-toml/.
 name = "formz_string"
-version = "2.0.0"
+version = "2.0.1"
 description = "String widgets and field definitions for the formz library."
 licences = ["Unlicense"]
-repository = { type = "github", user = "bentomas", repo = "formz" }
+repository = { type = "github", user = "bentomas", repo = "formz", path = "formz_string" }
 
 [dependencies]
 # formz = { path = "../formz" }
